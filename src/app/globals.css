@@ -124,6 +124,10 @@ body {
   text-shadow: 0 0 5px rgba(255, 176, 0, 0.6), 0 0 12px rgba(255, 176, 0, 0.25);
 }
 
+.power-on {
+  animation: flicker 700ms ease-out 1;
+}
+
 .glitch-hover {
   position: relative;
   display: inline-block;
@@ -146,6 +150,10 @@ body {
   100% {
     transform: translate(0, 0);
   }
+}
+
+.glitch-burst {
+  animation: glitch-shift 220ms steps(2, jump-none) 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
