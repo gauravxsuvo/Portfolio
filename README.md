@@ -1,6 +1,6 @@
 # Portfolio
 
-Personal portfolio site — a "Terminal CLI" themed build: monospace type,
+Personal portfolio site, a "Terminal CLI" themed build: monospace type,
 green-on-black phosphor palette, bracketed buttons, and terminal-window panes
 instead of cards.
 
