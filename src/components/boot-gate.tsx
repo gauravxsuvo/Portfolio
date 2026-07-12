@@ -33,7 +33,12 @@ export function BootGate({ children }: { children: ReactNode }) {
     if (!mounted || active) return;
     const main = document.querySelector("main");
     if (!main) return;
-    main.focus();
+    // preventScroll: the boot overlay is position:fixed over the full
+    // viewport, so nothing the user can see actually moves when it closes —
+    // without this, focusing <main> (much taller than the viewport) makes
+    // the browser scroll so its top edge aligns with the viewport top,
+    // shoving the nav bar off-screen and hiding the hero underneath it.
+    main.focus({ preventScroll: true });
     main.classList.add("power-on");
     const id = setTimeout(() => main.classList.remove("power-on"), 750);
     return () => clearTimeout(id);

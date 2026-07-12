@@ -35,7 +35,7 @@ export function SiteNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/95">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           <span className="flex items-baseline gap-x-2 whitespace-nowrap">
             <Link href="/" className="glitch-hover text-primary text-glow">

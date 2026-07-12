@@ -120,7 +120,7 @@ export function ThemePanel() {
         aria-expanded={open}
         aria-controls="theme-panel"
         aria-label="Terminal display settings"
-        className="fixed bottom-4 right-4 z-[55] bg-bg/90 text-xs backdrop-blur-sm"
+        className="fixed bottom-20 right-4 z-[55] bg-bg/90 text-xs backdrop-blur-sm"
       >
         DISPLAY
       </BracketButton>
@@ -130,7 +130,7 @@ export function ThemePanel() {
         ref={panelRef}
         role="dialog"
         aria-label="Terminal display settings"
-        className={`fixed bottom-16 right-4 z-[55] w-[min(20rem,calc(100vw-2rem))] origin-bottom-right transition-all duration-200 ${
+        className={`fixed bottom-32 right-4 z-[55] max-h-[calc(100vh-9rem)] w-[min(20rem,calc(100vw-2rem))] origin-bottom-right overflow-y-auto transition-all duration-200 ${
           open
             ? "pointer-events-auto opacity-100 scale-100"
             : "pointer-events-none opacity-0 scale-95"

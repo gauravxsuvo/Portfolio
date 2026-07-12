@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -12,6 +12,8 @@ import { KonamiListener } from "@/components/konami-listener";
 import { NavShortcuts } from "@/components/nav-shortcuts";
 import { ThemePanel } from "@/components/theme-panel";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { bio } from "@/lib/data";
+import { siteName, siteUrl } from "@/lib/site";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -19,10 +21,44 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "700", "800"],
 });
 
+const description = `${bio.role}. ${bio.summary}`.slice(0, 200);
+
 export const metadata: Metadata = {
-  title: "gaurav@portfolio:~$",
-  description:
-    "Software developer portfolio — projects, experience, and contact, rendered as a terminal.",
+  metadataBase: new URL(siteUrl),
+  title: { default: siteName, template: `%s — ${siteName}` },
+  description,
+  applicationName: `${bio.name} — Portfolio`,
+  authors: [{ name: bio.name, url: siteUrl }],
+  creator: bio.name,
+  keywords: [
+    bio.name,
+    bio.handle,
+    "software developer",
+    "portfolio",
+    "machine learning",
+    "full-stack development",
+    ...bio.focus,
+  ],
+  alternates: { canonical: siteUrl },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: `${bio.name} — Portfolio`,
+    title: siteName,
+    description,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description,
+  },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({

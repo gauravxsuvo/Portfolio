@@ -444,8 +444,17 @@ export function CommandShell() {
   const [value, setValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    // Skip on mount — scrolling the shell's own internal history list into
+    // view on first paint was dragging the whole page's scroll position down
+    // with it (the shell isn't the first section on the page), hiding the
+    // hero above it. Only scroll once the user actually runs a command.
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ block: "nearest" });
   }, [history]);
 

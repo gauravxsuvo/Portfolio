@@ -76,14 +76,19 @@ export function NeofetchPanel() {
         <div className="mt-3 flex gap-1.5">
           {SWATCHES.map((s) =>
             s.label === "primary" ? (
+              // p-2 -m-2 grows the actual tap target to ~40x28 (clearing the
+              // 24px touch-target minimum) without disturbing the visible
+              // swatch row, which stays flush with its decorative siblings.
               <button
                 key={s.label}
                 type="button"
                 onClick={() => window.dispatchEvent(new Event(OPEN_THEME_PANEL_EVENT))}
                 aria-label="Open display settings to change the phosphor color"
                 title="change phosphor color"
-                className={`inline-block h-3 w-6 transition-transform hover:scale-110 ${s.className}`}
-              />
+                className="-m-2 inline-flex items-center justify-center p-2 transition-transform hover:scale-110"
+              >
+                <span aria-hidden="true" className={`inline-block h-3 w-6 ${s.className}`} />
+              </button>
             ) : (
               <span key={s.label} aria-hidden="true" className={`inline-block h-3 w-6 ${s.className}`} />
             )

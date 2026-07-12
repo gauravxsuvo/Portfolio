@@ -3,10 +3,13 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { TerminalWindow } from "@/components/ui/terminal-window";
 import { BracketLink } from "@/components/ui/bracket-button";
 import { CopyButton } from "@/components/copy-button";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "cat contact.txt — gaurav@portfolio:~$",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "cat contact.txt",
+  description: "Get in touch — email, GitHub, LinkedIn.",
+  path: "/contact",
+});
 
 const EMAIL = "workwithggaurav@gmail.com";
 

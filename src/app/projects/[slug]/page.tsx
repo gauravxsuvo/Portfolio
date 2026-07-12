@@ -5,6 +5,7 @@ import { TerminalWindow } from "@/components/ui/terminal-window";
 import { BracketLink } from "@/components/ui/bracket-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { projects } from "@/lib/data";
+import { pageMetadata } from "@/lib/site";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -17,7 +18,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
-  return { title: project ? `${project.name} — gaurav@portfolio:~$` : "not found" };
+  if (!project) return { title: "not found" };
+  return pageMetadata({
+    title: project.name,
+    description: project.tagline,
+    path: `/projects/${project.slug}`,
+    image: `/projects/${project.slug}/opengraph-image`,
+  });
 }
 
 export default async function ProjectDetailPage({

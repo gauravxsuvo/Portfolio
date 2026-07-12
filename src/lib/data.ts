@@ -105,7 +105,7 @@ export const experience: ExperienceEntry[] = [
     role: "Freelance Video Editor & Graphic Designer",
     org: "Self-employed",
     period: "2021 — 2024",
-    location: "Agra, India",
+    location: "India",
     summary:
       "Delivered video editing and brand design for 50+ paying clients over three years, sourcing every engagement through cold email, LinkedIn outreach, and referrals.",
     highlights: [
@@ -168,7 +168,7 @@ export const bio = {
   name: "Gaurav Raj Singh",
   handle: "gauravxsuvo",
   role: "Computer Science Student — AI/ML & Full-Stack Systems",
-  location: "Agra, India",
+  location: "India",
   summary:
     "I'm a Computer Science student at IIT Guwahati, specializing in Data Science and Artificial Intelligence. I'm drawn to problems where machine learning meets the physical world — physics-informed models, multi-agent systems, geospatial data — and I like understanding things end-to-end rather than treating any layer as a black box. Before university I ran a freelance video editing and design business for three years, which is probably why I still care how something looks and feels, not just whether it works. Outside of that, I'm slowly picking up Korean and Japanese.",
   focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],

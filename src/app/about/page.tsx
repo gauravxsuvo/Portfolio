@@ -3,10 +3,13 @@ import { TerminalWindow } from "@/components/ui/terminal-window";
 import { SkillGroups } from "@/components/ui/skill-groups";
 import { SectionLabel } from "@/components/ui/section-label";
 import { bio, education, skillGroups } from "@/lib/data";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "whoami — gaurav@portfolio:~$",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "whoami",
+  description: `${bio.summary.slice(0, 150)}…`,
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (
