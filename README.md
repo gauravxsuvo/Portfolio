@@ -4,7 +4,7 @@ Personal portfolio site, a "Terminal CLI" themed build: monospace type,
 green-on-black phosphor palette, bracketed buttons, and terminal-window panes
 instead of cards.
 
-Built with Next.js (App Router), TypeScript, and Tailwind CSS v4.
+Built with Next.js, TypeScript, and Tailwind CSS v4.
 
 ## Getting started
 
