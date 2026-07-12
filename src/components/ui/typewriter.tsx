@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export function Typewriter({
   text,
@@ -16,34 +17,24 @@ export function Typewriter({
   as?: "span" | "h1" | "h2" | "p";
 }) {
   const [count, setCount] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setCount(text.length);
-      return;
-    }
+    if (reducedMotion) return;
     if (count >= text.length) return;
     const delay = count === 0 ? startDelay : speed;
     const id = setTimeout(() => setCount((c) => c + 1), delay);
     return () => clearTimeout(id);
   }, [count, text, speed, startDelay, reducedMotion]);
 
-  const done = count >= text.length;
+  const shown = reducedMotion ? text : text.slice(0, count);
+  const done = reducedMotion || count >= text.length;
 
   return (
     <Tag className={className}>
       <span className="sr-only">{text}</span>
       <span aria-hidden="true">
-        {text.slice(0, count)}
+        {shown}
         <span className={done ? "animate-blink" : ""}>_</span>
       </span>
     </Tag>

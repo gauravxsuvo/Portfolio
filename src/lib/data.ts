@@ -12,73 +12,83 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "packet-sniffer-dashboard",
-    name: "packet-sniffer-dashboard",
-    tagline: "Real-time network traffic visualizer",
+    slug: "deepdarcy",
+    name: "DeepDarcy",
+    tagline: "Physics-informed neural network for groundwater inference",
     description:
-      "A live dashboard that captures and classifies local network packets, rendering protocol breakdowns and traffic spikes as terminal-style bar charts. Built to make packet inspection approachable without a full Wireshark session.",
-    stack: ["Python", "Scapy", "WebSockets", "React"],
-    status: "live",
-    repoUrl: "https://github.com/",
-    liveUrl: "https://example.com/",
+      "A physics-informed neural network that solves the groundwater diffusion PDE by automatic differentiation and inverts it to recover unreported well pumping rates from sparse sensor data. Validated the forward solver to 0.91% relative L2 error against the analytical Theis solution, and recovered spatially varying depletion rates at 5.15% error on synthetic benchmarks. Held-out spatial validation on unseen Ogallala aquifer wells exposed overfitting; the published model card reports the true 38.3% holdout error and the model's intended-use limits honestly rather than only the best-case numbers. Served behind a FastAPI inference API with a Next.js and Leaflet frontend, containerized with Docker Compose.",
+    stack: ["Python", "PyTorch", "FastAPI", "Next.js", "Docker"],
+    status: "ok",
+    repoUrl: "https://github.com/gauravxsuvo/DeepDarcy",
     year: "2026",
   },
   {
-    slug: "cli-task-runner",
-    name: "cli-task-runner",
-    tagline: "Zero-config task orchestrator for monorepos",
+    slug: "notschool",
+    name: "notschool",
+    tagline: "Multi-agent learning-plan generator — team lead, 4 engineers",
     description:
-      "A dependency-aware task runner that reads a single manifest file and parallelizes builds across workspace packages, with cached outputs and a live status TUI.",
-    stack: ["Go", "Cobra", "Bubble Tea"],
+      "Led a four-person team to 37th in Asia-Pacific at the Google Cloud GenAI Academy Hackathon, a submission tier restricted to developers who cleared every codelab in a 192,660-developer program. Built the entire backend and agent layer in 3 days: a LangGraph orchestrator running four Gemini-backed agents for curriculum design, resource retrieval, calendar scheduling, and persistence. Shipped 21 FastAPI endpoints covering Google OAuth 2.0, HMAC-signed guest sessions, multimodal syllabus ingestion, quizzes, and a chat-history-aware tutor. Wired the YouTube Data API and Google Calendar in as Model Context Protocol tools, turning one image or text goal into a scheduled 7-day plan; ran it with 25+ early users.",
+    stack: ["LangGraph", "Gemini", "FastAPI", "MCP", "Docker"],
     status: "ok",
-    repoUrl: "https://github.com/",
-    year: "2025",
+    repoUrl: "https://github.com/gauravxsuvo/notschool",
+    year: "2026",
   },
   {
-    slug: "shell-first-notes",
-    name: "shell-first-notes",
-    tagline: "Markdown notes app you drive entirely from the keyboard",
+    slug: "bharatsim",
+    name: "BharatSim",
+    tagline: "District-level environmental simulation platform",
     description:
-      "A note-taking tool with vim-style modal navigation, full-text search over a local SQLite index, and a command palette modeled after shell command syntax.",
-    stack: ["TypeScript", "Electron", "SQLite"],
-    status: "wip",
-    repoUrl: "https://github.com/",
-    year: "2025",
-  },
-  {
-    slug: "uptime-pager",
-    name: "uptime-pager",
-    tagline: "Self-hosted status page and on-call pager",
-    description:
-      "Polls a list of endpoints on a schedule, tracks uptime history, and pages the on-call engineer over SMS/email when a service falls over. Includes a public status page.",
-    stack: ["Node.js", "Postgres", "Twilio"],
-    status: "ok",
-    repoUrl: "https://github.com/",
-    liveUrl: "https://example.com/",
-    year: "2024",
-  },
-  {
-    slug: "old-portfolio-v1",
-    name: "old-portfolio-v1",
-    tagline: "First portfolio attempt — retired",
-    description:
-      "The original version of this site, built as a static single-pager. Kept around for the archive, superseded by the terminal rebuild you're looking at now.",
-    stack: ["HTML", "CSS", "jQuery"],
-    status: "err",
-    repoUrl: "https://github.com/",
-    year: "2022",
+      "A geospatial simulation platform spanning all 759 Indian districts, with four domain modules for flood risk, heatwave, crop yield, and air quality. Backed by FastAPI, SQLAlchemy, and GeoAlchemy2 over PostgreSQL/PostGIS with Redis caching, with a Next.js and Mapbox GL frontend shipped to Vercel and Render.",
+    stack: ["Next.js", "FastAPI", "PostGIS", "Redis"],
+    status: "live",
+    repoUrl: "https://github.com/gauravxsuvo/BharatSim",
+    liveUrl: "https://bharat-sim.vercel.app",
+    year: "2026",
   },
 ];
 
-export type Skill = { label: string; value: number };
+export type SkillGroup = { category: string; items: string[] };
 
-export const skills: Skill[] = [
-  { label: "TypeScript / JavaScript", value: 92 },
-  { label: "React / Next.js", value: 88 },
-  { label: "Python", value: 80 },
-  { label: "Go", value: 65 },
-  { label: "SQL / Databases", value: 78 },
-  { label: "Systems & Networking", value: 60 },
+export const skillGroups: SkillGroup[] = [
+  { category: "Languages", items: ["Python", "TypeScript", "SQL"] },
+  {
+    category: "Machine Learning",
+    items: [
+      "PyTorch",
+      "Physics-Informed Neural Networks",
+      "Automatic Differentiation",
+      "scikit-learn",
+      "XGBoost",
+      "LightGBM",
+    ],
+  },
+  {
+    category: "AI Systems",
+    items: [
+      "LangGraph",
+      "Google Gemini",
+      "Model Context Protocol (FastMCP)",
+      "Multi-Agent Orchestration",
+      "LLM Tool-Calling",
+    ],
+  },
+  {
+    category: "Backend & Data",
+    items: [
+      "FastAPI",
+      "SQLAlchemy",
+      "GeoAlchemy2",
+      "PostgreSQL / PostGIS",
+      "SQLite",
+      "Redis",
+      "REST API Design",
+      "OAuth 2.0",
+    ],
+  },
+  {
+    category: "Frontend & Infra",
+    items: ["Next.js", "React", "Tailwind CSS", "Leaflet", "Docker", "Google Cloud Run", "Vercel", "Git"],
+  },
 ];
 
 export type ExperienceEntry = {
@@ -92,49 +102,74 @@ export type ExperienceEntry = {
 
 export const experience: ExperienceEntry[] = [
   {
-    role: "Software Engineer",
-    org: "Acme Systems",
-    period: "2024 — PRESENT",
-    location: "Remote",
+    role: "Freelance Video Editor & Graphic Designer",
+    org: "Self-employed",
+    period: "2021 — 2024",
+    location: "Agra, India",
     summary:
-      "Own the internal tooling platform used by ~40 engineers; own reliability of the deployment pipeline.",
+      "Delivered video editing and brand design for 50+ paying clients over three years, sourcing every engagement through cold email, LinkedIn outreach, and referrals.",
     highlights: [
-      "Cut average deploy time from 14m to 4m by parallelizing the build graph",
-      "Designed the internal CLI now used for all service scaffolding",
-      "On-call rotation for platform incidents, average MTTR under 20m",
+      "Worked as sole editor for the @Adityansh YouTube channel, cutting 10 to 12 videos that passed 1,000,000 combined views",
+      "Owned scoping, pricing, revisions, and deadlines across concurrent projects in Premiere Pro, Photoshop, and Illustrator",
     ],
   },
+];
+
+export type EducationEntry = {
+  school: string;
+  degree: string;
+  period: string;
+  location: string;
+  summary: string;
+  highlights: string[];
+};
+
+export const education: EducationEntry = {
+  school: "Indian Institute of Technology Guwahati",
+  degree: "B.S. (Honours), Computer Science — Data Science & Artificial Intelligence",
+  period: "2026 — 2030 (Expected)",
+  location: "Guwahati, India",
+  summary:
+    "Specialization in Data Science and Artificial Intelligence.",
+  highlights: [],
+};
+
+export type Publication = {
+  id: string;
+  title: string;
+  authors: string[];
+  venue: string;
+  year: string;
+  type: "conference" | "journal" | "workshop" | "preprint" | "thesis";
+  status: "published" | "under-review" | "preprint";
+  abstract: string;
+  links?: { pdf?: string; doi?: string; arxiv?: string; code?: string };
+  tags?: string[];
+};
+
+export const publications: Publication[] = [
   {
-    role: "Backend Engineer Intern",
-    org: "Nimbus Data",
-    period: "2023 — 2024",
-    location: "Bengaluru, IN",
-    summary:
-      "Built ingestion services for a real-time analytics pipeline processing ~2M events/day.",
-    highlights: [
-      "Rewrote the ingestion queue consumer, cutting p99 latency by 35%",
-      "Added structured logging and traces across 6 services",
-    ],
-  },
-  {
-    role: "B.Tech, Computer Science",
-    org: "University",
-    period: "2020 — 2024",
-    location: "India",
-    summary: "Coursework focused on systems, networks, and distributed computing.",
-    highlights: [
-      "Teaching assistant for Operating Systems, two semesters",
-      "Capstone project: a distributed key-value store with Raft consensus",
-    ],
+    id: "pinn-groundwater-ogallala",
+    title:
+      "Physics-Informed Neural Networks for Groundwater Depletion Inference: A Case Study on the Ogallala Aquifer",
+    authors: ["Gaurav Raj Singh"],
+    venue: "Zenodo",
+    year: "2026",
+    type: "preprint",
+    status: "preprint",
+    abstract:
+      "A physics-informed neural network solves the groundwater diffusion PDE via automatic differentiation and inverts it to recover unreported well pumping rates from sparse well data. The forward solver validates to 0.91% relative L2 error against the analytical Theis solution, and the model recovers spatially varying depletion rates at 5.15% error on synthetic benchmarks. Held-out spatial validation on unseen Ogallala aquifer wells surfaced an overfitting failure found and fixed during development; the accompanying model card reports the true 38.3% holdout error and the model's intended-use limits.",
+    links: { doi: "https://doi.org/10.5281/zenodo.21318191", code: "https://github.com/gauravxsuvo/DeepDarcy" },
+    tags: ["machine learning", "physics-informed neural networks", "hydrology"],
   },
 ];
 
 export const bio = {
   name: "Gaurav Raj Singh",
-  handle: "gaurav",
-  role: "Software Developer",
-  location: "India",
+  handle: "gauravxsuvo",
+  role: "Computer Science Student — AI/ML & Full-Stack Systems",
+  location: "Agra, India",
   summary:
-    "I build backend systems and developer tooling — things that are supposed to be invisible when they work. Comfortable across the stack, most at home closer to the metal.",
-  focus: ["distributed systems", "developer tooling", "networking", "web performance"],
+    "I'm a Computer Science student at IIT Guwahati, specializing in Data Science and Artificial Intelligence. I'm drawn to problems where machine learning meets the physical world — physics-informed models, multi-agent systems, geospatial data — and I like understanding things end-to-end rather than treating any layer as a black box. Before university I ran a freelance video editing and design business for three years, which is probably why I still care how something looks and feels, not just whether it works. Outside of that, I'm slowly picking up Korean and Japanese.",
+  focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
 };

@@ -49,7 +49,7 @@ export function Reveal({
           key={i}
           data-reveal-item="true"
           style={visible ? { transitionDelay: `${i * staggerMs}ms` } : undefined}
-          className={`transition-all duration-700 ease-out ${
+          className={`min-w-0 transition-all duration-700 ease-out ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
           } ${itemClassName}`}
         >

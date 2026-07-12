@@ -17,9 +17,20 @@ const SEQUENCE = [
   "a",
 ];
 
+export const TRIGGER_MATRIX_EVENT = "suvo:trigger-matrix";
+
 export function KonamiListener() {
   const [active, setActive] = useState(false);
   const progressRef = useRef(0);
+
+  useEffect(() => {
+    function onTrigger() {
+      unlockAchievement("konami");
+      setActive(true);
+    }
+    window.addEventListener(TRIGGER_MATRIX_EVENT, onTrigger);
+    return () => window.removeEventListener(TRIGGER_MATRIX_EVENT, onTrigger);
+  }, []);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

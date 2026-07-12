@@ -1,24 +1,32 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { PromptInput } from "@/components/ui/prompt-input";
-import { TerminalWindow } from "@/components/ui/terminal-window";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { ProjectCard } from "@/components/project-card";
 import type { Project } from "@/lib/data";
+
+const STATUS_ORDER: Record<Project["status"], number> = { live: 0, ok: 1, wip: 2, err: 3 };
 
 export function ProjectsExplorer({ projects }: { projects: Project[] }) {
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"newest" | "status">("newest");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter((p) =>
-      [p.name, p.tagline, ...p.stack].some((field) =>
-        field.toLowerCase().includes(q)
-      )
+    const matches = q
+      ? projects.filter((p) =>
+          [p.name, p.tagline, ...p.stack].some((field) =>
+            field.toLowerCase().includes(q)
+          )
+        )
+      : projects;
+
+    return [...matches].sort((a, b) =>
+      sort === "newest"
+        ? Number(b.year) - Number(a.year)
+        : STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
     );
-  }, [projects, query]);
+  }, [projects, query, sort]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,31 +38,33 @@ export function ProjectsExplorer({ projects }: { projects: Project[] }) {
         onChange={(e) => setQuery(e.target.value)}
         aria-label="Filter projects by name or technology"
       />
-      <p className="text-xs text-fg/40" aria-live="polite">
-        {filtered.length} result{filtered.length === 1 ? "" : "s"}
-      </p>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <p className="text-fg/40" aria-live="polite">
+          {filtered.length} result{filtered.length === 1 ? "" : "s"}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-fg/40">sort:</span>
+          {(["newest", "status"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setSort(option)}
+              className={`border px-2 py-1 uppercase transition-colors ${
+                sort === option
+                  ? "border-primary text-primary"
+                  : "border-border text-fg/50 hover:text-primary hover:border-primary"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {filtered.map((project) => (
-          <TerminalWindow key={project.slug} title={project.name} meta={project.year}>
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm text-fg/70">{project.tagline}</p>
-              <StatusBadge status={project.status} />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {project.stack.map((tech) => (
-                <span key={tech} className="text-xs text-secondary">
-                  [{tech}]
-                </span>
-              ))}
-            </div>
-            <Link
-              href={`/projects/${project.slug}`}
-              className="mt-4 inline-block text-sm text-primary underline underline-offset-4 decoration-border"
-            >
-              read more -&gt;
-            </Link>
-          </TerminalWindow>
+          <ProjectCard key={project.slug} project={project} onTagClick={setQuery} />
         ))}
 
         {filtered.length === 0 && (

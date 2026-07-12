@@ -4,9 +4,9 @@ import { useState } from "react";
 import { unlockAchievement } from "@/lib/achievements";
 
 const SOCIALS = [
-  { label: "github", href: "https://github.com/" },
-  { label: "linkedin", href: "https://www.linkedin.com/" },
-  { label: "email", href: "mailto:gauravrajsinghoppo@gmail.com" },
+  { label: "github", href: "https://github.com/gauravxsuvo" },
+  { label: "linkedin", href: "https://www.linkedin.com/in/gauravxsuvo" },
+  { label: "email", href: "mailto:workwithggaurav@gmail.com" },
 ];
 
 const STATES = [
@@ -38,7 +38,7 @@ export function SiteFooter() {
         </button>
         <span>{state.text}</span>
         <span aria-hidden="true" className="hidden sm:inline">
-          //
+          {"//"}
         </span>
         <nav aria-label="Social" className="flex flex-wrap gap-3">
           {SOCIALS.map((s) => (

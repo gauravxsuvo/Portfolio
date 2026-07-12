@@ -2,19 +2,22 @@ import Link from "next/link";
 import { Typewriter } from "@/components/ui/typewriter";
 import { TerminalWindow } from "@/components/ui/terminal-window";
 import { BracketLink } from "@/components/ui/bracket-button";
-import { ProgressBar } from "@/components/ui/progress-bar";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { SkillGroups } from "@/components/ui/skill-groups";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Reveal } from "@/components/ui/reveal";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
 import { CommandShell } from "@/components/command-shell";
 import { HeroLogo } from "@/components/hero-logo";
-import { bio, projects, skills } from "@/lib/data";
+import { ProjectCard } from "@/components/project-card";
+import { PublicationCard } from "@/components/publication-card";
+import { FocusTags } from "@/components/focus-tags";
+import { bio, projects, publications, skillGroups } from "@/lib/data";
 import { changelog } from "@/lib/changelog";
 
 export default function Home() {
   const featured = projects.filter((p) => p.status !== "err").slice(0, 3);
-  const topSkills = skills.slice(0, 4);
+  const topSkillGroups = skillGroups.slice(0, 3);
+  const topPublications = publications.slice(0, 2);
 
   return (
     <div className="flex flex-col gap-16">
@@ -22,14 +25,10 @@ export default function Home() {
         <Reveal trigger="mount" staggerMs={120}>
           <HeroLogo />
 
-          <h1 className="glitch-hover text-2xl sm:text-3xl font-bold tracking-wide text-fg">
-            {bio.name.toUpperCase()}
-          </h1>
-
           <p className="mt-3 text-primary text-glow text-base sm:text-lg">
             <Typewriter
-              text={`> ${bio.role.toLowerCase()} // building systems that don't page anyone at 3am`}
-              startDelay={350}
+              text={`> ${bio.role.toLowerCase()} // shipping physics-informed ML and multi-agent systems`}
+              startDelay={1900}
             />
           </p>
 
@@ -37,16 +36,7 @@ export default function Home() {
             {bio.summary}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {bio.focus.map((tag) => (
-              <span
-                key={tag}
-                className="border border-border px-2 py-0.5 text-xs text-fg/60"
-              >
-                #{tag.replace(/\s+/g, "-")}
-              </span>
-            ))}
-          </div>
+          <FocusTags tags={bio.focus} />
 
           <div className="mt-8 flex flex-wrap gap-3">
             <BracketLink href="/projects">VIEW PROJECTS</BracketLink>
@@ -64,10 +54,8 @@ export default function Home() {
 
       <section id="section-skills" className="scroll-mt-24" aria-labelledby="skills-heading">
         <SectionLabel index="02" label="Core Skills" />
-        <Reveal className="grid gap-5 sm:grid-cols-2" staggerMs={80}>
-          {topSkills.map((skill) => (
-            <ProgressBar key={skill.label} label={skill.label} value={skill.value} />
-          ))}
+        <Reveal>
+          <SkillGroups groups={topSkillGroups} />
         </Reveal>
         <div className="mt-4">
           <Link
@@ -83,25 +71,7 @@ export default function Home() {
         <SectionLabel index="03" label="Featured Projects" />
         <Reveal className="grid gap-5 sm:grid-cols-2" staggerMs={90}>
           {featured.map((project) => (
-            <TerminalWindow key={project.slug} title={project.name} meta={project.year}>
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm text-fg/70">{project.tagline}</p>
-                <StatusBadge status={project.status} />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {project.stack.map((tech) => (
-                  <span key={tech} className="text-xs text-secondary">
-                    [{tech}]
-                  </span>
-                ))}
-              </div>
-              <Link
-                href={`/projects/${project.slug}`}
-                className="mt-4 inline-block text-sm text-primary hover:text-glow underline underline-offset-4 decoration-border"
-              >
-                read more -&gt;
-              </Link>
-            </TerminalWindow>
+            <ProjectCard key={project.slug} project={project} />
           ))}
         </Reveal>
         <div className="mt-4">
@@ -123,8 +93,29 @@ export default function Home() {
         </Reveal>
       </section>
 
+      <section
+        id="section-publications"
+        className="scroll-mt-24"
+        aria-labelledby="publications-heading"
+      >
+        <SectionLabel index="05" label="Publications" />
+        <Reveal className="grid gap-5 sm:grid-cols-2" staggerMs={90}>
+          {topPublications.map((pub) => (
+            <PublicationCard key={pub.id} publication={pub} />
+          ))}
+        </Reveal>
+        <div className="mt-4">
+          <Link
+            href="/publications"
+            className="text-sm text-fg/50 hover:text-primary transition-colors"
+          >
+            cat publications.bib -&gt;
+          </Link>
+        </div>
+      </section>
+
       <section id="section-changelog" className="scroll-mt-24" aria-labelledby="changelog-heading">
-        <SectionLabel index="05" label="Changelog" />
+        <SectionLabel index="06" label="Changelog" />
         <Reveal>
           <TerminalWindow
             title="git log --oneline"

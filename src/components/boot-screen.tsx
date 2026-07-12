@@ -5,6 +5,7 @@ import { MonitorFrame } from "@/components/ui/monitor-frame";
 import { TerminalWindow } from "@/components/ui/terminal-window";
 import { BracketButton } from "@/components/ui/bracket-button";
 import { unlockAchievement } from "@/lib/achievements";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const BOOT_LOG = [
   "[ OK ] loading kernel modules",
@@ -28,16 +29,8 @@ export function BootScreen({ onComplete }: { onComplete: () => void }) {
   const [value, setValue] = useState("");
   const [booting, setBooting] = useState(false);
   const [revealedCount, setRevealedCount] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const reducedMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   useEffect(() => {
     inputRef.current?.focus();

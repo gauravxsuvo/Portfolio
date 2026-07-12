@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { CrtOverlay } from "@/components/crt-overlay";
 import { SiteNav } from "@/components/site-nav";
@@ -9,6 +10,8 @@ import { CursorTrail } from "@/components/cursor-trail";
 import { ConsoleEasterEgg } from "@/components/console-easter-egg";
 import { KonamiListener } from "@/components/konami-listener";
 import { NavShortcuts } from "@/components/nav-shortcuts";
+import { ThemePanel } from "@/components/theme-panel";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -28,8 +31,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jetbrainsMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${jetbrainsMono.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-bg text-fg font-mono selection:bg-primary selection:text-bg">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <noscript>
           <style>{`[data-boot-gate]{display:none !important;}[data-reveal-item]{opacity:1 !important;transform:none !important;}`}</style>
         </noscript>
@@ -38,6 +50,7 @@ export default function RootLayout({
         <ConsoleEasterEgg />
         <KonamiListener />
         <NavShortcuts />
+        <ThemePanel />
         <BootGate>
           <SiteNav />
           <main

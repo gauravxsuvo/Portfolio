@@ -9,16 +9,22 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "konami", label: "found the old cheat code", hint: "10 keys, very old, very classic" },
   { id: "sudo", label: "tried sudo in the shell", hint: "ask the shell for root" },
   { id: "replay", label: "replayed the boot sequence", hint: "the shell can restart the machine" },
-  { id: "logo", label: "clicked the logo", hint: "the big ascii letters up top" },
+  { id: "logo", label: "clicked the logo", hint: "the big glowing name up top" },
   { id: "status", label: "poked the status badge", hint: "footer, bottom left, [OK]" },
   { id: "root", label: "tried to sudo the nav bar", hint: "click the header prompt a few times" },
   { id: "shortcuts", label: "used a keyboard shortcut", hint: "press g, then a letter" },
   { id: "explorer", label: "unlocked every section", hint: "the shell can unlock <section>" },
+  { id: "theme", label: "changed the phosphor color", hint: "there's a display panel somewhere" },
+  { id: "vim", label: "got stuck in vim", hint: "the shell has editors too" },
+  { id: "godmode", label: "entered the cheat code of cheat codes", hint: "iddqd" },
+  { id: "party", label: "started a party", hint: "the shell knows how to have fun" },
+  { id: "hireme", label: "made the ask", hint: "just say it, one word" },
+  { id: "polyglot", label: "said hello in another language", hint: "안녕? こんにちは?" },
 ];
 
 const ACHIEVEMENTS_KEY = "suvo:achievements";
 const SECTIONS_KEY = "suvo:sections-visited";
-const ALL_SECTIONS = ["shell", "skills", "projects", "status", "changelog"];
+const ALL_SECTIONS = ["shell", "skills", "projects", "status", "publications", "changelog"];
 
 function readSet(key: string): Set<string> {
   if (typeof window === "undefined") return new Set();

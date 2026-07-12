@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { bio, projects, skills } from "@/lib/data";
+import { bio, projects, skillGroups } from "@/lib/data";
+import { OPEN_THEME_PANEL_EVENT } from "@/lib/theme";
 
 const GLYPH = String.raw`┌───────────┐
 │ $ _       │
@@ -35,17 +36,15 @@ function useSessionUptime() {
 
 export function NeofetchPanel() {
   const uptime = useSessionUptime();
-  const topLanguages = skills
-    .slice(0, 3)
-    .map((s) => s.label)
-    .join(", ");
+  const topLanguages =
+    skillGroups.find((g) => g.category === "Languages")?.items.join(", ") ?? "";
 
   const rows: [string, string][] = [
     ["os", "SuvoOS (portfolio edition)"],
     ["host", "gauravxsuvo.dev"],
     ["shell", "gsh 1.0 [react]"],
     ["resolution", "1920x1080 @ 60Hz (crt)"],
-    ["theme", "terminal-green [phosphor]"],
+    ["theme", "user-selectable [phosphor]"],
     ["cpu", `${bio.role} (human-grade)`],
     ["packages", `${projects.length} (portfolio)`],
     ["locale", bio.location],
@@ -74,13 +73,21 @@ export function NeofetchPanel() {
             </div>
           ))}
         </dl>
-        <div aria-hidden="true" className="mt-3 flex gap-1.5">
-          {SWATCHES.map((s) => (
-            <span
-              key={s.label}
-              className={`inline-block h-3 w-6 ${s.className}`}
-            />
-          ))}
+        <div className="mt-3 flex gap-1.5">
+          {SWATCHES.map((s) =>
+            s.label === "primary" ? (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => window.dispatchEvent(new Event(OPEN_THEME_PANEL_EVENT))}
+                aria-label="Open display settings to change the phosphor color"
+                title="change phosphor color"
+                className={`inline-block h-3 w-6 transition-transform hover:scale-110 ${s.className}`}
+              />
+            ) : (
+              <span key={s.label} aria-hidden="true" className={`inline-block h-3 w-6 ${s.className}`} />
+            )
+          )}
         </div>
       </div>
     </div>

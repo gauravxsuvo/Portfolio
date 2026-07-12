@@ -1,4 +1,5 @@
 import { BracketLink } from "@/components/ui/bracket-button";
+import { NotFoundHint } from "@/components/not-found-hint";
 
 export default function NotFound() {
   return (
@@ -6,10 +7,7 @@ export default function NotFound() {
       <p className="text-error text-glow text-sm">
         [ERR] 404: PATH NOT FOUND
       </p>
-      <pre className="text-fg/60 text-xs sm:text-sm overflow-x-auto">
-{`guest@gaurav:~$ cd ${"<requested-path>"}
-bash: cd: no such file or directory`}
-      </pre>
+      <NotFoundHint />
       <p className="text-fg/70 text-sm">
         The route you asked for doesn&apos;t exist on this system.
       </p>

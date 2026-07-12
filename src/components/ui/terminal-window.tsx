@@ -26,11 +26,11 @@ export function TerminalWindow({
   const accentClass = ACCENT_CLASSES[accent];
 
   return (
-    <div className={`border bg-bg ${accentClass} ${className}`}>
+    <div className={`min-w-0 border bg-bg ${accentClass} ${className}`}>
       <div
         className={`flex items-center justify-between gap-3 border-b px-3 py-2 text-[11px] sm:text-xs ${accentClass}`}
       >
-        <span className="truncate">
+        <span className="min-w-0 truncate">
           <span aria-hidden="true" className="opacity-60">
             +---{" "}
           </span>

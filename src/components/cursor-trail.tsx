@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export function CursorTrail() {
   const ref = useRef<HTMLSpanElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reducedMotion) return;
 
     const el = ref.current;
     if (!el) return;
@@ -26,7 +28,7 @@ export function CursorTrail() {
       window.removeEventListener("mousemove", handleMove);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [reducedMotion]);
 
   return (
     <span

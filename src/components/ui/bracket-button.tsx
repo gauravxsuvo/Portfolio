@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
 
 type Variant = "primary" | "secondary" | "ghost";
@@ -35,21 +35,20 @@ type CommonProps = {
   className?: string;
 };
 
-export function BracketButton({
-  variant = "primary",
-  children,
-  className = "",
-  ...rest
-}: CommonProps & ButtonHTMLAttributes<HTMLButtonElement>) {
+export const BracketButton = forwardRef<
+  HTMLButtonElement,
+  CommonProps & ButtonHTMLAttributes<HTMLButtonElement>
+>(function BracketButton({ variant = "primary", children, className = "", ...rest }, ref) {
   return (
     <button
+      ref={ref}
       className={`${BASE} ${VARIANT_CLASSES[variant]} ${className}`}
       {...rest}
     >
       <Brackets>{children}</Brackets>
     </button>
   );
-}
+});
 
 export function BracketLink({
   variant = "primary",

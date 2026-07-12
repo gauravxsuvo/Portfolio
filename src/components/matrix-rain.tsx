@@ -1,19 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { TerminalWindow } from "@/components/ui/terminal-window";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { THEME_CHANGE_EVENT } from "@/lib/theme";
 
 const GLYPHS = "01アイウエオカキクケコgauravxsuvo</>{}[]#$".split("");
 const FONT_SIZE = 16;
 
 export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const primaryRef = useRef("#33ff00");
 
   useEffect(() => {
-    setReducedMotion(
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
+    const read = () => {
+      primaryRef.current =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-primary")
+          .trim() || "#33ff00";
+    };
+    read();
+    window.addEventListener(THEME_CHANGE_EVENT, read);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, read);
+      window.removeEventListener("storage", read);
+    };
   }, []);
 
   useEffect(() => {
@@ -49,7 +62,7 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
     function draw() {
       ctx!.fillStyle = "rgba(10, 10, 10, 0.12)";
       ctx!.fillRect(0, 0, width, height);
-      ctx!.fillStyle = "#33ff00";
+      ctx!.fillStyle = primaryRef.current;
       ctx!.font = `${FONT_SIZE}px monospace`;
       for (let i = 0; i < drops.length; i++) {
         const glyph = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];

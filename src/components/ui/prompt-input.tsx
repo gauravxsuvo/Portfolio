@@ -1,14 +1,16 @@
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, Ref } from "react";
 
 export function PromptInput({
   promptLabel = "guest@site",
   path = "~$",
   className = "",
+  ref,
   ...rest
 }: {
   promptLabel?: string;
   path?: string;
   className?: string;
+  ref?: Ref<HTMLInputElement>;
 } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className={`flex items-center gap-2 border-b border-border pb-2 ${className}`}>
@@ -17,6 +19,7 @@ export function PromptInput({
         <span className="text-fg/50">:{path}</span>
       </span>
       <input
+        ref={ref}
         {...rest}
         className="flex-1 min-w-0 bg-transparent outline-none text-fg placeholder:text-fg/30 caret-primary text-sm"
       />
