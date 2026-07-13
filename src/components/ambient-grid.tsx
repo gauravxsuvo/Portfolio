@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { THEME_CHANGE_EVENT } from "@/lib/theme";
 
 const GLYPHS = "01<>/{}[]#$*+=".split("");
 const CELL = 28;
@@ -99,12 +100,12 @@ export function AmbientGrid() {
 
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("suvo:theme-change", refreshColor);
+    window.addEventListener(THEME_CHANGE_EVENT, refreshColor);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("suvo:theme-change", refreshColor);
+      window.removeEventListener(THEME_CHANGE_EVENT, refreshColor);
     };
   }, [enabled]);
 

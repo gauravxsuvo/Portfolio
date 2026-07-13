@@ -12,14 +12,16 @@ const EMPTY: PageSection[] = [];
  * section is stateful, and that's set from an IntersectionObserver callback —
  * a genuine external subscription, not a render mirror.
  */
-export function useSections() {
+export function useSections(enabled = true) {
   const pathname = usePathname();
   // Stable module-level reference, so this doesn't churn the effect below.
   const sections = PAGE_SECTIONS[pathname] ?? EMPTY;
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (sections.length === 0) return;
+    // The rails are the only consumers and they don't render below xl, so don't
+    // pay for an observer on viewports that can never show the result.
+    if (!enabled || sections.length === 0) return;
 
     const nodes = sections
       .map((s) => document.getElementById(s.id))
@@ -52,7 +54,7 @@ export function useSections() {
 
     nodes.forEach((n) => observer.observe(n));
     return () => observer.disconnect();
-  }, [sections]);
+  }, [sections, enabled]);
 
   // Self-healing rather than reset-by-effect: after a navigation the old active
   // id no longer exists in the new page's list, so fall back to the first.

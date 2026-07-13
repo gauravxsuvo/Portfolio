@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { useAchievementCount } from "@/hooks/use-achievement-count";
 import { useSections } from "@/hooks/use-sections";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 
 const SESSION_START = Date.now();
@@ -29,9 +30,14 @@ export function SystemRail() {
   const viewportRef = useRef<HTMLSpanElement>(null);
 
   const found = useAchievementCount();
-  const { activeId } = useSections();
+  // Gate on the same breakpoint the rail is shown at, and bail out of rendering
+  // entirely below it. A `hidden xl:block` class would still mount the component
+  // and run the fps rAF loop forever on every phone, for a counter nobody can see.
+  const shown = useMediaQuery("(min-width: 1280px)");
+  const { activeId } = useSections(shown);
 
   useEffect(() => {
+    if (!shown) return;
     let raf = 0;
     let frames = 0;
     let lastSample = performance.now();
@@ -96,7 +102,9 @@ export function SystemRail() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", readViewport);
     };
-  }, []);
+  }, [shown]);
+
+  if (!shown) return null;
 
   const rows: [string, React.ReactNode][] = [
     ["time", <span key="t" ref={clockRef} className="tabular-nums" suppressHydrationWarning />],
@@ -107,10 +115,7 @@ export function SystemRail() {
   ];
 
   return (
-    <aside
-      aria-hidden="true"
-      className="sticky top-24 hidden h-fit w-52 shrink-0 xl:block"
-    >
+    <aside aria-hidden="true" className="sticky top-24 h-fit w-52 shrink-0">
       <div className="border border-border">
         <p className="border-b border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-fg/40">
           +-- system --+

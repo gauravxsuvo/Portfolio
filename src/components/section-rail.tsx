@@ -1,6 +1,7 @@
 "use client";
 
 import { useSections } from "@/hooks/use-sections";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const KEYS: [string, string][] = [
   ["/", "search"],
@@ -18,14 +19,19 @@ const KEYS: [string, string][] = [
  * so it falls back to a key legend rather than rendering an empty box.
  */
 export function SectionRail() {
-  const { sections, activeId } = useSections();
+  // Same reasoning as SystemRail: don't mount the IntersectionObserver at all on
+  // viewports where the rail can never be seen.
+  const shown = useMediaQuery("(min-width: 1280px)");
+  const { sections, activeId } = useSections(shown);
 
   function go(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  if (!shown) return null;
+
   return (
-    <aside className="sticky top-24 hidden h-fit w-52 shrink-0 xl:block">
+    <aside className="sticky top-24 h-fit w-52 shrink-0">
       {sections.length >= 2 ? (
         <nav aria-label="On this page" className="border border-border">
           <p className="border-b border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-fg/40">
