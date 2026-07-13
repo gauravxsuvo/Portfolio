@@ -11,7 +11,11 @@ export function ProjectCard({
   onTagClick?: (tag: string) => void;
 }) {
   return (
-    <TerminalWindow title={project.name} meta={project.year}>
+    <TerminalWindow
+      title={project.name}
+      meta={project.year}
+      className="trace-box group h-full"
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-fg/70">{project.tagline}</p>
         <StatusBadge status={project.status} />
@@ -23,7 +27,7 @@ export function ProjectCard({
               key={tech}
               type="button"
               onClick={() => onTagClick(tech)}
-              className="text-xs text-secondary hover:text-primary hover:underline underline-offset-2"
+              className="text-xs text-secondary underline-offset-2 hover:text-primary hover:underline"
             >
               [{tech}]
             </button>
@@ -36,9 +40,15 @@ export function ProjectCard({
       </div>
       <Link
         href={`/projects/${project.slug}`}
-        className="mt-4 inline-block text-sm text-primary hover:text-glow underline underline-offset-4 decoration-border"
+        className="link-wipe mt-4 inline-flex items-center gap-1 text-sm text-primary hover:text-glow"
       >
-        read more -&gt;
+        read more
+        <span
+          aria-hidden="true"
+          className="inline-block transition-transform duration-200 group-hover:translate-x-1"
+        >
+          -&gt;
+        </span>
       </Link>
     </TerminalWindow>
   );

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { unlockAchievement } from "@/lib/achievements";
+import { SecretsCounter } from "@/components/secrets-counter";
+import { bio } from "@/lib/data";
 
 const SOCIALS = [
-  { label: "github", href: "https://github.com/gauravxsuvo" },
-  { label: "linkedin", href: "https://www.linkedin.com/in/gauravxsuvo" },
-  { label: "email", href: "mailto:workwithggaurav@gmail.com" },
+  { label: "github", href: bio.github },
+  { label: "linkedin", href: bio.linkedin },
+  { label: "email", href: `mailto:${bio.email}` },
 ];
 
 const STATES = [
@@ -47,12 +49,16 @@ export function SiteFooter() {
               href={s.href}
               target={s.href.startsWith("http") ? "_blank" : undefined}
               rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="hover:text-primary transition-colors"
+              className="link-wipe transition-colors hover:text-primary"
             >
               ./{s.label}
             </a>
           ))}
         </nav>
+        <span aria-hidden="true" className="hidden sm:inline">
+          {"//"}
+        </span>
+        <SecretsCounter />
         <span className="sm:ml-auto">
           © {year} GAURAV RAJ SINGH — BUILT WITH NEXT.JS
         </span>

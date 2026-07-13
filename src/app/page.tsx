@@ -5,7 +5,9 @@ import { BracketLink } from "@/components/ui/bracket-button";
 import { SkillGroups } from "@/components/ui/skill-groups";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Reveal } from "@/components/ui/reveal";
+import { Magnetic } from "@/components/ui/magnetic";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
+import { LiveStatus } from "@/components/live-status";
 import { CommandShell } from "@/components/command-shell";
 import { HeroLogo } from "@/components/hero-logo";
 import { ProjectCard } from "@/components/project-card";
@@ -39,10 +41,14 @@ export default function Home() {
           <FocusTags tags={bio.focus} />
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <BracketLink href="/projects">VIEW PROJECTS</BracketLink>
-            <BracketLink href="/contact" variant="secondary">
-              GET IN TOUCH
-            </BracketLink>
+            <Magnetic>
+              <BracketLink href="/projects">VIEW PROJECTS</BracketLink>
+            </Magnetic>
+            <Magnetic>
+              <BracketLink href="/contact" variant="secondary">
+                GET IN TOUCH
+              </BracketLink>
+            </Magnetic>
           </div>
         </Reveal>
       </section>
@@ -87,8 +93,9 @@ export default function Home() {
       <section id="section-status" className="scroll-mt-24" aria-labelledby="neofetch-heading">
         <SectionLabel index="04" label="System Status" />
         <Reveal>
-          <TerminalWindow title="neofetch" meta="R/O">
+          <TerminalWindow title="neofetch" meta="R/O" className="trace-box">
             <NeofetchPanel />
+            <LiveStatus />
           </TerminalWindow>
         </Reveal>
       </section>

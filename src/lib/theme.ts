@@ -7,6 +7,18 @@ export const OPEN_THEME_PANEL_EVENT = "suvo:open-theme-panel";
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
+/**
+ * Who wrote the theme. The display panel broadcasts its own changes so the rest
+ * of the app can react, but it must *not* re-derive its slider state from that
+ * broadcast: hex is a lossy encoding of HSL (lightness 100 collapses to #ffffff,
+ * which decodes back to hue 0 / saturation 0), so echoing your own change through
+ * the hex round-trip yanks the other two sliders to zero mid-drag. Listeners
+ * compare against their own id and skip.
+ */
+export type ThemeSource = "panel" | "shell" | "system";
+
+export type ThemeChangeDetail = { hex: string; source: ThemeSource };
+
 export function getComputedPrimaryHex(): string {
   if (typeof document === "undefined") return DEFAULT_PRIMARY_HEX;
   const computed = getComputedStyle(document.documentElement)
@@ -23,6 +35,25 @@ export function applyThemeColor(hex: string): void {
   style.setProperty("--color-accent", hex);
 }
 
+/**
+ * Writing --color-primary invalidates style for the whole document (every token
+ * derives from it, several through color-mix). At pointer-move frequency that is
+ * enough to drop frames on a phone, so coalesce to one write per frame.
+ */
+let pendingHex: string | null = null;
+let rafId = 0;
+
+export function scheduleThemeColor(hex: string): void {
+  if (typeof window === "undefined") return applyThemeColor(hex);
+  pendingHex = hex;
+  if (rafId) return;
+  rafId = window.requestAnimationFrame(() => {
+    rafId = 0;
+    if (pendingHex) applyThemeColor(pendingHex);
+    pendingHex = null;
+  });
+}
+
 export function persistThemeColor(hex: string): void {
   if (typeof window === "undefined") return;
   try {
@@ -30,6 +61,19 @@ export function persistThemeColor(hex: string): void {
   } catch {
     // storage unavailable — theme just won't persist across reloads
   }
+}
+
+/**
+ * localStorage.setItem is synchronous and hits disk. Called once per drag tick it
+ * is a visible source of jank, and only the value the user lands on matters, so
+ * write on a trailing edge instead.
+ */
+let persistTimer: ReturnType<typeof setTimeout> | undefined;
+
+export function persistThemeColorDebounced(hex: string, delayMs = 220): void {
+  if (typeof window === "undefined") return;
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => persistThemeColor(hex), delayMs);
 }
 
 export function readStoredThemeColor(): string | null {
@@ -42,15 +86,27 @@ export function readStoredThemeColor(): string | null {
   }
 }
 
-export function broadcastThemeChange(hex: string): void {
+export function broadcastThemeChange(hex: string, source: ThemeSource): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: hex }));
+  window.dispatchEvent(
+    new CustomEvent<ThemeChangeDetail>(THEME_CHANGE_EVENT, {
+      detail: { hex, source },
+    })
+  );
 }
 
-export function setThemeColor(hex: string): void {
+/** Commit a color everywhere: paint it, remember it, tell everyone. */
+export function setThemeColor(hex: string, source: ThemeSource = "system"): void {
   applyThemeColor(hex);
   persistThemeColor(hex);
-  broadcastThemeChange(hex);
+  broadcastThemeChange(hex, source);
+}
+
+/** Drag-time variant: paints every frame, but defers the disk write. */
+export function previewThemeColor(hex: string, source: ThemeSource = "panel"): void {
+  scheduleThemeColor(hex);
+  persistThemeColorDebounced(hex);
+  broadcastThemeChange(hex, source);
 }
 
 export function readCrtEnabled(): boolean {

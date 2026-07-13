@@ -1,0 +1,800 @@
+"use client";
+
+import type { ReactNode } from "react";
+import type { useRouter } from "next/navigation";
+import { NeofetchPanel } from "@/components/ui/neofetch-panel";
+import { bio, experience, projects, publications, skillGroups } from "@/lib/data";
+import { PRESETS, DEFAULT_PRIMARY_HEX, hslToHex, normalizeHex } from "@/lib/color";
+import {
+  OPEN_THEME_PANEL_EVENT,
+  applyThemeColor,
+  getComputedPrimaryHex,
+  readStoredThemeColor,
+  setThemeColor,
+} from "@/lib/theme";
+import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
+import {
+  ACHIEVEMENTS,
+  getUnlockedAchievements,
+  markSectionUnlocked,
+  resetAchievements,
+  unlockAchievement,
+} from "@/lib/achievements";
+
+export type Router = ReturnType<typeof useRouter>;
+
+export type CommandContext = {
+  /** Everything after the command name, verbatim. */
+  arg: string;
+  /** The full line as typed. */
+  raw: string;
+  /** Commands run earlier this session, oldest first. */
+  history: string[];
+  router: Router;
+};
+
+export type Command = {
+  name: string;
+  aliases?: string[];
+  /** Shown in `help`. Omit to keep a command hidden — that's how the eggs stay eggs. */
+  desc?: string;
+  usage?: string;
+  run: (ctx: CommandContext) => ReactNode | Promise<ReactNode>;
+};
+
+export const ROUTES: Record<string, string> = {
+  "~": "/",
+  home: "/",
+  about: "/about",
+  projects: "/projects",
+  experience: "/experience",
+  publications: "/publications",
+  research: "/publications",
+  contact: "/contact",
+};
+
+const SECTION_IDS: Record<string, string> = {
+  shell: "section-shell",
+  skills: "section-skills",
+  projects: "section-projects",
+  status: "section-status",
+  neofetch: "section-status",
+  publications: "section-publications",
+  changelog: "section-changelog",
+  log: "section-changelog",
+};
+
+const JOKES = [
+  "there are 10 kinds of people: those who understand binary, and those who don't.",
+  'a SQL query walks into a bar, walks up to two tables and asks, "can I join you?"',
+  "!false — it's funny because it's true.",
+  "why do programmers prefer dark mode? because light attracts bugs.",
+  "i'd tell you a UDP joke, but you might not get it.",
+  "there are two hard things in CS: cache invalidation, naming things, and off-by-one errors.",
+  "a byte walks into a bar looking miserable. bartender asks: what's wrong? byte says: parity error. bartender: yeah, i thought you looked a bit off.",
+  "my code doesn't have bugs. it just develops random unexpected features.",
+];
+
+const MAN_PAGES: Record<string, string> = {
+  cd: "cd <route> — change directory (route). aliases: ~, home, about, projects, experience, publications, contact.",
+  ls: "ls — list known routes on this system.",
+  grep: "grep <term> — search projects, publications, skills and experience for a term.",
+  theme:
+    "theme [preset|reset|#hex] — set the phosphor accent color, or open the display panel with no args.",
+  sudo: "sudo — attempt to run a command as root. permission will be denied. every time.",
+  tree: "tree — print the site as a directory tree.",
+  cat: "cat <file> — print a file. try `tree` to see what exists.",
+  stats: "stats — fetch live repo stats from the GitHub API (server-cached).",
+};
+
+function Err({ children }: { children: ReactNode }) {
+  return <p className="text-error">{children}</p>;
+}
+function Dim({ children }: { children: ReactNode }) {
+  return <p className="text-fg/60">{children}</p>;
+}
+function Out({ children }: { children: ReactNode }) {
+  return <div className="text-fg/75">{children}</div>;
+}
+
+function scrollAndFlourish(elementId: string) {
+  const el = document.getElementById(elementId);
+  if (!el) return false;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  el.classList.add("power-on");
+  setTimeout(() => el.classList.remove("power-on"), 750);
+  return true;
+}
+
+function formatUptime(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}m ${s.toString().padStart(2, "0")}s`;
+}
+
+const SESSION_START = Date.now();
+
+function navigate(router: Router, path: string): ReactNode {
+  router.push(path);
+  return <Dim>navigating to {path === "/" ? "~" : `~${path}`} ...</Dim>;
+}
+
+/* ------------------------------------------------------------------ search */
+
+type Hit = { kind: string; title: string; detail: string; href?: string };
+
+function search(term: string): Hit[] {
+  const q = term.toLowerCase();
+  const hits: Hit[] = [];
+
+  for (const p of projects) {
+    const haystack = `${p.name} ${p.tagline} ${p.description} ${p.stack.join(" ")}`.toLowerCase();
+    if (haystack.includes(q)) {
+      hits.push({
+        kind: "project",
+        title: p.name,
+        detail: p.tagline,
+        href: `/projects/${p.slug}`,
+      });
+    }
+  }
+  for (const p of publications) {
+    const haystack = `${p.title} ${p.abstract} ${(p.tags ?? []).join(" ")} ${p.venue}`.toLowerCase();
+    if (haystack.includes(q)) {
+      hits.push({
+        kind: "publication",
+        title: p.title,
+        detail: `${p.venue} · ${p.year}`,
+        href: "/publications",
+      });
+    }
+  }
+  for (const g of skillGroups) {
+    const matched = g.items.filter((i) => i.toLowerCase().includes(q));
+    if (matched.length) {
+      hits.push({ kind: "skill", title: g.category, detail: matched.join(", "), href: "/about" });
+    }
+  }
+  for (const e of experience) {
+    const haystack = `${e.role} ${e.org} ${e.summary} ${e.highlights.join(" ")}`.toLowerCase();
+    if (haystack.includes(q)) {
+      hits.push({
+        kind: "experience",
+        title: `${e.role} — ${e.org}`,
+        detail: e.period,
+        href: "/experience",
+      });
+    }
+  }
+  return hits;
+}
+
+/* -------------------------------------------------------------------- files */
+
+const FILES: Record<string, () => ReactNode> = {
+  "about.txt": () => <Out>{bio.summary}</Out>,
+  "contact.txt": () => (
+    <Out>
+      <p>email: {bio.email}</p>
+      <p>github: {bio.github}</p>
+      <p>linkedin: {bio.linkedin}</p>
+      <p>orcid: {bio.orcid}</p>
+    </Out>
+  ),
+  "skills.txt": () => (
+    <Out>
+      {skillGroups.map((g) => (
+        <p key={g.category}>
+          <span className="text-secondary">{g.category}:</span> {g.items.join(", ")}
+        </p>
+      ))}
+    </Out>
+  ),
+  "education.txt": () => <Out>education lives on ~/about — try `cd about`.</Out>,
+  ".secret": () => (
+    <Out>
+      <p className="text-secondary">you weren&apos;t supposed to find this.</p>
+      <p>ok fine: the boot codeword is `suvo init`, and `iddqd` still works.</p>
+    </Out>
+  ),
+};
+
+const TREE = String.raw`~/
+├── about/
+│   ├── about.txt
+│   ├── skills.txt
+│   └── education.txt
+├── projects/
+${projects.map((p, i, a) => `│   ${i === a.length - 1 ? "└──" : "├──"} ${p.slug}/`).join("\n")}
+├── experience/
+├── publications/
+├── contact/
+│   └── contact.txt
+└── .secret`;
+
+/* ----------------------------------------------------------------- registry */
+
+export const COMMANDS: Command[] = [
+  {
+    name: "help",
+    desc: "show this help",
+    run: () => (
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+        {COMMANDS.filter((c) => c.desc).map((c) => (
+          <div key={c.name} className="contents">
+            <dt className="whitespace-nowrap text-secondary">{c.usage ?? c.name}</dt>
+            <dd className="text-fg/70">{c.desc}</dd>
+          </div>
+        ))}
+        <div className="contents">
+          <dt className="text-fg/40">…</dt>
+          <dd className="text-fg/40">
+            and a few that aren&apos;t listed. try <span className="text-secondary">achievements</span>.
+          </dd>
+        </div>
+      </dl>
+    ),
+  },
+  {
+    name: "whoami",
+    desc: "print identity",
+    run: () => (
+      <Out>
+        <p>
+          {bio.name} — {bio.role}
+        </p>
+        <p>{bio.location}</p>
+        <p>{bio.focus.join(", ")}</p>
+      </Out>
+    ),
+  },
+  {
+    name: "ls",
+    desc: "list routes",
+    run: () => (
+      <p className="text-fg/70">
+        about projects experience publications contact{" "}
+        <span className="text-fg/40">(cd &lt;name&gt;)</span>
+      </p>
+    ),
+  },
+  {
+    name: "cd",
+    usage: "cd <route>",
+    desc: "navigate to a route (or just type its name)",
+    run: ({ arg, router }) => {
+      const target = arg.trim().toLowerCase().replace(/^\/+/, "");
+      const path = ROUTES[target || "~"];
+      if (path) return navigate(router, path);
+      return <Err>bash: cd: {arg || "~"}: no such file or directory</Err>;
+    },
+  },
+  {
+    name: "tree",
+    desc: "print the site as a directory tree",
+    run: () => {
+      unlockAchievement("tree");
+      return <pre className="text-xs text-fg/70 sm:text-sm">{TREE}</pre>;
+    },
+  },
+  {
+    name: "cat",
+    usage: "cat <file>",
+    desc: "print a file (see `tree`)",
+    run: ({ arg }) => {
+      const name = arg.trim().toLowerCase();
+      if (!name) return <Err>cat: missing operand. try `tree` to see what exists.</Err>;
+      const file = FILES[name] ?? FILES[name.replace(/^.*\//, "")];
+      if (!file) return <Err>cat: {arg}: No such file or directory</Err>;
+      return file();
+    },
+  },
+  {
+    name: "grep",
+    usage: "grep <term>",
+    desc: "search projects, papers, skills & experience",
+    run: ({ arg, router }) => {
+      const term = arg.trim();
+      if (!term) return <Err>usage: grep &lt;term&gt;</Err>;
+      unlockAchievement("grep");
+      const hits = search(term);
+      if (hits.length === 0) {
+        return <Dim>no matches for &quot;{term}&quot;.</Dim>;
+      }
+      return (
+        <div>
+          <p className="text-secondary">
+            {hits.length} match{hits.length === 1 ? "" : "es"} for &quot;{term}&quot;
+          </p>
+          <ul className="mt-1 flex flex-col gap-1">
+            {hits.map((hit, i) => (
+              <li key={i} className="text-fg/75">
+                <span className="text-fg/40">{hit.kind}/</span>
+                {hit.href ? (
+                  <button
+                    type="button"
+                    onClick={() => router.push(hit.href!)}
+                    className="text-primary underline decoration-border underline-offset-2 hover:text-glow"
+                  >
+                    {hit.title}
+                  </button>
+                ) : (
+                  <span className="text-primary">{hit.title}</span>
+                )}
+                <span className="block pl-4 text-xs text-fg/50">{hit.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    },
+  },
+  {
+    name: "stats",
+    aliases: ["gh"],
+    desc: "live repo stats from the GitHub API",
+    run: async () => {
+      try {
+        const res = await fetch("/api/github", { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as {
+          ok: boolean;
+          repos: { name: string; stars: number; language: string | null; pushedAt: string | null }[];
+          note?: string;
+        };
+        if (!data.repos?.length) {
+          return <Dim>{data.note ?? "no repo data available right now."}</Dim>;
+        }
+        return (
+          <div>
+            <dl className="grid grid-cols-[auto_auto_1fr] gap-x-3 gap-y-0.5 text-xs sm:text-sm">
+              {data.repos.map((r) => (
+                <div key={r.name} className="contents">
+                  <dt className="text-primary">{r.name}</dt>
+                  <dd className="tabular-nums text-secondary">★ {r.stars}</dd>
+                  <dd className="truncate text-fg/50">
+                    {r.language ?? "—"}
+                    {r.pushedAt
+                      ? ` · pushed ${new Date(r.pushedAt).toLocaleDateString()}`
+                      : ""}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            {data.note && <p className="mt-1 text-xs text-fg/40">{data.note}</p>}
+          </div>
+        );
+      } catch {
+        return <Err>stats: could not reach the GitHub API. try again in a bit.</Err>;
+      }
+    },
+  },
+  {
+    name: "neofetch",
+    desc: "show system info",
+    run: () => <NeofetchPanel />,
+  },
+  {
+    name: "theme",
+    usage: "theme [preset]",
+    desc: "change phosphor color, or open the display panel",
+    run: ({ arg }) => {
+      const target = arg.trim().toLowerCase();
+      if (!target) {
+        window.dispatchEvent(new Event(OPEN_THEME_PANEL_EVENT));
+        return <Dim>opening display settings...</Dim>;
+      }
+      if (target === "reset") {
+        setThemeColor(DEFAULT_PRIMARY_HEX, "shell");
+        return <p className="text-primary">[ OK ] phosphor reset to default green.</p>;
+      }
+      const hex = normalizeHex(target);
+      if (hex) {
+        setThemeColor(hex, "shell");
+        unlockAchievement("theme");
+        return <p className="text-primary">[ OK ] phosphor set to {hex}.</p>;
+      }
+      const preset = PRESETS.find((p) => p.id === target);
+      if (!preset) {
+        return (
+          <Err>
+            bash: theme: {target}: no such preset (try: {PRESETS.map((p) => p.id).join(", ")},
+            reset, or a #hex)
+          </Err>
+        );
+      }
+      setThemeColor(preset.hex, "shell");
+      unlockAchievement("theme");
+      return <p className="text-primary">[ OK ] phosphor set to {preset.label.toLowerCase()}.</p>;
+    },
+  },
+  {
+    name: "unlock",
+    usage: "unlock <section>",
+    desc: "jump to & unlock a homepage section",
+    run: ({ arg }) => {
+      const target = arg.trim().toLowerCase();
+      const elId = SECTION_IDS[target];
+      if (!elId) {
+        return (
+          <Err>
+            bash: unlock: {arg || "?"}: no such section (try: shell, skills, projects, status,
+            publications, changelog)
+          </Err>
+        );
+      }
+      const ok = scrollAndFlourish(elId);
+      if (ok) {
+        markSectionUnlocked(
+          target === "neofetch" ? "status" : target === "log" ? "changelog" : target
+        );
+      }
+      return (
+        <p className="text-primary">
+          {ok ? "unlocked. scrolling there now..." : "section not on this page."}
+        </p>
+      );
+    },
+  },
+  {
+    name: "achievements",
+    aliases: ["secrets"],
+    desc: "show secrets found so far",
+    run: () => {
+      const unlocked = getUnlockedAchievements();
+      return (
+        <div>
+          <p className="text-secondary">
+            [{unlocked.size}/{ACHIEVEMENTS.length}] secrets found
+          </p>
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {ACHIEVEMENTS.map((a) => {
+              const found = unlocked.has(a.id);
+              return (
+                <li key={a.id} className={found ? "text-primary" : "text-fg/40"}>
+                  [{found ? "x" : " "}] {found ? a.label : a.hint}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1 text-xs text-fg/30">(`achievements reset` wipes the board)</p>
+        </div>
+      );
+    },
+  },
+  {
+    name: "shortcuts",
+    aliases: ["keys"],
+    desc: "keyboard cheatsheet",
+    run: () => (
+      <Out>
+        <p>
+          <span className="text-secondary">ctrl/⌘ + k</span> command palette{"   "}
+          <span className="text-secondary">/</span> same
+        </p>
+        <p>
+          <span className="text-secondary">↑ ↓</span> shell history{"   "}
+          <span className="text-secondary">tab</span> complete{"   "}
+          <span className="text-secondary">ctrl+l</span> clear
+        </p>
+        <p>
+          <span className="text-secondary">g h</span> home{"   "}
+          <span className="text-secondary">g a</span> about{"   "}
+          <span className="text-secondary">g p</span> projects{"   "}
+          <span className="text-secondary">g e</span> experience{"   "}
+          <span className="text-secondary">g c</span> contact
+        </p>
+        <p className="text-fg/40">(press g, then the letter — not in a text field)</p>
+      </Out>
+    ),
+  },
+  {
+    name: "history",
+    desc: "show commands run this session",
+    run: ({ history }) =>
+      history.length === 0 ? (
+        <p className="text-fg/50">no history yet.</p>
+      ) : (
+        <ol className="flex flex-col gap-0.5 text-fg/70">
+          {history.map((cmd, i) => (
+            <li key={i}>
+              <span className="text-fg/40">{String(i + 1).padStart(3, " ")}</span> {cmd}
+            </li>
+          ))}
+        </ol>
+      ),
+  },
+  { name: "date", desc: "print the current date/time", run: () => <Out>{new Date().toString()}</Out> },
+  {
+    name: "echo",
+    usage: "echo <text>",
+    desc: "print text back",
+    run: ({ arg }) => <Out>{arg || " "}</Out>,
+  },
+  { name: "joke", aliases: ["fortune"], desc: "tell a bad programmer joke", run: () => <Out>{JOKES[Math.floor(Math.random() * JOKES.length)]}</Out> },
+  {
+    name: "cowsay",
+    usage: "cowsay <text>",
+    desc: "make a cow say something",
+    run: ({ arg }) => {
+      const msg = (arg.trim() || "moo?").slice(0, 40);
+      const width = msg.length;
+      return (
+        <pre className="text-xs text-fg/70 sm:text-sm">
+{` ${"_".repeat(width + 2)}
+< ${msg} >
+ ${"-".repeat(width + 2)}
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`}
+        </pre>
+      );
+    },
+  },
+  {
+    name: "sudo",
+    usage: "sudo <...>",
+    desc: "try it",
+    run: ({ arg }) => {
+      const target = arg.trim().toLowerCase();
+      unlockAchievement("sudo");
+      if (target === "make me a sandwich") {
+        unlockAchievement("sandwich");
+        return <p className="text-primary">okay. 🥪 (xkcd 149 — you had to.)</p>;
+      }
+      if (target.startsWith("rm -rf")) {
+        return (
+          <Err>
+            [ DENIED ] nice try. this incident has been logged, framed, and hung on the wall.
+          </Err>
+        );
+      }
+      return <Err>guest is not in the sudoers file. this incident will be reported.</Err>;
+    },
+  },
+  { name: "replay", desc: "replay the boot sequence", run: () => {
+      unlockAchievement("replay");
+      window.dispatchEvent(new Event("suvo:replay-boot"));
+      return <Dim>re-initializing...</Dim>;
+    },
+  },
+  { name: "clear", aliases: ["cls"], desc: "clear the screen", run: () => null },
+
+  /* ------------------------------------------------------- hidden / eggs */
+
+  {
+    name: "make",
+    run: ({ arg }) =>
+      arg.trim().toLowerCase() === "me a sandwich" ? (
+        <Err>what? make it yourself.</Err>
+      ) : (
+        <Err>make: *** No targets specified and no makefile found. Stop.</Err>
+      ),
+  },
+  { name: "pwd", run: () => <Out>{window.location.pathname}</Out> },
+  { name: "uname", run: () => <Out>SuvoOS 3.1 (portfolio-edition) x86_64 GNU/React</Out> },
+  {
+    name: "man",
+    run: ({ arg }) => {
+      const target = arg.trim().toLowerCase();
+      const page = MAN_PAGES[target];
+      return page ? <Out>{page}</Out> : <Err>No manual entry for {target || "?"}</Err>;
+    },
+  },
+  {
+    name: "ping",
+    run: ({ arg }) => {
+      const host = arg.trim() || "gauravxsuvo.dev";
+      const ms = () => (Math.random() * 18 + 4).toFixed(1);
+      return (
+        <Out>
+          <p>PING {host}: 56 data bytes</p>
+          <p>64 bytes from {host}: icmp_seq=0 ttl=64 time={ms()} ms</p>
+          <p>64 bytes from {host}: icmp_seq=1 ttl=64 time={ms()} ms</p>
+          <p>64 bytes from {host}: icmp_seq=2 ttl=64 time={ms()} ms</p>
+          <p className="text-fg/40">--- 3 packets transmitted, 3 received, 0% packet loss</p>
+        </Out>
+      );
+    },
+  },
+  {
+    name: "curl",
+    run: ({ arg }) => {
+      const url = arg.trim();
+      if (!url) return <Err>curl: try &apos;curl --help&apos; for more information</Err>;
+      return (
+        <Out>
+          <p className="text-fg/40">HTTP/2 200</p>
+          <p className="text-fg/40">content-type: text/plain</p>
+          <p className="mt-1">this shell doesn&apos;t have a network stack. but nice instinct.</p>
+          <p className="text-fg/50">
+            (the site <em>does</em> have a real API though — try{" "}
+            <span className="text-secondary">stats</span>)
+          </p>
+        </Out>
+      );
+    },
+  },
+  {
+    name: "banner",
+    run: () => (
+      <pre className="text-xs text-primary text-glow sm:text-sm">
+{`================================
+   ${bio.name.toUpperCase()}
+================================`}
+      </pre>
+    ),
+  },
+  {
+    name: "coffee",
+    aliases: ["brew"],
+    run: () => {
+      unlockAchievement("coffee");
+      return (
+        <pre className="text-xs text-secondary sm:text-sm">
+{`   ( (
+    ) )
+  ........
+  |      |]
+  \\      /
+   \`----'
+brewing... this may take a while.`}
+        </pre>
+      );
+    },
+  },
+  { name: "42", run: () => <Out>the answer to life, the universe, and everything.</Out> },
+  { name: "flip", run: () => <p className="text-sm text-error">(╯°□°）╯︵ ┻━┻</p> },
+  { name: "unflip", run: () => <p className="text-sm text-primary">┬─┬ノ( º _ ºノ)</p> },
+  {
+    name: "party",
+    run: () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return <Dim>reduced motion is on — imagine confetti.</Dim>;
+      }
+      unlockAchievement("party");
+      startParty();
+      return <p className="text-primary">party mode engaged... phosphor will settle back in a sec.</p>;
+    },
+  },
+  {
+    name: "hireme",
+    run: ({ router }) => {
+      unlockAchievement("hireme");
+      router.push("/contact");
+      return <p className="text-primary">smart move. routing to ~/contact...</p>;
+    },
+  },
+  { name: "idkfa", run: () => { unlockAchievement("godmode"); return <p className="text-primary">IDKFA... this shell doesn&apos;t have weapons, but you get bonus points for the reference.</p>; } },
+  { name: "iddqd", run: () => { unlockAchievement("godmode"); return <p className="text-primary">IDDQD... nice try, but this isn&apos;t Doom. (achievement unlocked anyway)</p>; } },
+  {
+    name: "vim",
+    aliases: ["vi", "nano", "emacs"],
+    run: ({ raw }) => {
+      unlockAchievement("vim");
+      const editor = raw.split(/\s+/)[0].toLowerCase();
+      return (
+        <Out>
+          entering {editor}... just kidding — escaped safely. (real vim users would still be
+          stuck on :q!)
+        </Out>
+      );
+    },
+  },
+  { name: ":q", aliases: [":q!", ":wq", ":x"], run: () => <Err>there is no escape. (also, this isn&apos;t actually vim)</Err> },
+  {
+    name: "sl",
+    run: () => {
+      unlockAchievement("train");
+      return (
+        <pre className="text-xs text-secondary sm:text-sm">
+{`    ==__=__=__=__=  o__
+ __|  gauravxsuvo  |__|__
+(__/\\--------------/\\____\\
+   o          o
+you meant "ls". this is a train.`}
+        </pre>
+      );
+    },
+  },
+  { name: "matrix", run: () => { window.dispatchEvent(new Event(TRIGGER_MATRIX_EVENT)); return <p className="text-primary">initializing digital rain...</p>; } },
+  { name: "uptime", run: () => <Out>up {formatUptime(Math.floor((Date.now() - SESSION_START) / 1000))} this session</Out> },
+  { name: "annyeong", aliases: ["안녕"], run: () => { unlockAchievement("polyglot"); return <Out>안녕하세요! (elementary korean, be gentle)</Out>; } },
+  { name: "konnichiwa", aliases: ["こんにちは"], run: () => { unlockAchievement("polyglot"); return <Out>こんにちは！(elementary japanese, still learning)</Out>; } },
+  { name: "github", run: () => { window.open(bio.github, "_blank", "noopener,noreferrer"); return <Dim>opening github...</Dim>; } },
+  { name: "linkedin", run: () => { window.open(bio.linkedin, "_blank", "noopener,noreferrer"); return <Dim>opening linkedin...</Dim>; } },
+  { name: "email", aliases: ["mail"], run: () => { window.location.href = `mailto:${bio.email}`; return <Dim>opening mail client...</Dim>; } },
+  { name: "exit", aliases: ["logout", "quit"], run: () => <Out>there is no exit. you live here now. (try `cd ~`)</Out> },
+];
+
+/**
+ * The colour cycle runs outside React, so it has to be re-entrant safe: a second
+ * `party` while one is already running would otherwise capture the *cycling*
+ * colour as the one to restore, and leave the site stuck on whatever hue it
+ * happened to catch.
+ */
+let partyTimer: ReturnType<typeof setInterval> | undefined;
+let partyStop: ReturnType<typeof setTimeout> | undefined;
+let partyOriginal: string | null = null;
+
+function startParty() {
+  if (partyOriginal === null) {
+    partyOriginal = readStoredThemeColor() ?? getComputedPrimaryHex();
+  }
+  clearInterval(partyTimer);
+  clearTimeout(partyStop);
+
+  let i = 0;
+  partyTimer = setInterval(() => {
+    i += 1;
+    applyThemeColor(hslToHex({ h: (i * 37) % 360, s: 100, l: 55 }));
+  }, 90);
+
+  partyStop = setTimeout(() => {
+    clearInterval(partyTimer);
+    if (partyOriginal) setThemeColor(partyOriginal, "shell");
+    partyOriginal = null;
+  }, 2500);
+}
+
+/* ---------------------------------------------------------------- resolution */
+
+const BY_NAME = new Map<string, Command>();
+for (const cmd of COMMANDS) {
+  BY_NAME.set(cmd.name, cmd);
+  for (const alias of cmd.aliases ?? []) BY_NAME.set(alias, cmd);
+}
+
+export function resolveCommand(name: string): Command | undefined {
+  return BY_NAME.get(name);
+}
+
+/** Every name a user could type — commands, aliases and bare route names. */
+export const COMPLETIONS: string[] = [
+  ...new Set([...BY_NAME.keys(), ...Object.keys(ROUTES)]),
+]
+  .filter((n) => /^[a-z0-9:._-]+$/i.test(n))
+  .sort();
+
+/** Argument completions, so `cd pro<tab>` and `cat sk<tab>` work too. */
+export function completionsFor(command: string): string[] {
+  if (command === "cd") return Object.keys(ROUTES);
+  if (command === "cat") return Object.keys(FILES);
+  if (command === "theme") return [...PRESETS.map((p) => p.id), "reset"];
+  if (command === "unlock") return Object.keys(SECTION_IDS);
+  if (command === "man") return Object.keys(MAN_PAGES);
+  if (command === "achievements") return ["reset"];
+  return [];
+}
+
+export function runShellCommand(ctx: CommandContext & { name: string }): ReactNode | Promise<ReactNode> {
+  const { name, arg, raw, router } = ctx;
+
+  // Bare route names ("about", "projects") navigate, matching the old behaviour.
+  if (name in ROUTES && !resolveCommand(name)) {
+    return navigate(router, ROUTES[name]);
+  }
+
+  if (name === "achievements" && arg.trim().toLowerCase() === "reset") {
+    resetAchievements();
+    return <Dim>achievement board wiped. go find them again.</Dim>;
+  }
+
+  const command = resolveCommand(name);
+  if (!command) {
+    const near = COMPLETIONS.find((c) => c.startsWith(name.slice(0, 2)) && c !== name);
+    return (
+      <Err>
+        bash: {raw.split(/\s+/)[0]}: command not found
+        {near && (
+          <span className="block text-fg/40">
+            did you mean <span className="text-secondary">{near}</span>?
+          </span>
+        )}
+      </Err>
+    );
+  }
+  return command.run(ctx);
+}

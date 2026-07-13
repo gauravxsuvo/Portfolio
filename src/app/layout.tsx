@@ -6,11 +6,14 @@ import { CrtOverlay } from "@/components/crt-overlay";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { BootGate } from "@/components/boot-gate";
-import { CursorTrail } from "@/components/cursor-trail";
+import { CursorLayer } from "@/components/cursor-layer";
 import { ConsoleEasterEgg } from "@/components/console-easter-egg";
 import { KonamiListener } from "@/components/konami-listener";
 import { NavShortcuts } from "@/components/nav-shortcuts";
 import { ThemePanel } from "@/components/theme-panel";
+import { AchievementToast } from "@/components/achievement-toast";
+import { CommandPalette } from "@/components/command-palette";
+import { RouteTransition } from "@/components/route-transition";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { bio } from "@/lib/data";
 import { siteName, siteUrl } from "@/lib/site";
@@ -82,7 +85,10 @@ export default function RootLayout({
           <style>{`[data-boot-gate]{display:none !important;}[data-reveal-item]{opacity:1 !important;transform:none !important;}`}</style>
         </noscript>
         <CrtOverlay />
-        <CursorTrail />
+        <CursorLayer />
+        <RouteTransition />
+        <AchievementToast />
+        <CommandPalette />
         <ConsoleEasterEgg />
         <KonamiListener />
         <NavShortcuts />

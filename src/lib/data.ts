@@ -167,6 +167,14 @@ export const publications: Publication[] = [
 export const bio = {
   name: "Gaurav Raj Singh",
   handle: "gauravxsuvo",
+  // Single source of truth. This used to be copy-pasted into the contact page,
+  // the footer, the shell's `email` command and the console easter egg — and the
+  // console one had drifted to a different address entirely.
+  email: "workwithggaurav@gmail.com",
+  github: "https://github.com/gauravxsuvo",
+  linkedin: "https://www.linkedin.com/in/gauravxsuvo",
+  website: "https://cinexg.com",
+  orcid: "0009-0009-0810-5513",
   role: "Computer Science Student — AI/ML & Full-Stack Systems",
   location: "India",
   summary:

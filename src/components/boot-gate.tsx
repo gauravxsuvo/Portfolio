@@ -1,32 +1,56 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { BootScreen } from "@/components/boot-screen";
+import { useMounted } from "@/hooks/use-mounted";
 
 const STORAGE_KEY = "suvo:booted";
 
-export function BootGate({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  const [active, setActive] = useState(true);
+function hasBooted(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
-  useEffect(() => {
-    setMounted(true);
-    const seen = window.localStorage.getItem(STORAGE_KEY) === "1";
-    if (seen) setActive(false);
-  }, []);
+export function BootGate({ children }: { children: ReactNode }) {
+  const mounted = useMounted();
+  const [dismissed, setDismissed] = useState(false);
+  // Bumped by `replay` to force the localStorage read below to happen again.
+  const [replayNonce, setReplayNonce] = useState(0);
+
+  // Derived from storage rather than copied into state by an effect — the effect
+  // version re-rendered the entire tree twice on every single page load.
+  const seen = useMemo(
+    () => (mounted ? hasBooted() : false),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mounted, replayNonce]
+  );
+
+  const active = !seen && !dismissed;
 
   useEffect(() => {
     const onReplay = () => {
-      window.localStorage.removeItem(STORAGE_KEY);
-      setActive(true);
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore — the replay still works for this session
+      }
+      setDismissed(false);
+      setReplayNonce((n) => n + 1);
     };
     window.addEventListener("suvo:replay-boot", onReplay);
     return () => window.removeEventListener("suvo:replay-boot", onReplay);
   }, []);
 
   const handleComplete = useCallback(() => {
-    window.localStorage.setItem(STORAGE_KEY, "1");
-    setActive(false);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, "1");
+    } catch {
+      // ignore — boot just replays next visit
+    }
+    setDismissed(true);
   }, []);
 
   useEffect(() => {

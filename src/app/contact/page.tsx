@@ -4,6 +4,7 @@ import { TerminalWindow } from "@/components/ui/terminal-window";
 import { BracketLink } from "@/components/ui/bracket-button";
 import { CopyButton } from "@/components/copy-button";
 import { pageMetadata } from "@/lib/site";
+import { bio } from "@/lib/data";
 
 export const metadata: Metadata = pageMetadata({
   title: "cat contact.txt",
@@ -11,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/contact",
 });
 
-const EMAIL = "workwithggaurav@gmail.com";
+const EMAIL = bio.email;
 
 const CHANNELS = [
   {
@@ -22,31 +23,31 @@ const CHANNELS = [
   },
   {
     label: "GITHUB",
-    value: "github.com/gauravxsuvo",
-    href: "https://github.com/gauravxsuvo",
+    value: bio.github.replace("https://", ""),
+    href: bio.github,
     external: true,
-    copyValue: "https://github.com/gauravxsuvo",
+    copyValue: bio.github,
   },
   {
     label: "LINKEDIN",
-    value: "linkedin.com/in/gauravxsuvo",
-    href: "https://www.linkedin.com/in/gauravxsuvo",
+    value: bio.linkedin.replace("https://www.", ""),
+    href: bio.linkedin,
     external: true,
-    copyValue: "https://www.linkedin.com/in/gauravxsuvo",
+    copyValue: bio.linkedin,
   },
   {
     label: "WEBSITE",
-    value: "cinexg.com",
-    href: "https://cinexg.com",
+    value: bio.website.replace("https://", ""),
+    href: bio.website,
     external: true,
-    copyValue: "https://cinexg.com",
+    copyValue: bio.website,
   },
   {
     label: "ORCID",
-    value: "0009-0009-0810-5513",
-    href: "https://orcid.org/0009-0009-0810-5513",
+    value: bio.orcid,
+    href: `https://orcid.org/${bio.orcid}`,
     external: true,
-    copyValue: "https://orcid.org/0009-0009-0810-5513",
+    copyValue: `https://orcid.org/${bio.orcid}`,
   },
 ];
 

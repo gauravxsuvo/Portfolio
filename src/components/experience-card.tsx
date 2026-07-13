@@ -8,7 +8,7 @@ export function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <TerminalWindow title={entry.org} meta={entry.period}>
+    <TerminalWindow title={entry.org} meta={entry.period} className="trace-box">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-primary text-glow font-semibold">{entry.role}</p>
         <p className="text-xs text-fg/40">{entry.location}</p>

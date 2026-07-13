@@ -45,21 +45,42 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-    let columns = Math.floor(width / FONT_SIZE);
-    let drops = new Array(columns).fill(1);
+    let width = 0;
+    let height = 0;
+    let drops: number[] = [];
 
-    function onResize() {
-      width = canvas!.width = window.innerWidth;
-      height = canvas!.height = window.innerHeight;
-      columns = Math.floor(width / FONT_SIZE);
-      drops = new Array(columns).fill(1);
+    // Back the canvas at device resolution and scale the context to CSS pixels —
+    // without this the glyphs render at 1x and get upscaled, which is soft and
+    // muddy on every phone and retina display.
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas!.width = Math.floor(width * dpr);
+      canvas!.height = Math.floor(height * dpr);
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const columns = Math.ceil(width / FONT_SIZE);
+      // Preserve existing column positions on resize so the rain doesn't reset
+      // to a single flat line every time the viewport changes.
+      drops = Array.from({ length: columns }, (_, i) => drops[i] ?? Math.random() * -20);
     }
-    window.addEventListener("resize", onResize);
+    resize();
+    window.addEventListener("resize", resize);
 
     let raf = 0;
-    function draw() {
+    let last = 0;
+    const FRAME_MS = 1000 / 30;
+
+    function draw(now: number) {
+      raf = requestAnimationFrame(draw);
+      // The rain reads better at 30fps than 60 and halves the work — this runs
+      // full-screen over the whole page, often on a phone.
+      if (now - last < FRAME_MS) return;
+      last = now;
+
       ctx!.fillStyle = "rgba(10, 10, 10, 0.12)";
       ctx!.fillRect(0, 0, width, height);
       ctx!.fillStyle = primaryRef.current;
@@ -72,13 +93,12 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
         }
         drops[i]++;
       }
-      raf = requestAnimationFrame(draw);
     }
-    draw();
+    raf = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", resize);
     };
   }, [reducedMotion]);
 

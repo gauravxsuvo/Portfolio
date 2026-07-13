@@ -28,7 +28,11 @@ export function PublicationCard({
   const linkEntries = Object.entries(links).filter(([, href]) => href);
 
   return (
-    <TerminalWindow title={publication.title} meta={publication.year}>
+    <TerminalWindow
+      title={publication.title}
+      meta={publication.year}
+      className="trace-box h-full"
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-fg/70">{publication.authors.join(", ")}</p>
         <span

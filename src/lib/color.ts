@@ -110,6 +110,23 @@ export function ensureReadableAgainstBg(
   return candidate;
 }
 
+export const BG_HEX = "#0a0a0a";
+
+/** WCAG bucket for the primary color against the fixed black background. */
+export function contrastGrade(hex: string, bgHex = BG_HEX) {
+  const ratio = contrastRatio(hex, bgHex);
+  const grade = ratio >= 7 ? "AAA" : ratio >= 4.5 ? "AA" : ratio >= 3 ? "AA-LG" : "FAIL";
+  return { ratio, grade };
+}
+
+export function randomReadableHsl(): HSL {
+  return ensureReadableAgainstBg({
+    h: Math.floor(Math.random() * 360),
+    s: 65 + Math.floor(Math.random() * 35),
+    l: 45 + Math.floor(Math.random() * 25),
+  });
+}
+
 export const DEFAULT_PRIMARY_HEX = "#33ff00";
 
 export const PRESETS: { id: string; label: string; hex: string }[] = [
@@ -119,4 +136,8 @@ export const PRESETS: { id: string; label: string; hex: string }[] = [
   { id: "red", label: "Red Alert", hex: "#ff4d4d" },
   { id: "white", label: "Paper White", hex: "#e8e8e8" },
   { id: "purple", label: "Purple Haze", hex: "#c07bff" },
+  { id: "magenta", label: "Magenta Burn", hex: "#ff5cc8" },
+  { id: "ice", label: "Ice Blue", hex: "#8ab4ff" },
+  { id: "lime", label: "Toxic Lime", hex: "#c6ff4d" },
+  { id: "sand", label: "Sandstorm", hex: "#e0c391" },
 ];
