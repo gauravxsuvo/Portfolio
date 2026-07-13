@@ -45,7 +45,7 @@ export function NeofetchPanel() {
     ["shell", "gsh 1.0 [react]"],
     ["resolution", "1920x1080 @ 60Hz (crt)"],
     ["theme", "user-selectable [phosphor]"],
-    ["cpu", `${bio.role} (human-grade)`],
+    ["cpu", bio.role],
     ["packages", `${projects.length} (portfolio)`],
     ["locale", bio.location],
     ["languages", topLanguages],

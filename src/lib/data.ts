@@ -126,11 +126,10 @@ export type EducationEntry = {
 
 export const education: EducationEntry = {
   school: "Indian Institute of Technology Guwahati",
-  degree: "B.S. (Honours), Computer Science — Data Science & Artificial Intelligence",
+  degree: "B.S. (Honours), Data Science and Artificial Intelligence",
   period: "2026 — 2030 (Expected)",
   location: "Guwahati, India",
-  summary:
-    "Specialization in Data Science and Artificial Intelligence.",
+  summary: "Undergraduate coursework spanning machine learning, statistics, and systems.",
   highlights: [],
 };
 
@@ -173,11 +172,11 @@ export const bio = {
   email: "workwithggaurav@gmail.com",
   github: "https://github.com/gauravxsuvo",
   linkedin: "https://www.linkedin.com/in/gauravxsuvo",
-  website: "https://cinexg.com",
+  website: "https://gauravxsuvo.vercel.app",
   orcid: "0009-0009-0810-5513",
-  role: "Computer Science Student — AI/ML & Full-Stack Systems",
+  role: "Data Science & AI Student — Full-Stack & ML Systems",
   location: "India",
   summary:
-    "I'm a Computer Science student at IIT Guwahati, specializing in Data Science and Artificial Intelligence. I'm drawn to problems where machine learning meets the physical world — physics-informed models, multi-agent systems, geospatial data — and I like understanding things end-to-end rather than treating any layer as a black box. Before university I ran a freelance video editing and design business for three years, which is probably why I still care how something looks and feels, not just whether it works. Outside of that, I'm slowly picking up Korean and Japanese.",
+    "I'm a Data Science and Artificial Intelligence student at IIT Guwahati. I'm drawn to problems where machine learning meets the physical world — physics-informed models, multi-agent systems, geospatial data — and I like understanding things end-to-end rather than treating any layer as a black box. Before university I ran a freelance video editing and design business for three years, which is probably why I still care how something looks and feels, not just whether it works. Outside of that, I'm slowly picking up Korean and Japanese.",
   focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
 };

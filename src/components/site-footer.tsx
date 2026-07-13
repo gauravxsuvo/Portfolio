@@ -59,9 +59,7 @@ export function SiteFooter() {
           {"//"}
         </span>
         <SecretsCounter />
-        <span className="sm:ml-auto">
-          © {year} GAURAV RAJ SINGH — BUILT WITH NEXT.JS
-        </span>
+        <span className="sm:ml-auto">© {year} GAURAV RAJ SINGH</span>
       </div>
     </footer>
   );

@@ -124,12 +124,18 @@ function navigate(router: Router, path: string): ReactNode {
 type Hit = { kind: string; title: string; detail: string; href?: string };
 
 function search(term: string): Hit[] {
-  const q = term.toLowerCase();
+  // Word-AND rather than a single contiguous substring: a query like "multi-agent
+  // systems" should hit the "AI Systems" skill group (which contains both words,
+  // just not adjacent), not report zero results because nothing happens to
+  // contain that exact three-word phrase.
+  const words = term.toLowerCase().split(/\s+/).filter(Boolean);
   const hits: Hit[] = [];
+  if (words.length === 0) return hits;
+  const matchesAll = (haystack: string) => words.every((w) => haystack.includes(w));
 
   for (const p of projects) {
     const haystack = `${p.name} ${p.tagline} ${p.description} ${p.stack.join(" ")}`.toLowerCase();
-    if (haystack.includes(q)) {
+    if (matchesAll(haystack)) {
       hits.push({
         kind: "project",
         title: p.name,
@@ -140,7 +146,7 @@ function search(term: string): Hit[] {
   }
   for (const p of publications) {
     const haystack = `${p.title} ${p.abstract} ${(p.tags ?? []).join(" ")} ${p.venue}`.toLowerCase();
-    if (haystack.includes(q)) {
+    if (matchesAll(haystack)) {
       hits.push({
         kind: "publication",
         title: p.title,
@@ -150,14 +156,22 @@ function search(term: string): Hit[] {
     }
   }
   for (const g of skillGroups) {
-    const matched = g.items.filter((i) => i.toLowerCase().includes(q));
-    if (matched.length) {
-      hits.push({ kind: "skill", title: g.category, detail: matched.join(", "), href: "/about" });
+    const haystack = `${g.category} ${g.items.join(" ")}`.toLowerCase();
+    if (matchesAll(haystack)) {
+      const matchedItems = g.items.filter((i) =>
+        words.some((w) => i.toLowerCase().includes(w))
+      );
+      hits.push({
+        kind: "skill",
+        title: g.category,
+        detail: matchedItems.length ? matchedItems.join(", ") : g.items.join(", "),
+        href: "/about",
+      });
     }
   }
   for (const e of experience) {
     const haystack = `${e.role} ${e.org} ${e.summary} ${e.highlights.join(" ")}`.toLowerCase();
-    if (haystack.includes(q)) {
+    if (matchesAll(haystack)) {
       hits.push({
         kind: "experience",
         title: `${e.role} — ${e.org}`,

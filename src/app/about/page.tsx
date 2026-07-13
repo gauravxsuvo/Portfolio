@@ -41,12 +41,12 @@ export default function AboutPage() {
               <dt className="text-fg/40">orcid:</dt>
               <dd className="text-fg">
                 <a
-                  href="https://orcid.org/0009-0009-0810-5513"
+                  href={`https://orcid.org/${bio.orcid}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary underline underline-offset-4 decoration-border hover:text-glow"
                 >
-                  0009-0009-0810-5513
+                  {bio.orcid}
                 </a>
               </dd>
             </div>
