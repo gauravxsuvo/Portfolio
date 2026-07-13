@@ -99,7 +99,7 @@ export function HeroLogo() {
         aria-label={`${bio.name} — click to replay identity scan`}
         className="block text-left"
       >
-        <h1 className="glitch-hover text-2xl sm:text-4xl lg:text-5xl font-bold tracking-wide text-primary text-glow break-words">
+        <h1 className="glitch-hover warp-text break-words text-2xl font-bold tracking-wide text-primary sm:text-4xl lg:text-5xl xl:text-6xl">
           <span className="sr-only">{bio.name}</span>
           <span aria-hidden="true">
             {shown}

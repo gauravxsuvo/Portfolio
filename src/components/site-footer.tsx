@@ -28,8 +28,8 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="border-t border-border">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-xs text-fg/50">
+    <footer className="relative z-[1] border-t border-border bg-bg">
+      <div className="mx-auto flex max-w-[100rem] flex-col gap-2 px-4 py-4 text-xs text-fg/50 sm:flex-row sm:items-center sm:gap-3 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={handleClick}

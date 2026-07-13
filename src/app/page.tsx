@@ -6,6 +6,7 @@ import { SkillGroups } from "@/components/ui/skill-groups";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Reveal } from "@/components/ui/reveal";
 import { Magnetic } from "@/components/ui/magnetic";
+import { Tilt } from "@/components/ui/tilt";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
 import { LiveStatus } from "@/components/live-status";
 import { CommandShell } from "@/components/command-shell";
@@ -23,20 +24,20 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-16">
-      <section>
+      <section aria-label="Introduction">
         <Reveal trigger="mount" staggerMs={120}>
           <HeroLogo />
 
-          <p className="mt-3 text-primary text-glow text-base sm:text-lg">
+          <p className="mt-3 text-base text-primary text-glow sm:text-lg">
             <Typewriter
               text={`> ${bio.role.toLowerCase()} // shipping physics-informed ML and multi-agent systems`}
               startDelay={1900}
             />
           </p>
 
-          <p className="mt-5 max-w-2xl text-fg/70 text-sm sm:text-base leading-relaxed">
-            {bio.summary}
-          </p>
+          {/* Prose stays narrow even though the column got wider — a 1100px line
+              of monospace is not readable. */}
+          <p className="prose-measure mt-5 text-sm text-fg/70 sm:text-base">{bio.summary}</p>
 
           <FocusTags tags={bio.focus} />
 
@@ -53,45 +54,61 @@ export default function Home() {
         </Reveal>
       </section>
 
-      <section id="section-shell" className="scroll-mt-24" aria-labelledby="shell-heading">
-        <SectionLabel index="01" label="Try the shell" />
+      <section
+        id="section-shell"
+        data-label="try the shell"
+        className="scroll-mt-24"
+        aria-labelledby="shell-heading"
+      >
+        <SectionLabel id="shell-heading" index="01" label="Try the shell" />
         <CommandShell />
       </section>
 
-      <section id="section-skills" className="scroll-mt-24" aria-labelledby="skills-heading">
-        <SectionLabel index="02" label="Core Skills" />
+      <section
+        id="section-skills"
+        data-label="core skills"
+        className="scroll-mt-24"
+        aria-labelledby="skills-heading"
+      >
+        <SectionLabel id="skills-heading" index="02" label="Core Skills" />
         <Reveal>
           <SkillGroups groups={topSkillGroups} />
         </Reveal>
         <div className="mt-4">
-          <Link
-            href="/about"
-            className="text-sm text-fg/50 hover:text-primary transition-colors"
-          >
+          <Link href="/about" className="link-wipe text-sm text-fg/50 hover:text-primary">
             cat about.txt --full-skill-list -&gt;
           </Link>
         </div>
       </section>
 
-      <section id="section-projects" className="scroll-mt-24" aria-labelledby="projects-heading">
-        <SectionLabel index="03" label="Featured Projects" />
-        <Reveal className="grid gap-5 sm:grid-cols-2" staggerMs={90}>
+      <section
+        id="section-projects"
+        data-label="featured projects"
+        className="scroll-mt-24"
+        aria-labelledby="projects-heading"
+      >
+        <SectionLabel id="projects-heading" index="03" label="Featured Projects" />
+        <Reveal className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" staggerMs={90}>
           {featured.map((project) => (
-            <ProjectCard key={project.slug} project={project} />
+            <Tilt key={project.slug}>
+              <ProjectCard project={project} />
+            </Tilt>
           ))}
         </Reveal>
         <div className="mt-4">
-          <Link
-            href="/projects"
-            className="text-sm text-fg/50 hover:text-primary transition-colors"
-          >
+          <Link href="/projects" className="link-wipe text-sm text-fg/50 hover:text-primary">
             ls -la ~/projects -&gt;
           </Link>
         </div>
       </section>
 
-      <section id="section-status" className="scroll-mt-24" aria-labelledby="neofetch-heading">
-        <SectionLabel index="04" label="System Status" />
+      <section
+        id="section-status"
+        data-label="system status"
+        className="scroll-mt-24"
+        aria-labelledby="neofetch-heading"
+      >
+        <SectionLabel id="neofetch-heading" index="04" label="System Status" />
         <Reveal>
           <TerminalWindow title="neofetch" meta="R/O" className="trace-box">
             <NeofetchPanel />
@@ -102,38 +119,37 @@ export default function Home() {
 
       <section
         id="section-publications"
+        data-label="publications"
         className="scroll-mt-24"
         aria-labelledby="publications-heading"
       >
-        <SectionLabel index="05" label="Publications" />
+        <SectionLabel id="publications-heading" index="05" label="Publications" />
         <Reveal className="grid gap-5 sm:grid-cols-2" staggerMs={90}>
           {topPublications.map((pub) => (
-            <PublicationCard key={pub.id} publication={pub} />
+            <Tilt key={pub.id} max={3}>
+              <PublicationCard publication={pub} />
+            </Tilt>
           ))}
         </Reveal>
         <div className="mt-4">
-          <Link
-            href="/publications"
-            className="text-sm text-fg/50 hover:text-primary transition-colors"
-          >
+          <Link href="/publications" className="link-wipe text-sm text-fg/50 hover:text-primary">
             cat publications.bib -&gt;
           </Link>
         </div>
       </section>
 
-      <section id="section-changelog" className="scroll-mt-24" aria-labelledby="changelog-heading">
-        <SectionLabel index="06" label="Changelog" />
+      <section
+        id="section-changelog"
+        data-label="changelog"
+        className="scroll-mt-24"
+        aria-labelledby="changelog-heading"
+      >
+        <SectionLabel id="changelog-heading" index="06" label="Changelog" />
         <Reveal>
-          <TerminalWindow
-            title="git log --oneline"
-            meta={`${changelog.length} commits`}
-          >
+          <TerminalWindow title="git log --oneline" meta={`${changelog.length} commits`}>
             <ul className="flex flex-col gap-1.5 text-sm">
               {changelog.map((entry) => (
-                <li
-                  key={entry.hash}
-                  className="flex flex-wrap items-baseline gap-2 text-fg/70"
-                >
+                <li key={entry.hash} className="flex flex-wrap items-baseline gap-2 text-fg/70">
                   <span className="text-secondary">{entry.hash}</span>
                   <span className="text-xs text-fg/40">{entry.date}</span>
                   <span>{entry.message}</span>

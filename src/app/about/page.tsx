@@ -14,9 +14,9 @@ export const metadata: Metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <div className="flex flex-col gap-12">
-      <section>
-        <SectionLabel index="00" label="whoami" />
-        <TerminalWindow title="about.txt" meta="R/O">
+      <section id="section-whoami" data-label="whoami" className="scroll-mt-24" aria-labelledby="whoami-heading">
+        <SectionLabel id="whoami-heading" index="00" label="whoami" />
+        <TerminalWindow title="about.txt" meta="R/O" className="trace-box">
           <p className="text-sm sm:text-base leading-relaxed text-fg/80">
             {bio.summary}
           </p>
@@ -54,14 +54,14 @@ export default function AboutPage() {
         </TerminalWindow>
       </section>
 
-      <section aria-labelledby="skills-heading">
-        <SectionLabel index="01" label="Skills" />
+      <section id="section-skills" data-label="skills" className="scroll-mt-24" aria-labelledby="skills-heading">
+        <SectionLabel id="skills-heading" index="01" label="Skills" />
         <SkillGroups groups={skillGroups} />
       </section>
 
-      <section aria-labelledby="education-heading">
-        <SectionLabel index="02" label="Education" />
-        <TerminalWindow title={education.school} meta={education.period}>
+      <section id="section-education" data-label="education" className="scroll-mt-24" aria-labelledby="education-heading">
+        <SectionLabel id="education-heading" index="02" label="Education" />
+        <TerminalWindow title={education.school} meta={education.period} className="trace-box">
           <p className="text-sm text-primary">{education.degree}</p>
           <p className="mt-2 text-sm text-fg/70">{education.summary}</p>
           {education.highlights.length > 0 && (

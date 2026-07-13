@@ -43,7 +43,7 @@ export function SiteNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/95 backdrop-blur-sm">
-      <div className="relative mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start sm:px-6">
+      <div className="relative mx-auto flex max-w-[100rem] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           <span className="flex items-baseline gap-x-2 whitespace-nowrap">
             <Link href="/" className="glitch-hover text-primary text-glow">
@@ -72,14 +72,18 @@ export function SiteNav() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:ml-auto">
-          {/* Horizontal scroll rather than a second wrapped row: six routes at
-              phone widths otherwise push the nav to two lines and shove the page
-              down. -mx-4 px-4 lets the row bleed to the screen edges so it reads
-              as scrollable. */}
+        <div className="flex min-w-0 items-center gap-2 sm:ml-auto">
+          {/* Phone: one bleed-to-edge scrollable row (-mx-4 px-4), because six
+              routes stacked into two lines eats a third of a small screen.
+              Tablet and up: allowed to wrap instead.
+
+              min-w-0 rather than the flex-none this used to carry — flex-none
+              sizes the row to max-content, which means flex-wrap can never
+              actually wrap, and at ~768px the nav simply ran 145px off the side
+              of the page. */}
           <nav
             aria-label="Primary"
-            className="-mx-4 flex flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-none sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+            className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
           >
             {LINKS.map((link) => {
               const active =

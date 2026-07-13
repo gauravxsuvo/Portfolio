@@ -15,7 +15,9 @@ export async function GET() {
       status: "ok",
       service: "gauravxsuvo-portfolio",
       version: "3.1",
-      runtime: `node ${process.versions.node}`,
+      // Major only. The exact patch version is free reconnaissance for anyone
+      // matching a host against known CVEs, and the neofetch panel doesn't care.
+      runtime: `node ${process.versions.node.split(".")[0]}.x`,
       env: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
       region: process.env.VERCEL_REGION ?? "local",
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev",

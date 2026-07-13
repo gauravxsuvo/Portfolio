@@ -14,6 +14,10 @@ import { ThemePanel } from "@/components/theme-panel";
 import { AchievementToast } from "@/components/achievement-toast";
 import { CommandPalette } from "@/components/command-palette";
 import { RouteTransition } from "@/components/route-transition";
+import { SiteFrame } from "@/components/site-frame";
+import { AmbientGrid } from "@/components/ambient-grid";
+import { SelectionSearch } from "@/components/selection-search";
+import { ScrollFx } from "@/components/scroll-fx";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { bio } from "@/lib/data";
 import { siteName, siteUrl } from "@/lib/site";
@@ -84,23 +88,21 @@ export default function RootLayout({
         <noscript>
           <style>{`[data-boot-gate]{display:none !important;}[data-reveal-item]{opacity:1 !important;transform:none !important;}`}</style>
         </noscript>
+        <AmbientGrid />
         <CrtOverlay />
         <CursorLayer />
+        <ScrollFx />
         <RouteTransition />
         <AchievementToast />
         <CommandPalette />
+        <SelectionSearch />
         <ConsoleEasterEgg />
         <KonamiListener />
         <NavShortcuts />
         <ThemePanel />
         <BootGate>
           <SiteNav />
-          <main
-            tabIndex={-1}
-            className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 outline-none"
-          >
-            {children}
-          </main>
+          <SiteFrame>{children}</SiteFrame>
           <SiteFooter />
         </BootGate>
       </body>

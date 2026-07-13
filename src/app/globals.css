@@ -606,6 +606,58 @@ html[data-cursor-down="true"] .cursor-ring {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Scroll-velocity CRT warp
+   --scroll-warp is written by <ScrollFx/> once per frame. Everything below is
+   pure CSS off that one variable, so scrolling never triggers layout work.
+   The intensity is deliberately tiny: enough to feel the tube struggling,
+   not enough to make text unreadable while you're reading it.
+   --------------------------------------------------------------------------- */
+:root {
+  --scroll-warp: 0;
+  --scroll-dir: 1;
+}
+
+.crt-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: calc(var(--scroll-warp) * 0.55);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-primary) 10%, transparent) 50%,
+    transparent 100%
+  );
+  transform: scaleY(calc(1 + var(--scroll-warp) * 0.5));
+}
+
+/* Chromatic split on the hero wordmark only — applying it to body text would
+   make the whole page shimmer while you scroll, which is nauseating. */
+.warp-text {
+  text-shadow:
+    calc(var(--scroll-warp) * var(--scroll-dir) * 2px) 0 0
+      color-mix(in srgb, var(--color-error) 60%, transparent),
+    calc(var(--scroll-warp) * var(--scroll-dir) * -2px) 0 0
+      color-mix(in srgb, #00b4ff 60%, transparent),
+    0 0 5px color-mix(in srgb, var(--color-primary) 60%, transparent),
+    0 0 12px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+/* The ambient canvas sits at z-0. Content is lifted above it by `relative z-[1]`
+   on the frame/footer wrappers in JSX — deliberately NOT by a blanket
+   `aside { position: relative }` here, because an unlayered rule like that
+   outranks Tailwind's `.sticky` utility and silently unpins the sticky rails. */
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay::before {
+    display: none;
+  }
+  .warp-text {
+    text-shadow: 0 0 5px color-mix(in srgb, var(--color-primary) 60%, transparent);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
