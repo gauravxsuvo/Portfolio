@@ -1,44 +1,44 @@
 import "server-only";
 
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 
 /**
  * Auth for /admin.
  *
- * This guards every visitor's browsing history on the site, so it gets treated
- * as a real auth system despite having exactly one user. Two secrets, both
- * required, both env-only:
+ * This guards every visitor's browsing history, so it's treated as a real auth
+ * system despite having exactly one user. Two secrets, both required, both
+ * env-only:
  *
  *   ADMIN_PASSWORD  — what you type.
- *   ADMIN_SECRET    — HMAC key for the session cookie.
+ *   ADMIN_SECRET    — HMAC key for the session token.
  *
- * A stateless signed cookie rather than a session table: there's one user, so a
- * DB round-trip per page load buys nothing. The tradeoff is that sessions can't
- * be revoked individually — rotating ADMIN_SECRET invalidates all of them at
- * once, which for a single-user dashboard is a complete answer.
+ * **There is no cookie.** The token is returned in the response body and the
+ * dashboard holds it in a React state variable, nowhere else. That's a
+ * deliberate answer to "I shouldn't stay logged in if I refresh or close the
+ * tab": a cookie's entire purpose is to survive those, so honouring that
+ * requirement with one would mean setting a cookie and then building machinery
+ * to defeat it. Memory has the wanted lifetime natively — a refresh drops the
+ * JS heap, and the token with it.
+ *
+ * The tradeoff, stated plainly: a cookie can be httpOnly and therefore
+ * unreadable by injected script, whereas an in-memory token is readable by any
+ * XSS on the page. That's an acceptable trade *here* because the CSP blocks
+ * third-party script outright, the site renders no user-supplied HTML, and the
+ * token dies in five minutes regardless. It also removes CSRF as a category
+ * entirely: nothing is sent ambiently, so there's nothing to forge.
  *
  * If either secret is unset, auth fails closed and /admin is unreachable. The
- * tempting alternative — a default password, or skipping auth when unconfigured
- * — would mean a forgotten env var silently publishes the analytics of everyone
- * who ever visited. An admin page nobody can open is a much better failure than
- * one everybody can.
+ * tempting alternative — a default password, or skipping auth when
+ * unconfigured — would mean a forgotten env var silently publishes the
+ * analytics of everyone who ever visited.
  */
 
 /**
- * The __Host- prefix is enforced by the browser, not by us: it refuses to store
- * the cookie unless it's Secure, Path=/, and has no Domain attribute. That last
- * part is the point — it makes the cookie unsettable by any subdomain, so a
- * compromised or attacker-registered *.mysuvo.com can't "toss" a suvo_admin
- * cookie up to the parent domain and interfere with the session.
- *
- * It requires Secure, which localhost-over-http can't satisfy, so dev drops the
- * prefix. The name differing between dev and prod is fine: nothing reads this
- * cookie but this module.
+ * Five minutes, sliding. Every authenticated response mints a fresh token, so
+ * activity extends the session and idleness ends it. Short because the only
+ * thing behind it is a dashboard you read for a minute at a time.
  */
-const COOKIE_NAME =
-  process.env.NODE_ENV === "production" ? "__Host-suvo_admin" : "suvo_admin";
-const SESSION_TTL_SECONDS = 12 * 60 * 60;
+export const SESSION_TTL_SECONDS = 5 * 60;
 
 export function isAuthConfigured(): boolean {
   return Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_SECRET);
@@ -64,17 +64,17 @@ function sign(value: string): string {
   return createHmac("sha256", secret).update(value).digest("base64url");
 }
 
-/** Token: <issuedAt>.<nonce>.<hmac>. The nonce makes tokens distinct even
- *  within the same second, so a re-login doesn't mint a byte-identical cookie. */
-function mintToken(): string {
+/** Token: <issuedAt>.<nonce>.<hmac>. The nonce keeps two tokens minted in the
+ *  same millisecond distinct. */
+export function mintToken(): string {
   const issued = Date.now().toString(36);
   const nonce = randomBytes(12).toString("base64url");
   const body = `${issued}.${nonce}`;
   return `${body}.${sign(body)}`;
 }
 
-function verifyToken(token: string): boolean {
-  if (!isAuthConfigured()) return false;
+export function verifyToken(token: string | null | undefined): boolean {
+  if (!token || !isAuthConfigured()) return false;
   const parts = token.split(".");
   if (parts.length !== 3) return false;
   const [issued, nonce, mac] = parts;
@@ -97,31 +97,44 @@ export function checkPassword(candidate: string): boolean {
   return safeEqual(candidate, expected);
 }
 
-export async function createSession(): Promise<void> {
-  const store = await cookies();
-  store.set(COOKIE_NAME, mintToken(), {
-    // Unreadable from JS, so the site's own XSS surface can't exfiltrate it.
-    httpOnly: true,
-    // Not sent over plain http in production. Left off in dev because
-    // localhost isn't https and the cookie would simply never be stored.
-    secure: process.env.NODE_ENV === "production",
-    // "strict", not "lax": nothing should ever link into an authed /admin from
-    // another site, so there's no usability cost, and it closes cross-site
-    // request forgery on the logout/read routes entirely.
-    sameSite: "strict",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  });
+/** Reads the bearer token from an Authorization header. */
+export function bearerFrom(headers: Headers): string | null {
+  const raw = headers.get("authorization");
+  if (!raw) return null;
+  const [scheme, token] = raw.split(" ");
+  if (!scheme || scheme.toLowerCase() !== "bearer" || !token) return null;
+  return token.trim() || null;
 }
 
-export async function destroySession(): Promise<void> {
-  const store = await cookies();
-  store.delete(COOKIE_NAME);
+/**
+ * Login throttle.
+ *
+ * A single-password admin page with no rate limit has a password of "however
+ * many guesses fit in a minute". Per-instance and in-memory, with the same
+ * caveat as the ingest limiter (instances don't share state) — but here it
+ * backs a real password rather than being the only defence, so the goal is to
+ * make online brute force impractical, not impossible.
+ */
+const ATTEMPT_LIMIT = 5;
+const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
+const attempts = new Map<string, { count: number; resetAt: number }>();
+
+export function tooManyAttempts(key: string): boolean {
+  const now = Date.now();
+  const entry = attempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    attempts.set(key, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS });
+    // Without this sweep the Map grows with every distinct IP forever.
+    if (attempts.size > 1000) {
+      for (const [k, v] of attempts) if (now > v.resetAt) attempts.delete(k);
+    }
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > ATTEMPT_LIMIT;
 }
 
-export async function isAuthed(): Promise<boolean> {
-  if (!isAuthConfigured()) return false;
-  const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
-  return token ? verifyToken(token) : false;
+/** Clears the throttle for a key after a successful login. */
+export function resetAttempts(key: string): void {
+  attempts.delete(key);
 }

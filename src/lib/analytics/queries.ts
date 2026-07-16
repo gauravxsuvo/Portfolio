@@ -137,6 +137,27 @@ async function topProp(days: number, eventName: string, key: string, limit = 12)
 export const topShellCommands = (d: number) => topProp(d, "shell_command", "name");
 export const topAchievements = (d: number) => topProp(d, "achievement", "id");
 export const topOutbound = (d: number) => topProp(d, "outbound", "to");
+export const topSearches = (d: number) => topProp(d, "filter", "term");
+
+/**
+ * Filter terms that found nothing — the most actionable rows in the whole
+ * dashboard, since each one is a person looking for something this site doesn't
+ * have or doesn't name the way they expected.
+ */
+export async function zeroResultSearches(days: number, limit = 10): Promise<Row[]> {
+  const sql = getSql();
+  if (!sql) return [];
+  const rows = (await sql`
+    SELECT props->>'term' AS label, count(*) AS value
+    FROM events
+    WHERE name = 'filter'
+      AND coalesce(props->>'term', '') <> ''
+      AND (props->>'results') = '0'
+      AND ts > now() - (${days} || ' days')::interval
+    GROUP BY 1 ORDER BY value DESC LIMIT ${limit}
+  `) as Record<string, unknown>[];
+  return rows.map((r) => ({ label: String(r.label), value: Number(r.value ?? 0) }));
+}
 
 /** Daily pageview series for the sparkline. Zero-filled so gaps read as zero
  *  rather than as a shorter, misleadingly smooth line. */

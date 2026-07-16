@@ -62,13 +62,35 @@ Nothing is collected until a visitor accepts the consent prompt. See
 hard gate rather than a banner over live tracking. `/admin` is excluded from
 tracking entirely, so reading the dashboard doesn't inflate the numbers on it.
 
+The site sets **no cookies at all** — not for visitors, and not for the admin
+login, which keeps its bearer token in memory so it dies on refresh and on tab
+close.
+
+Every event passes through [`throttle.ts`](src/lib/analytics/throttle.ts):
+dedupe, a per-type minimum interval, a token bucket, and a session cap. It's
+there because idle clicking is noise, not data — one drag of the theme slider
+used to emit an event per animation frame. `/api/track` re-checks independently
+(a client throttle is unenforceable), capping events per IP per minute rather
+than just requests.
+
 > **If you add a localStorage key or a cookie, add it to
 > [`src/lib/storage-inventory.ts`](src/lib/storage-inventory.ts).** Both
 > `/privacy` and `/cookies` render their tables from that one file so they can't
 > drift apart. A stale storage list on those pages is a false statement in a
 > legal document, not a docs nit. Same goes for adding an event name to
 > `src/lib/analytics/events.ts` — the "what's collected" list on `/privacy`
-> needs it too.
+> needs it too, and an event name that nothing fires is its own bug (`filter`
+> was listed as collected while no code sent it).
+
+### Geo, and why it's not Vercel's
+
+Cloudflare proxies this domain, so Vercel's edge sees a Cloudflare PoP rather
+than the visitor — and Cloudflare's free plan routes a lot of Indian traffic
+through Singapore. `x-vercel-ip-country` therefore reports where *Cloudflare*
+is. `getGeo` uses `cf-ipcountry` (computed from the real visitor IP) and drops
+city entirely unless Cloudflare supplies it, rather than reporting the PoP's
+city. Enabling **Cloudflare → Rules → Transform Rules → Managed Transforms →
+"Add visitor location headers"** (free) adds real city/region.
 
 ### Setup
 

@@ -51,23 +51,57 @@ const NO_CONTENT = new NextResponse(null, { status: 204 });
  * thing that actually matters, which is that one script hammering one instance
  * gets cut off, and it costs nothing.
  */
-const RATE_LIMIT = { windowMs: 60_000, maxRequests: 60 } as const;
-const hits = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = {
+  windowMs: 60_000,
+  /** Requests per IP per minute. Each may carry a batch. */
+  maxRequests: 60,
+  /**
+   * Events per IP per minute — the limit that actually matters.
+   *
+   * Capping requests alone was close to useless: 60 requests x 20 events per
+   * batch is 1200 rows/minute from one address, which is precisely the flood
+   * the limiter is supposed to stop. A real visitor generates a few dozen
+   * events a minute at their most frantic, so 200 is generous and still two
+   * orders of magnitude below what the request cap permitted.
+   */
+  maxEvents: 200,
+} as const;
 
-function rateLimited(key: string): boolean {
-  const now = Date.now();
+type Hit = { requests: number; events: number; resetAt: number };
+const hits = new Map<string, Hit>();
+
+function bucketFor(key: string, now: number): Hit {
   const entry = hits.get(key);
-  if (!entry || now > entry.resetAt) {
-    hits.set(key, { count: 1, resetAt: now + RATE_LIMIT.windowMs });
-    // Opportunistic sweep. Without it this Map is an unbounded memory leak that
-    // grows with every distinct IP for the life of the instance.
-    if (hits.size > 5000) {
-      for (const [k, v] of hits) if (now > v.resetAt) hits.delete(k);
-    }
-    return false;
+  if (entry && now <= entry.resetAt) return entry;
+  const fresh: Hit = { requests: 0, events: 0, resetAt: now + RATE_LIMIT.windowMs };
+  hits.set(key, fresh);
+  // Opportunistic sweep. Without it this Map is an unbounded memory leak that
+  // grows with every distinct IP for the life of the instance.
+  if (hits.size > 5000) {
+    for (const [k, v] of hits) if (now > v.resetAt) hits.delete(k);
   }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT.maxRequests;
+  return fresh;
+}
+
+/** Call once per request, before doing any work. */
+function requestLimited(key: string, now: number): boolean {
+  const b = bucketFor(key, now);
+  b.requests += 1;
+  return b.requests > RATE_LIMIT.maxRequests;
+}
+
+/**
+ * Call with the number of rows a request wants to write. Charges the budget and
+ * returns how many are allowed — a partial accept, so a visitor who trips the
+ * limit mid-batch still gets their earlier events recorded rather than having
+ * the whole batch silently vanish.
+ */
+function chargeEvents(key: string, want: number, now: number): number {
+  const b = bucketFor(key, now);
+  const remaining = Math.max(0, RATE_LIMIT.maxEvents - b.events);
+  const granted = Math.min(want, remaining);
+  b.events += granted;
+  return granted;
 }
 
 /** Rejects cross-site POSTs. Not CSRF protection — there's nothing to forge
@@ -129,7 +163,9 @@ export async function POST(req: Request) {
   if (isBot(ua)) return NO_CONTENT;
 
   const ip = getClientIp(req.headers);
-  if (rateLimited(ip ?? "unknown")) return NO_CONTENT;
+  const rateKey = ip ?? "unknown";
+  const now = Date.now();
+  if (requestLimited(rateKey, now)) return NO_CONTENT;
 
   // Read as text, not req.json(): the size has to be checked before anything
   // tries to parse it.
@@ -198,10 +234,16 @@ export async function POST(req: Request) {
 
   if (rows.length === 0) return NO_CONTENT;
 
+  // Charge the per-IP event budget only for rows that survived validation —
+  // junk shouldn't consume a legitimate visitor's allowance on a shared NAT.
+  const granted = chargeEvents(rateKey, rows.length, now);
+  if (granted === 0) return NO_CONTENT;
+  const accepted = granted < rows.length ? rows.slice(0, granted) : rows;
+
   try {
     const ready = await ensureSchema();
     if (!ready) return NO_CONTENT;
-    await insertEvents(rows);
+    await insertEvents(accepted);
     void maybePurge();
   } catch (err) {
     // Swallowed on purpose. A failed analytics write is not a visitor's problem

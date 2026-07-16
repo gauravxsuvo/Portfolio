@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PromptInput } from "@/components/ui/prompt-input";
 import { ProjectCard } from "@/components/project-card";
+import { useFilterTracking } from "@/hooks/use-filter-tracking";
 import type { Project } from "@/lib/data";
 
 const STATUS_ORDER: Record<Project["status"], number> = { live: 0, ok: 1, wip: 2, err: 3 };
@@ -31,6 +32,9 @@ export function ProjectsExplorer({ projects }: { projects: Project[] }) {
         : STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
     );
   }, [projects, query, sort]);
+
+  // Reports the settled term only — never a keystroke. See the hook for why.
+  useFilterTracking("projects", query, filtered.length);
 
   return (
     <div className="flex flex-col gap-6">

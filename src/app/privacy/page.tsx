@@ -37,7 +37,12 @@ const COLLECTED: { what: string; detail: string }[] = [
   {
     what: "What you interact with",
     detail:
-      "shell commands you run, easter eggs you find, theme changes, palette opens, filters, and clicks on outbound links like my GitHub or email",
+      "shell commands you run, easter eggs you find, theme changes, command-palette opens, and clicks on outbound links like my GitHub or email",
+  },
+  {
+    what: "What you search for",
+    detail:
+      "if you type in the project or publication filter, the finished term — once you stop typing, never keystroke by keystroke — and how many results it found. A term that finds nothing tells me something's missing",
   },
   {
     what: "How far you read",

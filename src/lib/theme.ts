@@ -17,7 +17,13 @@ const HEX_RE = /^#[0-9a-f]{6}$/i;
  */
 export type ThemeSource = "panel" | "shell" | "system";
 
-export type ThemeChangeDetail = { hex: string; source: ThemeSource };
+/**
+ * `committed` separates "the user settled on this colour" from "a frame of a
+ * drag". Both broadcast, because the CRT overlay and friends must repaint every
+ * frame — but a listener that records history (analytics) wants only the former.
+ * Without it, one drag of the hue slider emitted an event per pointermove.
+ */
+export type ThemeChangeDetail = { hex: string; source: ThemeSource; committed: boolean };
 
 export function getComputedPrimaryHex(): string {
   if (typeof document === "undefined") return DEFAULT_PRIMARY_HEX;
@@ -86,11 +92,15 @@ export function readStoredThemeColor(): string | null {
   }
 }
 
-export function broadcastThemeChange(hex: string, source: ThemeSource): void {
+export function broadcastThemeChange(
+  hex: string,
+  source: ThemeSource,
+  committed: boolean
+): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent<ThemeChangeDetail>(THEME_CHANGE_EVENT, {
-      detail: { hex, source },
+      detail: { hex, source, committed },
     })
   );
 }
@@ -99,14 +109,15 @@ export function broadcastThemeChange(hex: string, source: ThemeSource): void {
 export function setThemeColor(hex: string, source: ThemeSource = "system"): void {
   applyThemeColor(hex);
   persistThemeColor(hex);
-  broadcastThemeChange(hex, source);
+  broadcastThemeChange(hex, source, true);
 }
 
 /** Drag-time variant: paints every frame, but defers the disk write. */
 export function previewThemeColor(hex: string, source: ThemeSource = "panel"): void {
   scheduleThemeColor(hex);
   persistThemeColorDebounced(hex);
-  broadcastThemeChange(hex, source);
+  // committed:false — this fires at pointer frequency.
+  broadcastThemeChange(hex, source, false);
 }
 
 export function readCrtEnabled(): boolean {

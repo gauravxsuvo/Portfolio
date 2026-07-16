@@ -183,9 +183,11 @@ export function AnalyticsProvider() {
     };
     const onTheme = (e: Event) => {
       const detail = (e as CustomEvent<ThemeChangeDetail>).detail;
-      // Only the committed choice from the panel, not every frame of a drag —
-      // a slider drag would otherwise emit hundreds of events per second.
-      if (detail?.hex && detail.source !== "system") {
+      // `committed` only: the panel broadcasts every frame of a slider drag so
+      // the page can repaint, and recording those meant one drag produced
+      // hundreds of identical events. What's interesting is the colour someone
+      // settled on, not the ones they passed through on the way.
+      if (detail?.hex && detail.committed && detail.source !== "system") {
         track("theme_change", { hex: detail.hex, source: detail.source });
       }
     };

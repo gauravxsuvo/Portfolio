@@ -109,12 +109,24 @@ export function hashIp(ip: string | null): string | null {
 }
 
 /**
- * x-forwarded-for is a client-settable header; it is only trustworthy because
- * Vercel's proxy overwrites it before our code runs. The FIRST entry is the
- * original client — later ones are the proxy chain. (Reading the last entry is
- * a classic bug that rate-limits the CDN instead of the visitor.)
+ * The client's IP.
+ *
+ * These headers are all client-settable and are only trustworthy because a
+ * proxy we control overwrites them before our code runs. Order matters:
+ *
+ *   cf-connecting-ip — set by Cloudflare, always the real visitor. Cloudflare
+ *                      strips any inbound copy, so it can't be spoofed through
+ *                      them. This site is proxied by Cloudflare, so it wins.
+ *   true-client-ip   — the same thing under its enterprise name.
+ *   x-forwarded-for  — the FIRST entry is the original client; later ones are
+ *                      the proxy chain. (Reading the last entry is the classic
+ *                      bug that rate-limits the CDN instead of the visitor.)
  */
 export function getClientIp(headers: Headers): string | null {
+  const cf = headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+  const trueClient = headers.get("true-client-ip");
+  if (trueClient) return trueClient.trim();
   const forwarded = headers.get("x-forwarded-for");
   if (forwarded) {
     const first = forwarded.split(",")[0]?.trim();
@@ -125,19 +137,75 @@ export function getClientIp(headers: Headers): string | null {
 
 export type Geo = { country: string | null; region: string | null; city: string | null };
 
+/** Cloudflare uses these for "unknown" and "Tor exit node" respectively. */
+const CF_NON_COUNTRIES = new Set(["XX", "T1"]);
+
+/**
+ * Where the visitor actually is.
+ *
+ * There are two proxies in front of this code — Cloudflare, then Vercel — and
+ * that broke the naive version badly enough to be worth explaining.
+ *
+ * Vercel's x-vercel-ip-* headers are derived from the IP that connects to
+ * *Vercel's* edge. With Cloudflare proxying the domain, that IP is a Cloudflare
+ * PoP, not the visitor: a visitor in India was reported as Singapore, because
+ * Cloudflare's free plan routes a lot of Indian traffic through its Singapore
+ * PoP (CF-RAY ends `-SIN`, and Vercel then serves from `sin1`). So the Vercel
+ * headers were faithfully reporting where *Cloudflare* was, which is not a fact
+ * anyone wants in an analytics dashboard.
+ *
+ * Cloudflare's own cf-ipcountry is computed from the real visitor IP before any
+ * of that, so it's authoritative here and takes precedence.
+ *
+ * The city/region handling is the subtle part. cf-ipcity and cf-region only
+ * exist if the "Add visitor location headers" Managed Transform is enabled in
+ * Cloudflare (it's free). Absent that, the only city on offer is Vercel's —
+ * which is the PoP's city and therefore wrong in exactly the cases where the
+ * country was wrong. So Vercel's city/region are only trusted when its country
+ * agrees with Cloudflare's, i.e. when there was no PoP skew to begin with.
+ * Storing nothing beats storing "Singapore" for someone in Agra.
+ */
 export function getGeo(headers: Headers): Geo {
   const decode = (value: string | null): string | null => {
     if (!value) return null;
     try {
-      // Vercel percent-encodes city names so a header stays ASCII-safe.
-      return decodeURIComponent(value) || null;
+      // Vercel percent-encodes city names so the header stays ASCII-safe.
+      return decodeURIComponent(value).trim() || null;
     } catch {
-      return value;
+      return value.trim() || null;
     }
   };
+
+  const cfCountryRaw = headers.get("cf-ipcountry")?.trim().toUpperCase() || null;
+  const cfCountry = cfCountryRaw && !CF_NON_COUNTRIES.has(cfCountryRaw) ? cfCountryRaw : null;
+
+  // The *presence* of any Cloudflare header is the signal that matters, not its
+  // value: it means Vercel's edge saw a Cloudflare PoP rather than the visitor,
+  // so every x-vercel-ip-* value is a fact about Cloudflare's network. Falling
+  // back to them when cf-ipcountry is "XX" (unknown) or "T1" (Tor) would
+  // reintroduce the exact bug — Cloudflare saying "I don't know" is not an
+  // invitation to believe the PoP's location instead.
+  const behindCloudflare = cfCountryRaw !== null || headers.has("cf-ray");
+
+  const country = cfCountry ?? (behindCloudflare ? null : headers.get("x-vercel-ip-country")?.trim().toUpperCase() || null);
+
+  // Present only with Cloudflare's "Add visitor location headers" Managed
+  // Transform enabled (free tier). Computed from the real visitor IP.
+  const cfCity = decode(headers.get("cf-ipcity"));
+  const cfRegion = decode(headers.get("cf-region"));
+  if (cfCity || cfRegion) {
+    return { country, region: cfRegion, city: cfCity };
+  }
+
+  if (behindCloudflare) {
+    // Country from Cloudflare, but no city worth having. Null beats "Singapore"
+    // for a visitor in Agra.
+    return { country, region: null, city: null };
+  }
+
   return {
-    country: headers.get("x-vercel-ip-country"),
-    region: headers.get("x-vercel-ip-country-region"),
+    country,
+    region: headers.get("x-vercel-ip-country-region")?.trim() || null,
     city: decode(headers.get("x-vercel-ip-city")),
   };
 }

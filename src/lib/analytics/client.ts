@@ -2,6 +2,7 @@
 
 import { getSessionId, getVisitorId, readConsent } from "./consent";
 import { LIMITS, type EventName, type EventProps } from "./events";
+import { allowEvent } from "./throttle";
 
 /**
  * The browser side of analytics.
@@ -168,7 +169,14 @@ export function track(name: EventName, props?: EventProps, path?: string): void 
   if (readConsent() !== "granted") return;
   const resolved = path ?? currentPath();
   if (isExcluded(resolved)) return;
-  queue.push({ name, path: resolved, props: sanitizeProps(props) });
+
+  const clean = sanitizeProps(props);
+  // Sanitize before the throttle check, not after: the dedupe key is built from
+  // the props, and two events that only differ in a field the server would have
+  // truncated away are the same event.
+  if (!allowEvent(name, resolved, clean).allowed) return;
+
+  queue.push({ name, path: resolved, props: clean });
   scheduleFlush();
 }
 

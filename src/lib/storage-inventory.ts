@@ -96,17 +96,12 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
     category: "necessary",
     retention: "until you clear site data, or `history -c`",
   },
-  {
-    // Named with the __Host- prefix in production (see analytics/auth.ts) — the
-    // browser then refuses to store it unless it's Secure and Path=/ with no
-    // Domain, which makes it unsettable by any subdomain.
-    key: "__Host-suvo_admin",
-    kind: "cookie",
-    purpose:
-      "the login session for the site owner's private analytics page. Never set for visitors — you will only ever have this if you are me and you logged in",
-    category: "necessary",
-    retention: "12 hours",
-  },
+  // No cookie entry, and that is not an omission: this site sets no cookies at
+  // all, for anyone. The admin login used to set one; it now holds its token in
+  // memory only (see analytics/auth.ts), so it dies with the tab and never
+  // touches storage. cookieEntries below is therefore empty, and /cookies
+  // renders "none" from it rather than from a hardcoded claim — if a cookie is
+  // ever added here, that page stops saying "none" on its own.
 ];
 
 export const localStorageEntries = STORAGE_INVENTORY.filter((e) => e.kind === "local-storage");
