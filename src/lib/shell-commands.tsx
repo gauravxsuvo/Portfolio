@@ -52,6 +52,8 @@ export const ROUTES: Record<string, string> = {
   publications: "/publications",
   research: "/publications",
   contact: "/contact",
+  privacy: "/privacy",
+  terms: "/terms",
 };
 
 const SECTION_IDS: Record<string, string> = {
@@ -236,6 +238,8 @@ ${projects.map((p, i, a) => `│   ${i === a.length - 1 ? "└──" : "├─�
 ├── publications/
 ├── contact/
 │   └── contact.txt
+├── privacy/
+├── terms/
 └── .secret`;
 
 /* ----------------------------------------------------------------- registry */

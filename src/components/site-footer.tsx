@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { unlockAchievement } from "@/lib/achievements";
 import { SecretsCounter } from "@/components/secrets-counter";
 import { bio } from "@/lib/data";
+
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "privacy" },
+  { href: "/terms", label: "terms" },
+];
 
 const SOCIALS = [
   { label: "github", href: bio.github },
@@ -59,7 +65,14 @@ export function SiteFooter() {
           {"//"}
         </span>
         <SecretsCounter />
-        <span className="sm:ml-auto">© {year} GAURAV RAJ SINGH</span>
+        <nav aria-label="Legal" className="flex flex-wrap gap-3 sm:ml-auto">
+          {LEGAL_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="link-wipe hover:text-primary">
+              {l.label}
+            </Link>
+          ))}
+          <span>© {year} GAURAV RAJ SINGH</span>
+        </nav>
       </div>
     </footer>
   );
