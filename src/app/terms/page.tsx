@@ -85,27 +85,29 @@ export default function TermsPage() {
               <div>
                 <dt className="mb-1 text-fg/50">The site&apos;s source code</dt>
                 <dd>
-                  Not currently published — the repository it&apos;s built from is private,
-                  so there&apos;s nothing here to fork. If you had a copy while it was
-                  public, the MIT license it carried still covers that copy; I can&apos;t
-                  take that back and wouldn&apos;t want to.
+                  MIT licensed, in{" "}
+                  <A href={`${bio.github}/Portfolio`} external>
+                    the repository it&apos;s built from
+                  </A>
+                  . Fork it, learn from it, ship your own version. That&apos;s what it&apos;s
+                  there for.
                 </dd>
               </div>
               <div>
                 <dt className="mb-1 text-fg/50">The content</dt>
                 <dd>
                   My bio, project write-ups, publication abstracts, and the design of this
-                  site are mine, <strong className="text-fg">all rights reserved</strong> —
-                  and they never travelled with the code&apos;s license even when that code
-                  was public. Quote a sentence or two with credit and a link — that&apos;s
-                  fair and I&apos;d appreciate it. Just don&apos;t republish the writing as
-                  yours or present my projects as your own work.
+                  site are <strong className="text-fg">not</strong> covered by that MIT
+                  license. They&apos;re mine, all rights reserved. Quote a sentence or two
+                  with credit and a link — that&apos;s fair and I&apos;d appreciate it. Just
+                  don&apos;t republish the writing as yours or present my projects as your
+                  own work.
                 </dd>
               </div>
             </dl>
             <p className="mt-3">
               The projects this site links to are separate repositories under their own
-              licenses, stated in each one. Nothing on this page reaches them.
+              licenses, stated in each one. The MIT license here doesn&apos;t reach them.
             </p>
           </Section>
 

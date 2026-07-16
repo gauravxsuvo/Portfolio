@@ -134,6 +134,63 @@ export async function recentLogins(limit = 25): Promise<LoginRow[]> {
   }));
 }
 
+export type FailureCounts = {
+  /** Wrong passwords from this exact address inside the window. */
+  fromIp: number;
+  /** Wrong passwords from *everyone* inside the window. */
+  total: number;
+};
+
+/**
+ * The global login throttle — layer two, and the one that actually binds.
+ *
+ * The in-memory limiter in auth.ts can't see across serverless instances, so on
+ * its own it caps guesses per instance rather than per attacker. Postgres is the
+ * one thing every instance shares, and every failed attempt already writes a row
+ * here, so this ceiling costs no new infrastructure: no Redis, no second vendor,
+ * no paid tier. It's a single indexed count on a table that only grows when
+ * someone is trying to get in.
+ *
+ * Two numbers, because they stop different attacks:
+ *
+ *   fromIp — the obvious one. Bounds a single source.
+ *   total  — the backstop, and the more important of the two. A per-IP limit is
+ *            worth nothing to an attacker with a botnet or a header they can
+ *            spoof: they just rotate the key it's counted under and the limit
+ *            never triggers. A count that isn't keyed on identity at all can't
+ *            be evaded by changing identity.
+ *
+ * The tradeoff of `total` is real and deliberate: someone willing to burn enough
+ * failed logins can lock *me* out for the window. That's the right trade. Being
+ * unable to read my own analytics for ten minutes during an active brute-force
+ * is an inconvenience; the alternative — an unbounded guess rate — is the whole
+ * database. A lockout is also self-announcing, which a slow grind is not.
+ *
+ * Only 'bad_password' counts. Not 'rate_limited', which would make the block
+ * feed itself, and not 'not_configured', which isn't a guess at anything.
+ */
+export async function failureCounts(
+  ip: string | null,
+  windowMinutes: number
+): Promise<FailureCounts | null> {
+  const sql = getSql();
+  if (!sql) return null;
+  if (!(await ensureAdminSchema())) return null;
+  // One round-trip for both numbers, and it rides the existing
+  // (outcome, ts DESC) index rather than needing one of its own.
+  const rows = (await sql`
+    SELECT
+      count(*) FILTER (WHERE ip IS NOT DISTINCT FROM ${ip}) AS from_ip,
+      count(*)                                              AS total
+    FROM admin_logins
+    WHERE outcome = 'bad_password'
+      AND ts > now() - (${windowMinutes} || ' minutes')::interval
+  `) as Record<string, unknown>[];
+  const r = rows[0];
+  if (!r) return null;
+  return { fromIp: Number(r.from_ip ?? 0), total: Number(r.total ?? 0) };
+}
+
 export type LoginSummary = {
   successes24h: number;
   failures24h: number;

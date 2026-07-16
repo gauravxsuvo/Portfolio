@@ -7,7 +7,7 @@ import {
   resetAttempts,
   SESSION_TTL_SECONDS,
 } from "@/lib/analytics/auth";
-import { recordLoginAttempt, type LoginOutcome } from "@/lib/analytics/admin-log";
+import { failureCounts, recordLoginAttempt, type LoginOutcome } from "@/lib/analytics/admin-log";
 import { getClientIp, getGeo, parseBrowser, parseDevice, parseOs } from "@/lib/analytics/request";
 
 /** Login. Exchanges the password for a short-lived, memory-only bearer token. */
@@ -24,6 +24,25 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
  * lesson already and reads as text first; there's no reason this one shouldn't.
  */
 const MAX_BODY_BYTES = 2_000;
+
+/**
+ * The global ceiling, counted in Postgres so it holds across every serverless
+ * instance at once. See failureCounts() for why the per-instance limiter can't
+ * do this job alone.
+ *
+ * Sized against what an honest login looks like: it's one person, who either
+ * knows the password or is pasting it. Ten wrong guesses from one address in ten
+ * minutes is already nothing a human does. Fifty site-wide is impossible unless
+ * something is very wrong, which is exactly when a hard stop is wanted.
+ *
+ * Even at the global ceiling, an attacker gets 50 guesses per 10 minutes —
+ * ~7,200 a day. Against 16 random characters that is not a rounding error away
+ * from zero; it *is* zero. The limits and the password-length floor are one
+ * defence, not two.
+ */
+const FAILURE_WINDOW_MINUTES = 10;
+const MAX_FAILURES_FROM_IP = 10;
+const MAX_FAILURES_GLOBAL = 50;
 
 export async function POST(req: Request) {
   const ip = getClientIp(req.headers);
@@ -86,6 +105,29 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "admin auth is not configured on this deployment." },
       { status: 503, headers: NO_STORE }
+    );
+  }
+
+  /**
+   * The global gate. Deliberately *not* logged when it refuses: the rows that
+   * caused this decision are already in the table — that's what was counted —
+   * and appending "blocked" rows for each rejected request is how an audit log
+   * gets flooded by the attack it exists to record.
+   *
+   * Fails open to the in-memory limiter if the database is unreachable
+   * (`null`), rather than closed. Failing closed here would hand anyone a
+   * lockout: knock Neon over, or just wait for it to blink, and /admin is sealed
+   * for everyone including me. The password is still the wall in that window,
+   * and the per-instance limiter still stands.
+   */
+  const failures = await failureCounts(ip, FAILURE_WINDOW_MINUTES);
+  if (
+    failures &&
+    (failures.fromIp >= MAX_FAILURES_FROM_IP || failures.total >= MAX_FAILURES_GLOBAL)
+  ) {
+    return NextResponse.json(
+      { error: "too many attempts. try again later." },
+      { status: 429, headers: NO_STORE }
     );
   }
 

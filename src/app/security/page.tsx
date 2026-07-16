@@ -54,9 +54,9 @@ const KNOWN: { title: string; detail: string }[] = [
       "By design — a tracker that required a credential would have to ship one to every browser. It's same-origin checked, bot-filtered, rate-limited, size-capped, and validates against a closed event vocabulary. The worst case is junk rows in my own chart. If you can get it to do something else, I want to hear about it.",
   },
   {
-    title: "Rate limits are per-instance",
+    title: "Analytics ingest rate limits are per-instance",
     detail:
-      "Serverless instances don't share memory, so the true limit is (limit x live instances). A distributed limiter needs Redis to defend a route whose worst case is a bad bar chart. Known tradeoff, documented in the code.",
+      "Serverless instances don't share memory, so the true limit on /api/track is (limit x live instances). A distributed limiter needs Redis — a second database and a paid tier — to defend a route whose worst case is a junk row in my own bar chart, so this one is an accepted tradeoff rather than an oversight. The login throttle is deliberately not on this list: it had the same weakness and no longer does, because its ceiling is counted in Postgres, which every instance shares.",
   },
   {
     title: "Missing SPF/DMARC on a domain that sends no mail",

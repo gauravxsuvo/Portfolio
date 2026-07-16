@@ -40,8 +40,50 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
  */
 export const SESSION_TTL_SECONDS = 5 * 60;
 
+/**
+ * Minimum secret lengths, enforced rather than suggested.
+ *
+ * Every other defence here is downstream of these two values actually being
+ * unguessable. Rate limits raise the cost of each guess; they don't help if the
+ * password is in a wordlist, because the attacker needs one guess. And the whole
+ * scheme is public — the repository is open, so an attacker reads exactly how
+ * this works, which is fine (it's meant to survive that) but removes any
+ * pretence that a weak password is hidden behind clever code.
+ *
+ * 16 characters of random password is far past what an online attack can reach
+ * through the limits below. 32 for the HMAC key because a guessable signing key
+ * doesn't need the password at all — it forges the token and skips the login.
+ *
+ * This fails *closed*: too short and /admin is unreachable, exactly as if the
+ * variable were missing. A warning that could be ignored would be worthless
+ * precisely when it mattered, and "the deploy is broken" is a much better
+ * failure than "the deploy is open".
+ */
+const MIN_PASSWORD_LENGTH = 16;
+const MIN_SECRET_LENGTH = 32;
+
+/** Latched so a hot instance logs this once, not once per request. */
+let weakSecretsReported = false;
+
 export function isAuthConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_SECRET);
+  const password = process.env.ADMIN_PASSWORD;
+  const secret = process.env.ADMIN_SECRET;
+  if (!password || !secret) return false;
+
+  if (password.length < MIN_PASSWORD_LENGTH || secret.length < MIN_SECRET_LENGTH) {
+    if (!weakSecretsReported) {
+      weakSecretsReported = true;
+      // Lengths only, never the values — this goes to a log aggregator.
+      console.error(
+        `[admin] DISABLED: secrets too short. ADMIN_PASSWORD is ${password.length} chars ` +
+          `(needs >= ${MIN_PASSWORD_LENGTH}), ADMIN_SECRET is ${secret.length} chars ` +
+          `(needs >= ${MIN_SECRET_LENGTH}). Generate with: ` +
+          `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+      );
+    }
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -107,13 +149,25 @@ export function bearerFrom(headers: Headers): string | null {
 }
 
 /**
- * Login throttle.
+ * Login throttle, layer one of two: fast, in-memory, per-instance.
  *
  * A single-password admin page with no rate limit has a password of "however
- * many guesses fit in a minute". Per-instance and in-memory, with the same
- * caveat as the ingest limiter (instances don't share state) — but here it
- * backs a real password rather than being the only defence, so the goal is to
- * make online brute force impractical, not impossible.
+ * many guesses fit in a minute". This stops that, but it cannot be the whole
+ * answer, and the reason is worth stating plainly: **serverless instances do not
+ * share memory.** Every cold start brings an empty Map, so an attacker who
+ * forces concurrency gets ATTEMPT_LIMIT guesses *per instance*, and the platform
+ * will happily start as many instances as the incoming load asks for. Read that
+ * way, this limit isn't "5 per 10 minutes" — it's "5 times however many
+ * instances you can provoke", which is not a limit at all.
+ *
+ * So this layer's real job is narrow and it does it well: it's the cheap gate
+ * that absorbs a flood without touching the database, which in turn bounds how
+ * many database round-trips layer two can be made to perform.
+ *
+ * Layer two is the global one — see failureCounts() in admin-log.ts, called from
+ * the session route. Postgres is shared by every instance, so a count taken
+ * there is the real ceiling. The two compose: this one keeps the flood off the
+ * database, that one makes the number mean something.
  */
 const ATTEMPT_LIMIT = 5;
 const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
