@@ -117,21 +117,44 @@ export function bearerFrom(headers: Headers): string | null {
  */
 const ATTEMPT_LIMIT = 5;
 const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
-const attempts = new Map<string, { count: number; resetAt: number }>();
+type Attempt = { count: number; resetAt: number; rejectionLogged: boolean };
+const attempts = new Map<string, Attempt>();
 
-export function tooManyAttempts(key: string): boolean {
+export type AttemptCheck = {
+  /** Over the limit: refuse the request. */
+  limited: boolean;
+  /**
+   * True on the *first* refusal of a window only.
+   *
+   * This exists because the audit log is a write path an anonymous caller can
+   * trigger. Recording every throttled request meant a script could append rows
+   * as fast as it could POST — filling the database, and worse, burying every
+   * real login under thousands of identical "rate limited" rows in a panel that
+   * only shows the last 25. An attacker who can erase the evidence of their own
+   * attack by continuing it has beaten the log. One row per burst keeps the
+   * signal ("this address got throttled at this time") and drops the flood.
+   */
+  firstRejection: boolean;
+};
+
+/** Records an attempt against `key` and says what to do about it. Mutates, so
+ *  call exactly once per request. */
+export function noteAttempt(key: string): AttemptCheck {
   const now = Date.now();
   const entry = attempts.get(key);
   if (!entry || now > entry.resetAt) {
-    attempts.set(key, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS });
+    attempts.set(key, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS, rejectionLogged: false });
     // Without this sweep the Map grows with every distinct IP forever.
     if (attempts.size > 1000) {
       for (const [k, v] of attempts) if (now > v.resetAt) attempts.delete(k);
     }
-    return false;
+    return { limited: false, firstRejection: false };
   }
   entry.count += 1;
-  return entry.count > ATTEMPT_LIMIT;
+  if (entry.count <= ATTEMPT_LIMIT) return { limited: false, firstRejection: false };
+  const firstRejection = !entry.rejectionLogged;
+  entry.rejectionLogged = true;
+  return { limited: true, firstRejection };
 }
 
 /** Clears the throttle for a key after a successful login. */

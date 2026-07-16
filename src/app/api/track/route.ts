@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { insertEvents, ensureSchema, isDbConfigured, purgeOldEvents, type InsertableEvent } from "@/lib/analytics/db";
 import { purgeOldLogins } from "@/lib/analytics/admin-log";
-import { isEventName, LIMITS, type EventProps } from "@/lib/analytics/events";
+import { isEventName, propsAreValid, LIMITS, type EventProps } from "@/lib/analytics/events";
 import {
   getClientIp,
   getGeo,
@@ -208,6 +208,13 @@ export async function POST(req: Request) {
     const cleanedPath = cleanPath(path);
     if (!cleanedPath) continue;
 
+    const cleanedProps = cleanProps(props);
+    // Drop the whole event, not just the offending prop. A scroll_depth with no
+    // usable pct isn't a partial measurement worth keeping — and a stored prop
+    // that a dashboard query will later cast is the one input here that can do
+    // more than skew a chart. See propsAreValid().
+    if (!propsAreValid(name, cleanedProps)) continue;
+
     const ref = clamp(referrer, LIMITS.maxReferrerLength);
     const host = referrerHost(ref);
     rows.push({
@@ -229,7 +236,7 @@ export async function POST(req: Request) {
       screenW: w,
       screenH: h,
       ipHash,
-      props: cleanProps(props),
+      props: cleanedProps,
     });
   }
 

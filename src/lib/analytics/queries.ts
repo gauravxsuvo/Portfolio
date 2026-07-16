@@ -46,9 +46,15 @@ export async function getOverview(days: number): Promise<Overview | null> {
       (SELECT count(*) FROM window_events WHERE name = 'pageview')            AS pageviews,
       (SELECT count(DISTINCT visitor_id) FROM window_events)                  AS visitors,
       (SELECT count(DISTINCT session_id) FROM window_events)                  AS sessions,
+      -- Digit-bounded, not just "is digits": '^[0-9]+$' happily matches a
+      -- 60-digit number, and one of those in an avg() makes "avg time" read as
+      -- 4e59 seconds. Bounding the *pattern* rather than adding a range check
+      -- is deliberate: a numeric range check in WHERE could be evaluated before
+      -- the regex that makes its own cast safe, since Postgres doesn't promise
+      -- to order WHERE conditions. The pattern can't have that problem.
       (SELECT coalesce(avg((props->>'seconds')::numeric), 0)
          FROM window_events
-        WHERE name = 'page_exit' AND props->>'seconds' ~ '^[0-9]+$')          AS avg_seconds,
+        WHERE name = 'page_exit' AND props->>'seconds' ~ '^[0-9]{1,4}$')      AS avg_seconds,
       (SELECT coalesce(
                 100.0 * count(*) FILTER (WHERE views = 1) / nullif(count(*), 0), 0)
          FROM session_pages)                                                  AS bounce_rate
@@ -201,7 +207,10 @@ export async function webVitals(days: number): Promise<VitalRow[]> {
     FROM events
     WHERE name = 'web_vital'
       AND props->>'metric' IS NOT NULL
-      AND props->>'value' ~ '^[0-9]+(\\.[0-9]+)?$'
+      -- Same digit bound as avg_seconds above, for the same reason: this regex
+      -- is what makes the ::numeric in percentile_cont safe, and an unbounded
+      -- one lets a single hostile sample dominate the percentile.
+      AND props->>'value' ~ '^[0-9]{1,7}(\\.[0-9]{1,4})?$'
       AND ts > now() - (${days} || ' days')::interval
     GROUP BY 1 ORDER BY 1
   `) as Record<string, unknown>[];
@@ -232,7 +241,14 @@ export async function scrollDepth(days: number): Promise<Row[]> {
     SELECT (props->>'pct') AS label, count(DISTINCT session_id || path) AS value
     FROM events
     WHERE name = 'scroll_depth'
-      AND props->>'pct' IS NOT NULL
+      -- Must match the exact buckets the client emits, not merely "is not null".
+      -- ORDER BY casts this to int, and a bad cast aborts the statement rather
+      -- than skipping the row: with the stats route running everything in one
+      -- Promise.all, a single junk value took the whole dashboard down for the
+      -- 90 days until it aged out. The ingest route rejects these now
+      -- (propsAreValid), but this is the layer that has to hold for rows already
+      -- stored, and it costs one regex.
+      AND props->>'pct' ~ '^(25|50|75|100)$'
       AND ts > now() - (${days} || ' days')::interval
     GROUP BY 1
     ORDER BY (props->>'pct')::int

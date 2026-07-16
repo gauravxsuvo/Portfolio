@@ -63,7 +63,10 @@ export function AnalyticsProvider() {
     const isFirst = lastPath.current === null;
     const referrer = isFirst ? document.referrer || null : null;
 
-    track("pageview", referrer ? { referrer } : undefined, pathname);
+    // Fourth argument, not a prop — see track()'s doc comment. As a prop this
+    // stored the full referring URL and never populated referrer_host, so the
+    // dashboard's referrers panel read "all direct so far" no matter what.
+    track("pageview", undefined, pathname, referrer);
 
     enteredAt.current = Date.now();
     lastPath.current = pathname;
@@ -219,7 +222,7 @@ export function AnalyticsProvider() {
       // every accepted visitor looks like they arrived on whatever page they
       // happened to be on when they clicked.
       if (consent === "granted") {
-        track("pageview", { referrer: document.referrer || null }, window.location.pathname);
+        track("pageview", undefined, window.location.pathname, document.referrer || null);
       }
     };
     window.addEventListener(CONSENT_EVENT, onConsent);

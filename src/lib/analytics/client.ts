@@ -163,8 +163,24 @@ function scheduleFlush(): void {
   }
 }
 
-/** Public entry point. A no-op unless consent has been granted. */
-export function track(name: EventName, props?: EventProps, path?: string): void {
+/**
+ * Public entry point. A no-op unless consent has been granted.
+ *
+ * `referrer` is a separate argument rather than just another prop, and that
+ * distinction is load-bearing. It travels in the payload's own `referrer` field,
+ * which the server runs through referrerHost() — reducing it to a bare hostname
+ * *before* anything is stored. Passed as a prop it would bypass that entirely
+ * and land in the props JSONB as the full URL, complete with whatever search
+ * query or internal path sent the visitor here. That's precisely what /privacy
+ * promises never happens ("the referring site's domain only, never the full
+ * URL"), so the shape of this signature is what keeps that sentence true.
+ */
+export function track(
+  name: EventName,
+  props?: EventProps,
+  path?: string,
+  referrer?: string | null
+): void {
   if (typeof window === "undefined") return;
   if (readConsent() !== "granted") return;
   const resolved = path ?? currentPath();
@@ -176,7 +192,7 @@ export function track(name: EventName, props?: EventProps, path?: string): void 
   // truncated away are the same event.
   if (!allowEvent(name, resolved, clean).allowed) return;
 
-  queue.push({ name, path: resolved, props: clean });
+  queue.push({ name, path: resolved, props: clean, referrer: referrer ?? null });
   scheduleFlush();
 }
 
