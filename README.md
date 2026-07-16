@@ -117,7 +117,7 @@ never publish visitors' analytics or downgrade a privacy guarantee.
 | Page | What it covers |
 | --- | --- |
 | [`/privacy`](src/app/privacy/page.tsx) | What the analytics record, why, retention, your rights |
-| [`/cookies`](src/app/cookies/page.tsx) | Every storage key and cookie, split by whether it needs consent |
+| [`/cookies`](src/app/cookies/page.tsx) | Every storage key, split by whether it needs consent — and why there are no cookies |
 | [`/terms`](src/app/terms/page.tsx) | Use of the site, and the code-vs-content license split |
 | [`/security`](src/app/security/page.tsx) | Vulnerability disclosure: scope, what's promised, known tradeoffs |
 | [`/accessibility`](src/app/accessibility/page.tsx) | WCAG 2.2 AA self-assessment, and where it honestly falls short |
