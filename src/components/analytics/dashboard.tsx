@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BracketButton } from "@/components/ui/bracket-button";
 import { StatBars } from "@/components/analytics/stat-bars";
 import { DashboardSkeleton } from "@/components/analytics/dashboard-skeleton";
+import { LoginLog } from "@/components/analytics/login-log";
 import type { Row, VitalRow, Overview } from "@/lib/analytics/queries";
+import type { LoginRow, LoginSummary } from "@/lib/analytics/admin-log";
 
 type Stats = {
   days: number;
@@ -23,6 +25,8 @@ type Stats = {
   vitals: VitalRow[];
   searches: Row[];
   zeroSearches: Row[];
+  logins: LoginRow[];
+  loginStats: LoginSummary | null;
   fetchedAt: string;
   token: string;
   error?: string;
@@ -295,6 +299,12 @@ export function Dashboard({
               </ul>
             )}
           </section>
+
+          {/* Deliberately not filtered by the date range above: the range picks
+              a window for analytics trends, but "have there been failed logins"
+              is a question you want answered now, not for whatever window is
+              selected. Always the most recent 25. */}
+          <LoginLog rows={stats.logins ?? []} summary={stats.loginStats ?? null} />
 
           <p className="mt-4 text-[11px] leading-relaxed text-fg/30">
             Only visitors who accepted the consent prompt appear here, so these numbers are a

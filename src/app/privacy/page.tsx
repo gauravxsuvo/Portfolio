@@ -117,14 +117,34 @@ export default function PrivacyPage() {
           <Section>
             <H3>What&apos;s deliberately not collected</H3>
             <p>
-              Your IP address is never stored. It&apos;s used in memory to work out your
-              country and to stop one person flooding the endpoint, and what gets saved
-              instead is a salted hash that rotates every day — so even I can&apos;t link
-              your visits across two days by it, and it can&apos;t be turned back into an
-              address by anyone who obtains the database. There&apos;s no session recording,
-              no heatmap, no keystroke logging, no cross-site tracking, no fingerprinting,
-              no ad profile, and nothing you type into the shell is stored server-side
-              beyond the name of the command itself.
+              Your IP address is not stored (one narrow exception below, and it almost
+              certainly isn&apos;t you). It&apos;s used in memory to work out your country
+              and to stop one person flooding the endpoint, and what gets saved instead is a
+              salted hash that rotates every day — so even I can&apos;t link your visits
+              across two days by it, and it can&apos;t be turned back into an address by
+              anyone who obtains the database. There&apos;s no session recording, no heatmap,
+              no keystroke logging, no cross-site tracking, no fingerprinting, no ad profile,
+              and nothing you type into the shell is stored server-side beyond the name of
+              the command itself.
+            </p>
+          </Section>
+
+          <Section>
+            <H3>The one exception: logging in to the admin page</H3>
+            <p>
+              This site has a private page where I read the analytics. Every attempt to log
+              in to it — mine or anyone else&apos;s — is recorded with the time, the full IP
+              address, the rough location and the browser, and whether it succeeded. That is
+              the only place a full IP is stored, and I&apos;m saying so plainly rather than
+              letting &quot;IPs are never stored&quot; quietly not be true.
+            </p>
+            <p className="mt-3">
+              It exists so I can tell whether someone other than me is trying to get at your
+              data, which is not a question a hash that changes every night can answer. The
+              basis for it is legitimate interest in securing the site rather than consent —
+              asking an attacker&apos;s permission to log the attack would be a strange
+              system. If you have never typed a password into this site, you have no rows
+              here. Kept 90 days, then deleted, like everything else.
             </p>
           </Section>
 

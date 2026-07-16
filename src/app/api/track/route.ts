@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertEvents, ensureSchema, isDbConfigured, purgeOldEvents, type InsertableEvent } from "@/lib/analytics/db";
+import { purgeOldLogins } from "@/lib/analytics/admin-log";
 import { isEventName, LIMITS, type EventProps } from "@/lib/analytics/events";
 import {
   getClientIp,
@@ -274,6 +275,11 @@ async function maybePurge(): Promise<void> {
   try {
     const deleted = await purgeOldEvents(90);
     if (deleted > 0) console.log(`[analytics] purged ${deleted} events past retention`);
+    // The admin login log rides the same schedule. Smaller table, but the
+    // privacy page promises 90 days for it too, and a retention promise kept
+    // on one table and forgotten on the other is just a wrong promise.
+    const logs = await purgeOldLogins(90);
+    if (logs > 0) console.log(`[admin-log] purged ${logs} login rows past retention`);
   } catch {
     // ignore
   }

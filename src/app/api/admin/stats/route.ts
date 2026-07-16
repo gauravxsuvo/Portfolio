@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { bearerFrom, isAuthConfigured, mintToken, verifyToken, SESSION_TTL_SECONDS } from "@/lib/analytics/auth";
 import { isDbConfigured } from "@/lib/analytics/db";
+import { loginSummary, recentLogins } from "@/lib/analytics/admin-log";
 import {
   clampDays,
   getOverview,
@@ -76,6 +77,8 @@ export async function GET(req: Request) {
       vitals,
       searches,
       zeroSearches,
+      logins,
+      loginStats,
     ] = await Promise.all([
       getOverview(days),
       pageviewSeries(days),
@@ -92,6 +95,8 @@ export async function GET(req: Request) {
       webVitals(days),
       topSearches(days),
       zeroResultSearches(days),
+      recentLogins(25),
+      loginSummary(),
     ]);
 
     return NextResponse.json(
@@ -112,6 +117,8 @@ export async function GET(req: Request) {
         vitals,
         searches,
         zeroSearches,
+        logins,
+        loginStats,
         fetchedAt: new Date().toISOString(),
         // Sliding session: this response is proof of activity.
         token: mintToken(),

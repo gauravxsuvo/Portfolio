@@ -66,6 +66,14 @@ The site sets **no cookies at all** — not for visitors, and not for the admin
 login, which keeps its bearer token in memory so it dies on refresh and on tab
 close.
 
+`/admin` keeps an auth audit trail ([`admin-log.ts`](src/lib/analytics/admin-log.ts)):
+every login attempt on it, success or failure, with time, IP, location and
+device, shown as a panel in the dashboard with a warning when repeated failures
+come from multiple addresses. That table is the **one place a full IP is
+stored** — a daily-rotating hash would make the same attacker look new every
+midnight, which defeats the point of a security log. `/privacy` calls the
+exception out rather than letting "IPs are never stored" quietly not be true.
+
 Every event passes through [`throttle.ts`](src/lib/analytics/throttle.ts):
 dedupe, a per-type minimum interval, a token bucket, and a session cap. It's
 there because idle clicking is noise, not data — one drag of the theme slider
