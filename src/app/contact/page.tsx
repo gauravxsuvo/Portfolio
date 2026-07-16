@@ -35,13 +35,9 @@ const CHANNELS = [
     external: true,
     copyValue: bio.linkedin,
   },
-  {
-    label: "WEBSITE",
-    value: bio.website.replace("https://", ""),
-    href: bio.website,
-    external: true,
-    copyValue: bio.website,
-  },
+  // No WEBSITE row: bio.website is now this site. Listing it here offered the
+  // reader a link back to the page they were already standing on, with a copy
+  // button for its own address.
   {
     label: "ORCID",
     value: bio.orcid,

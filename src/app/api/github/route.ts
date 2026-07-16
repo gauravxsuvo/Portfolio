@@ -24,10 +24,39 @@ type RepoStat = {
   url: string;
 };
 
+/**
+ * GitHub's own rule for owner and repo names: letters, digits, dot, dash,
+ * underscore. Nothing else is a valid segment.
+ */
+const SEGMENT_RE = /^[A-Za-z0-9_.-]+$/;
+
 function parseRepo(repoUrl: string): { owner: string; repo: string } | null {
-  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/?#]+)/i);
-  if (!match) return null;
-  return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+  // Anchored to the real host via URL parsing, not a substring match. The old
+  // regex looked for "github.com/" anywhere in the string, so
+  // "https://evil.com/github.com/a/b" matched and was treated as a GitHub repo.
+  let url: URL;
+  try {
+    url = new URL(repoUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  const host = url.hostname.toLowerCase();
+  if (host !== "github.com" && host !== "www.github.com") return null;
+
+  const [, owner, rawRepo] = url.pathname.split("/");
+  if (!owner || !rawRepo) return null;
+  const repo = rawRepo.replace(/\.git$/, "");
+
+  // Rejects "..", empty segments, and anything with a slash or encoded byte.
+  // Without this, an owner of ".." makes the request URL below normalise to
+  // https://api.github.com/admin — a path traversal out of /repos/. Today
+  // repoUrl only ever comes from the static data in data.ts, so this isn't
+  // reachable; it's here so that stops being load-bearing.
+  if (!SEGMENT_RE.test(owner) || !SEGMENT_RE.test(repo)) return null;
+  if (owner === "." || owner === ".." || repo === "." || repo === "..") return null;
+
+  return { owner, repo };
 }
 
 async function fetchRepo(owner: string, repo: string): Promise<RepoStat | null> {
@@ -41,7 +70,11 @@ async function fetchRepo(owner: string, repo: string): Promise<RepoStat | null> 
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
 
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+  // encodeURIComponent belt-and-braces on top of the SEGMENT_RE check above:
+  // the validation is what makes this safe, but interpolating an unencoded
+  // value into a URL is the habit worth not having.
+  const path = `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  const res = await fetch(`https://api.github.com/repos/${path}`, {
     headers,
     next: { revalidate: CACHE_SECONDS },
   });

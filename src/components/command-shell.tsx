@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { PromptInput } from "@/components/ui/prompt-input";
 import { TerminalWindow } from "@/components/ui/terminal-window";
-import { SHELL_PREFILL_EVENT } from "@/lib/shell-events";
+import { SHELL_PREFILL_EVENT, SHELL_RUN_EVENT, type ShellRunDetail } from "@/lib/shell-events";
 import {
   COMPLETIONS,
   completionsFor,
@@ -303,6 +303,19 @@ export function CommandShell() {
     const arg = rest.join(" ");
 
     const resolved = resolveCommand(name);
+
+    // Announce the run for anything that cares (analytics subscribes to this).
+    // Dispatched before the early returns below so `clear` and `history -c`
+    // aren't silently missing from the data, and it carries the resolved name
+    // so aliases aggregate onto the command they resolve to rather than
+    // splitting the count. Unknown commands report the raw token: the typos are
+    // the interesting part, since they say what people expected to work.
+    window.dispatchEvent(
+      new CustomEvent<ShellRunDetail>(SHELL_RUN_EVENT, {
+        detail: { name: resolved?.name ?? name, known: Boolean(resolved) },
+      })
+    );
+
     if (resolved?.name === "clear") {
       setEntries([]);
       return;

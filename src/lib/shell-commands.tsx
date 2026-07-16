@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { useRouter } from "next/navigation";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
 import { bio, experience, projects, publications, skillGroups } from "@/lib/data";
+import { siteHost } from "@/lib/site";
 import { PRESETS, DEFAULT_PRIMARY_HEX, hslToHex, normalizeHex } from "@/lib/color";
 import {
   OPEN_THEME_PANEL_EVENT,
@@ -53,7 +54,11 @@ export const ROUTES: Record<string, string> = {
   research: "/publications",
   contact: "/contact",
   privacy: "/privacy",
+  cookies: "/cookies",
   terms: "/terms",
+  security: "/security",
+  accessibility: "/accessibility",
+  a11y: "/accessibility",
 };
 
 const SECTION_IDS: Record<string, string> = {
@@ -239,7 +244,10 @@ ${projects.map((p, i, a) => `│   ${i === a.length - 1 ? "└──" : "├─�
 ├── contact/
 │   └── contact.txt
 ├── privacy/
+├── cookies/
 ├── terms/
+├── security/
+├── accessibility/
 └── .secret`;
 
 /* ----------------------------------------------------------------- registry */
@@ -666,7 +674,7 @@ export const COMMANDS: Command[] = [
   {
     name: "ping",
     run: ({ arg }) => {
-      const host = arg.trim() || "gauravxsuvo.dev";
+      const host = arg.trim() || siteHost;
       const ms = () => (Math.random() * 18 + 4).toFixed(1);
       return (
         <Out>

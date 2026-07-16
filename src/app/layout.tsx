@@ -19,9 +19,12 @@ import { SiteFrame } from "@/components/site-frame";
 import { AmbientGrid } from "@/components/ambient-grid";
 import { SelectionSearch } from "@/components/selection-search";
 import { ScrollFx } from "@/components/scroll-fx";
+import { SkipLink } from "@/components/skip-link";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
+import { ConsentBanner } from "@/components/analytics/consent-banner";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { bio } from "@/lib/data";
-import { siteName, siteUrl } from "@/lib/site";
+import { isCanonicalHost, siteName, siteUrl } from "@/lib/site";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -64,7 +67,11 @@ export const metadata: Metadata = {
     title: siteName,
     description,
   },
-  robots: { index: true, follow: true },
+  // Matches robots.ts: preview deployments must not be indexed as duplicates of
+  // the real domain.
+  robots: isCanonicalHost
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
@@ -92,6 +99,9 @@ export default function RootLayout({
         <noscript>
           <style>{`[data-boot-gate]{display:none !important;}[data-reveal-item]{opacity:1 !important;transform:none !important;}`}</style>
         </noscript>
+        {/* First focusable element in the document, on purpose — a skip link
+            that isn't first is one you have to tab past the nav to reach. */}
+        <SkipLink />
         <AmbientGrid />
         <CrtOverlay />
         <CursorLayer />
@@ -105,11 +115,16 @@ export default function RootLayout({
         <KonamiListener />
         <NavShortcuts />
         <ThemePanel />
+        <AnalyticsProvider />
         <BootGate>
           <SiteNav />
           <SiteFrame>{children}</SiteFrame>
           <SiteFooter />
         </BootGate>
+        {/* Outside BootGate: it gates on the boot-complete event itself, and
+            nesting it here would let the boot screen's `inert` swallow the
+            buttons. */}
+        <ConsentBanner />
       </body>
     </html>
   );

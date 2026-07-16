@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { bio, projects, skillGroups } from "@/lib/data";
+import { siteHost } from "@/lib/site";
 import { OPEN_THEME_PANEL_EVENT } from "@/lib/theme";
 
 const GLYPH = String.raw`┌───────────┐
@@ -41,7 +42,10 @@ export function NeofetchPanel() {
 
   const rows: [string, string][] = [
     ["os", "SuvoOS (portfolio edition)"],
-    ["host", "gauravxsuvo.dev"],
+    // Derived, not hardcoded: this used to read "gauravxsuvo.dev", a domain
+    // that was never registered — so the one row in this panel claiming to
+    // report the real host was the only fabricated line in it.
+    ["host", siteHost],
     ["shell", "gsh 1.0 [react]"],
     ["resolution", "1920x1080 @ 60Hz (crt)"],
     ["theme", "user-selectable [phosphor]"],

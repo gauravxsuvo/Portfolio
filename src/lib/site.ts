@@ -1,11 +1,46 @@
 import type { Metadata } from "next";
 
-// VERCEL_PROJECT_PRODUCTION_URL is set automatically by Vercel to whatever
-// domain currently serves production — the *.vercel.app one today, and the
-// custom domain the moment one is attached, with no code change required.
-export const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
+/**
+ * The canonical origin, hardcoded on purpose.
+ *
+ * This used to derive from VERCEL_PROJECT_PRODUCTION_URL. That was right while
+ * the site had no domain of its own, but it is actively harmful now that it
+ * does: the variable resolves to whichever domain Vercel considers production,
+ * which is still the *.vercel.app host under several project configurations.
+ * Every canonical tag, OG image URL, sitemap entry and robots.txt line is built
+ * from this constant, so a wrong value here silently tells Google the site
+ * lives at two origins and splits its ranking between them.
+ *
+ * A domain is a deliberate, rare change — worth an edit here rather than
+ * something that can drift when a hosting dashboard is reconfigured. The env
+ * var stays supported for preview deployments, which genuinely do serve from a
+ * generated hostname and shouldn't claim to be the canonical site.
+ */
+const PRODUCTION_ORIGIN = "https://mysuvo.com";
+
+function resolveSiteUrl(): string {
+  // Explicit override wins — used by preview deploys and any self-host.
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_ENV === "production") return PRODUCTION_ORIGIN;
+  // Preview builds: describe themselves honestly rather than as the real site.
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.NODE_ENV === "production") return PRODUCTION_ORIGIN;
+  return "http://localhost:3000";
+}
+
+export const siteUrl = resolveSiteUrl();
+
+/**
+ * Whether this deployment is the real site rather than a preview or a local dev
+ * server. Drives robots.txt and the `robots` metadata: only the canonical host
+ * should ever invite indexing.
+ */
+export const isCanonicalHost = siteUrl === PRODUCTION_ORIGIN;
+
+/** Bare hostname, e.g. "mysuvo.com". For display (neofetch, terms, shell). */
+export const siteHost = siteUrl.replace(/^https?:\/\//, "");
 
 export const siteName = "gaurav@portfolio:~$";
 

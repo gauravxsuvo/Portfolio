@@ -47,6 +47,20 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
+  // The directives below don't inherit from default-src, so leaving them out
+  // left real gaps even with `default-src 'self'` set:
+  //   frame-src   — the site embeds no iframes at all; 'none' means an injected
+  //                 <iframe> can't load anything, not even from this origin.
+  //   worker-src  — falls back to script-src, which carries 'unsafe-inline';
+  //                 pinning it to 'self' stops a blob: worker being spawned.
+  //                 (img-src allows blob: for canvas work, so blob: is reachable.)
+  //   media-src   — no <audio>/<video> anywhere.
+  //   manifest-src— the PWA manifest is ours and same-origin.
+  "frame-src 'none'",
+  "child-src 'none'",
+  "worker-src 'self'",
+  "media-src 'none'",
+  "manifest-src 'self'",
   // Pointless over http://localhost and only ever a foot-gun there.
   !isDev && "upgrade-insecure-requests",
 ]
@@ -61,8 +75,41 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    // Everything this site will never legitimately ask for. Denying a feature
+    // it doesn't use costs nothing and means an injected script can't prompt a
+    // visitor for a camera or a payment sheet under this domain's name.
+    value: [
+      "accelerometer=()",
+      "autoplay=()",
+      "browsing-topics=()", // opts out of Chrome's ad-topics API entirely
+      "camera=()",
+      "display-capture=()",
+      "encrypted-media=()",
+      "fullscreen=(self)",
+      "geolocation=()",
+      "gyroscope=()",
+      "idle-detection=()",
+      "interest-cohort=()", // legacy FLoC opt-out; harmless to keep
+      "magnetometer=()",
+      "microphone=()",
+      "midi=()",
+      "payment=()",
+      "publickey-credentials-get=()",
+      "screen-wake-lock=()",
+      "serial=()",
+      "usb=()",
+      "xr-spatial-tracking=()",
+    ].join(", "),
   },
+  // Severs the window.opener relationship, so a page this site opens can't
+  // reach back into it, and isolates the browsing context group.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Stops another site embedding this one's responses as a subresource, which
+  // is the read half of a Spectre-style cross-origin leak.
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // The site resolves no third-party hostnames, so speculative DNS lookups
+  // leak visitor IPs to nobody's benefit.
+  { key: "X-DNS-Prefetch-Control", value: "off" },
   // Browsers ignore HSTS over plain http anyway, but there's no reason to ship a
   // two-year pin from a dev server.
   ...(isDev
@@ -75,11 +122,26 @@ const securityHeaders = [
       ]),
 ];
 
+/**
+ * Keeps the private surface out of search indexes at the transport layer.
+ *
+ * robots.txt is a request a crawler may ignore, and a <meta robots> tag only
+ * exists once a page renders — neither covers a JSON endpoint. An X-Robots-Tag
+ * header applies to every response including API routes, and the major crawlers
+ * do honour it. Belt and braces with the meta tag on /admin.
+ */
+const noIndexHeader = [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }];
+
 const nextConfig: NextConfig = {
   // Don't advertise the framework version to anyone scanning.
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/admin/:path*", headers: noIndexHeader },
+      { source: "/admin", headers: noIndexHeader },
+      { source: "/api/:path*", headers: noIndexHeader },
+    ];
   },
 };
 

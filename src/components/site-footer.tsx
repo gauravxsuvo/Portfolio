@@ -8,7 +8,10 @@ import { bio } from "@/lib/data";
 
 const LEGAL_LINKS = [
   { href: "/privacy", label: "privacy" },
+  { href: "/cookies", label: "cookies" },
   { href: "/terms", label: "terms" },
+  { href: "/security", label: "security" },
+  { href: "/accessibility", label: "a11y" },
 ];
 
 const SOCIALS = [

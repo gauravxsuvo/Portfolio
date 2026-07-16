@@ -169,10 +169,10 @@ export const bio = {
   // Single source of truth. This used to be copy-pasted into the contact page,
   // the footer, the shell's `email` command and the console easter egg — and the
   // console one had drifted to a different address entirely.
-  email: "workwithggaurav@gmail.com",
+  email: "hello@mysuvo.com",
   github: "https://github.com/gauravxsuvo",
   linkedin: "https://www.linkedin.com/in/gauravxsuvo",
-  website: "https://gauravxsuvo.vercel.app",
+  website: "https://mysuvo.com",
   orcid: "0009-0009-0810-5513",
   role: "Data Science & AI student",
   location: "India",

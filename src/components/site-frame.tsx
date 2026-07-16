@@ -18,7 +18,12 @@ export function SiteFrame({ children }: { children: ReactNode }) {
     <div className="relative z-[1] mx-auto flex w-full max-w-[100rem] flex-1 gap-8 px-4 sm:px-6 lg:px-8 2xl:gap-12">
       <SystemRail />
 
-      <main tabIndex={-1} className="min-w-0 flex-1 py-10 outline-none">
+      {/* id is the skip link's target (see SkipLink in the root layout).
+          tabIndex={-1} is what lets it receive focus programmatically — without
+          it, following the skip link moves the scroll position but leaves focus
+          stranded back in the nav, so the next Tab returns you to where you
+          just escaped from. */}
+      <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 py-10 outline-none">
         <div className="mx-auto w-full max-w-6xl">
           {children}
           <PageNav />
