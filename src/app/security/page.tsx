@@ -118,10 +118,9 @@ export default function SecurityPage() {
           <Section>
             <H3>In scope</H3>
             <p>
-              {siteHost} and the endpoints under it (<code className="text-fg/50">/api/track</code>,{" "}
+              {siteHost} and its public endpoints (<code className="text-fg/50">/api/track</code>,{" "}
               <code className="text-fg/50">/api/github</code>,{" "}
-              <code className="text-fg/50">/api/health</code>,{" "}
-              <code className="text-fg/50">/admin</code>).
+              <code className="text-fg/50">/api/health</code>).
             </p>
           </Section>
 

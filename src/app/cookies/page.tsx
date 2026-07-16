@@ -132,8 +132,7 @@ export default function CookiesPage() {
             <H3>Cookies</H3>
             <p className="mb-3">
               For completeness, since this page is called cookies.txt: there are none. Not
-              for visitors, not for me. Even the login for my own analytics page keeps its
-              session in memory rather than a cookie, so it disappears when the tab closes.
+              for visitors, not for me — nothing on this site sets one, for any purpose.
               This table is generated from the same list as the rest of the page — if a
               cookie is ever added, it appears here automatically rather than relying on me
               remembering to update this sentence.

@@ -129,24 +129,6 @@ export default function PrivacyPage() {
           </Section>
 
           <Section>
-            {/* Deliberately generic: it names no page, no path, and nothing about what
-                the log is reviewed for. What it cannot do is go away entirely — the
-                sentence above says analytics don't store your IP, and something here
-                does, so this is what keeps that from being a lie. */}
-            <H3>Security logging</H3>
-            <p>
-              Separately from analytics: attempts to sign in to this site&apos;s restricted
-              area are recorded — the time, the IP address, the rough location and the
-              browser — whether they succeed or not. That&apos;s the only place a full IP is
-              kept, and the basis for it is my legitimate interest in keeping the site
-              secure rather than your consent, since an attacker&apos;s permission is not a
-              thing worth asking for. If you have never typed a password into this site,
-              there is nothing about you here. Kept 90 days, then deleted, like everything
-              else.
-            </p>
-          </Section>
-
-          <Section>
             <H3>Why I collect it</H3>
             <p>
               Honestly? Curiosity and craft. I want to know whether anyone finds the shell,
@@ -169,9 +151,8 @@ export default function PrivacyPage() {
               >
                 Neon
               </a>
-              , read only by me, through a password-protected page on this site. Raw events
-              are deleted automatically after 90 days. Nothing is sold, shared, or handed to
-              an advertiser, ever.
+              , read only by me. Raw events are deleted automatically after 90 days. Nothing
+              is sold, shared, or handed to an advertiser, ever.
             </p>
           </Section>
 

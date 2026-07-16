@@ -148,8 +148,9 @@ export function LoginLog({
       )}
 
       <p className="mt-3 text-[10px] leading-relaxed text-fg/30">
-        Every attempt is recorded, including failures. This is the only place the site stores
-        a full IP address — see /privacy. Kept 90 days, then deleted.
+        Every attempt is recorded, including failures — the only place the site stores a full
+        IP address. Deliberately not described in the public policies: this panel is private
+        and they don&apos;t advertise it. Kept 90 days, then deleted.
       </p>
     </section>
   );

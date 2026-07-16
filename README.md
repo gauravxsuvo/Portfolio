@@ -163,9 +163,13 @@ fires before consent.
 
 ## License
 
-The **source code** is MIT licensed — see [LICENSE](LICENSE).
+**This repository is private.** The source isn't published, so the MIT text in
+[LICENSE](LICENSE) grants nothing to anyone new — it's kept because it still
+covers copies taken while the repo was public, and MIT can't be revoked
+retroactively.
 
 The **content** — bio, project write-ups, publication abstracts, and the site's
-visual design — is **not** covered by that license and remains all rights
-reserved. Fork the code, not the biography. [`/terms`](src/app/terms/page.tsx)
-has the long version.
+visual design — was never covered by that license and remains all rights
+reserved. [`/terms`](src/app/terms/page.tsx) has the public version, and it no
+longer offers the code or links here; if the repo ever goes public again, that
+page needs changing back.
