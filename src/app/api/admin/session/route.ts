@@ -8,6 +8,7 @@ import {
   SESSION_TTL_SECONDS,
 } from "@/lib/analytics/auth";
 import { failureCounts, recordLoginAttempt, type LoginOutcome } from "@/lib/analytics/admin-log";
+import { viaTrustedEdge } from "@/lib/analytics/origin";
 import { getClientIp, getGeo, parseBrowser, parseDevice, parseOs } from "@/lib/analytics/request";
 
 /** Login. Exchanges the password for a short-lived, memory-only bearer token. */
@@ -45,6 +46,25 @@ const MAX_FAILURES_FROM_IP = 10;
 const MAX_FAILURES_GLOBAL = 50;
 
 export async function POST(req: Request) {
+  /**
+   * Before anything else — before the throttle, before a row is written, before
+   * an IP is even read.
+   *
+   * Everything below this line trusts cf-connecting-ip to say who's calling, and
+   * that header is only trustworthy because Cloudflare overwrites it. A request
+   * that reached Vercel's *.vercel.app hostname directly never met Cloudflare,
+   * so it can claim any IP it likes — which doesn't just weaken the per-IP
+   * limit, it dissolves it, and poisons the audit log with invented addresses at
+   * the same time. Checking anything else first would mean reasoning about an
+   * identity we have no reason to believe.
+   *
+   * 404, not 403: a probe that never went through the edge learns only that
+   * there's nothing here, rather than "correct guess, wrong credential".
+   */
+  if (!viaTrustedEdge(req.headers)) {
+    return new NextResponse(null, { status: 404, headers: NO_STORE });
+  }
+
   const ip = getClientIp(req.headers);
   const ua = req.headers.get("user-agent") ?? "";
   const geo = getGeo(req.headers);

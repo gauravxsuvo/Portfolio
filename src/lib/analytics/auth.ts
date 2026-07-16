@@ -94,8 +94,12 @@ export function isAuthConfigured(): boolean {
  * recover a password one character at a time. timingSafeEqual always reads
  * every byte. It also throws on a length mismatch (which itself leaks length),
  * so both sides are hashed to a fixed 32 bytes first.
+ *
+ * Exported because origin.ts needs the same guarantee for the edge secret, and
+ * a security primitive copy-pasted into two files is one bug away from being two
+ * different primitives.
  */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   const ha = createHmac("sha256", "cmp").update(a).digest();
   const hb = createHmac("sha256", "cmp").update(b).digest();
   return timingSafeEqual(ha, hb);

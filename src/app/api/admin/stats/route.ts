@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { bearerFrom, isAuthConfigured, mintToken, verifyToken, SESSION_TTL_SECONDS } from "@/lib/analytics/auth";
 import { isDbConfigured } from "@/lib/analytics/db";
 import { loginSummary, recentLogins } from "@/lib/analytics/admin-log";
+import { viaTrustedEdge } from "@/lib/analytics/origin";
 import {
   clampDays,
   getOverview,
@@ -36,6 +37,14 @@ export const dynamic = "force-dynamic";
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 export async function GET(req: Request) {
+  // Same gate as the login route. A valid token is already required below, so
+  // this isn't the thing keeping the data in — but there's no reason to serve
+  // every visitor's analytics down a path that skipped the edge, and an endpoint
+  // reachable two ways is an endpoint defended two ways.
+  if (!viaTrustedEdge(req.headers)) {
+    return new NextResponse(null, { status: 404, headers: NO_STORE });
+  }
+
   if (!isAuthConfigured()) {
     return NextResponse.json({ error: "not configured" }, { status: 503, headers: NO_STORE });
   }
