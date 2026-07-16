@@ -15,8 +15,16 @@ import type { Metadata } from "next";
  * something that can drift when a hosting dashboard is reconfigured. The env
  * var stays supported for preview deployments, which genuinely do serve from a
  * generated hostname and shouldn't claim to be the canonical site.
+ *
+ * **It includes the `www.` and that is not a typo.** The apex `mysuvo.com`
+ * 308-redirects to `www.mysuvo.com`, so www is where the site actually lives.
+ * Pointing this at the apex made every canonical tag, OG url, sitemap entry and
+ * the security.txt `Canonical:` field name a URL that immediately redirects —
+ * the same "two origins" problem this constant exists to avoid, just aimed the
+ * other way. If the redirect is ever flipped to www -> apex, change this line
+ * and nothing else.
  */
-const PRODUCTION_ORIGIN = "https://mysuvo.com";
+const PRODUCTION_ORIGIN = "https://www.mysuvo.com";
 
 function resolveSiteUrl(): string {
   // Explicit override wins — used by preview deploys and any self-host.

@@ -172,7 +172,9 @@ export const bio = {
   email: "hello@mysuvo.com",
   github: "https://github.com/gauravxsuvo",
   linkedin: "https://www.linkedin.com/in/gauravxsuvo",
-  website: "https://mysuvo.com",
+  // The www form, matching PRODUCTION_ORIGIN in lib/site.ts — the apex
+  // redirects here, so this is the address that doesn't cost a hop.
+  website: "https://www.mysuvo.com",
   orcid: "0009-0009-0810-5513",
   role: "Data Science & AI student",
   location: "India",

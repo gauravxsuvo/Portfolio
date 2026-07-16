@@ -1,6 +1,6 @@
 # Portfolio
 
-Personal portfolio site for **Gaurav Raj Singh** — [mysuvo.com](https://mysuvo.com)
+Personal portfolio site for **Gaurav Raj Singh** — [www.mysuvo.com](https://www.mysuvo.com)
 
 A "Terminal CLI" themed build: monospace type, green-on-black phosphor palette,
 bracketed buttons, and terminal-window panes instead of cards. There's a working
