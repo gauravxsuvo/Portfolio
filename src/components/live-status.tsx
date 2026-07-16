@@ -20,9 +20,22 @@ type GithubStats = {
 /**
  * Reads the site's own API routes so the "system status" panel is reporting real
  * server state (region, build commit, live star counts) rather than decoration.
- * Everything here is progressive: if either endpoint is unreachable the row just
- * doesn't render, and nothing above it is affected.
+ *
+ * The two endpoints are settled independently and on purpose. /api/github talks
+ * to a rate-limited third party and is by far the likelier of the two to fail;
+ * joining them with Promise.all would let that one outage blank out the health
+ * rows as well, which are served from this origin and were fine. Each half now
+ * fails on its own: no health means the panel hides, no stars means the panel
+ * renders without the github row.
  */
+async function getJson<T>(url: string, signal: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal });
+  // A non-2xx here typically carries an HTML error page, and res.json() would
+  // reject with a parse error that says nothing about the real status.
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  return (await res.json()) as T;
+}
+
 export function LiveStatus() {
   const [health, setHealth] = useState<Health | null>(null);
   const [stats, setStats] = useState<GithubStats | null>(null);
@@ -30,17 +43,18 @@ export function LiveStatus() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const { signal } = controller;
 
-    Promise.all([
-      fetch("/api/health", { signal: controller.signal }).then((r) => r.json()),
-      fetch("/api/github", { signal: controller.signal }).then((r) => r.json()),
-    ])
-      .then(([h, g]: [Health, GithubStats]) => {
-        setHealth(h);
-        setStats(g);
-      })
+    getJson<Health>("/api/health", signal)
+      .then(setHealth)
       .catch((err) => {
         if (err?.name !== "AbortError") setFailed(true);
+      });
+
+    getJson<GithubStats>("/api/github", signal)
+      .then(setStats)
+      .catch(() => {
+        // Non-fatal: the github row is additive, so drop it and keep the rest.
       });
 
     return () => controller.abort();

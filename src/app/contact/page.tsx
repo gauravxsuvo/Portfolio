@@ -8,7 +8,7 @@ import { bio } from "@/lib/data";
 
 export const metadata: Metadata = pageMetadata({
   title: "cat contact.txt",
-  description: "Get in touch — email, GitHub, LinkedIn.",
+  description: "Email, GitHub, LinkedIn.",
   path: "/contact",
 });
 
@@ -57,8 +57,7 @@ export default function ContactPage() {
       <SectionLabel index="05" label="Contact" />
       <TerminalWindow title="contact.txt" meta="R/O">
         <p className="text-sm text-fg/70">
-          Open to new roles, research collaborations, and interesting problems.
-          Reach out on any of the channels below — email is fastest.
+          Open to work and research collaborations. Email is fastest.
         </p>
 
         <dl className="mt-6 flex flex-col gap-3">

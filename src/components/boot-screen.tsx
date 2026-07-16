@@ -86,10 +86,10 @@ export function BootScreen({ onComplete }: { onComplete: () => void }) {
     <div className="flex min-h-full w-full items-center justify-center p-4 sm:p-10">
       <div className="flex w-full max-w-2xl flex-col items-center gap-3">
         <MonitorFrame>
-          <TerminalWindow title="gauravxsuvo — boot" meta="tty1">
+          <TerminalWindow title="gauravxsuvo // boot" meta="tty1">
             <div className="flex flex-col gap-1 text-xs sm:text-sm">
               <p className="text-fg/50">
-                SUVO OS [Version 3.1] — (c) {new Date().getFullYear()} Gaurav Raj Singh
+                SUVO OS [Version 3.1] (c) {new Date().getFullYear()} Gaurav Raj Singh
               </p>
 
               {history.map((entry, i) => (
@@ -113,7 +113,7 @@ export function BootScreen({ onComplete }: { onComplete: () => void }) {
                     className="flex items-center gap-2"
                   >
                     <label htmlFor="boot-input" className="sr-only">
-                      Boot terminal — type suvo init and press enter
+                      Boot terminal. type suvo init and press enter
                     </label>
                     <span className="text-primary whitespace-nowrap">
                       guest@gauravxsuvo

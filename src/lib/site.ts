@@ -29,7 +29,7 @@ export function pageMetadata({
   path?: string;
   image?: string;
 }): Metadata {
-  const fullTitle = `${title} — ${siteName}`;
+  const fullTitle = `${title} · ${siteName}`;
   const url = `${siteUrl}${path}`;
   const images = [{ url: `${siteUrl}${image}`, width: 1200, height: 630, alt: fullTitle }];
   return {

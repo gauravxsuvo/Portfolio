@@ -7,7 +7,9 @@ import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "whoami",
-  description: `${bio.summary.slice(0, 150)}…`,
+  // The whole thing, not a slice: the bio is 181 characters now, and cutting it
+  // at 150 truncated mid-word ("...learning Korean and Ja…").
+  description: bio.summary,
   path: "/about",
 });
 

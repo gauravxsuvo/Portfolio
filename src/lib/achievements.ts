@@ -25,6 +25,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "polyglot", label: "said hello in another language", hint: "안녕? こんにちは?" },
   { id: "grep", label: "grepped the portfolio", hint: "the shell can search everything" },
   { id: "tab", label: "found tab-completion", hint: "a real shell finishes your sentences" },
+  {
+    id: "reverse-search",
+    label: "reverse-searched your history",
+    hint: "the shell remembers. ctrl+something",
+  },
   { id: "tree", label: "listed the whole filesystem", hint: "one command, every branch" },
   { id: "coffee", label: "brewed a coffee", hint: "the shell is also a kitchen" },
   { id: "train", label: "caught the train", hint: "fat-finger `ls` badly enough" },

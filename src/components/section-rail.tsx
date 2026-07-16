@@ -2,16 +2,22 @@
 
 import { useSections } from "@/hooks/use-sections";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { SHORTCUT_GROUPS } from "@/lib/shortcuts";
 
-const KEYS: [string, string][] = [
-  ["/", "search"],
-  ["ctrl k", "palette"],
-  ["g h", "home"],
-  ["g p", "projects"],
-  ["g c", "contact"],
-  ["↑ ↓", "shell history"],
-  ["tab", "complete"],
-];
+/**
+ * A short legend, not the full cheatsheet: the rail is a narrow column and the
+ * whole table doesn't fit. Picked from SHORTCUT_GROUPS by key rather than
+ * retyped, so a renamed binding can't leave a stale label sitting here (this
+ * used to be its own hardcoded list, and it never learned about ? or ctrl+r).
+ */
+// "/" stands in for ctrl+k, which carries the identical label and would just
+// print "command palette" twice in a column this narrow. ? reveals the rest.
+const LEGEND_KEYS = ["/", "?", "g h", "g p", "g c", "ctrl + r", "tab"];
+
+const KEYS: [string, string][] = SHORTCUT_GROUPS.flatMap((g) => g.items)
+  .filter((i) => LEGEND_KEYS.includes(i.keys))
+  .sort((a, b) => LEGEND_KEYS.indexOf(a.keys) - LEGEND_KEYS.indexOf(b.keys))
+  .map((i) => [i.keys, i.label]);
 
 /**
  * Sticky right rail. On pages with sections it's a scroll-spy table of contents;

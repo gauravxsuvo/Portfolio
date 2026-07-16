@@ -13,6 +13,7 @@ import { NavShortcuts } from "@/components/nav-shortcuts";
 import { ThemePanel } from "@/components/theme-panel";
 import { AchievementToast } from "@/components/achievement-toast";
 import { CommandPalette } from "@/components/command-palette";
+import { ShortcutsOverlay } from "@/components/shortcuts-overlay";
 import { RouteTransition } from "@/components/route-transition";
 import { SiteFrame } from "@/components/site-frame";
 import { AmbientGrid } from "@/components/ambient-grid";
@@ -28,13 +29,16 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "700", "800"],
 });
 
-const description = `${bio.role}. ${bio.summary}`.slice(0, 200);
+// The summary alone, not `${bio.role}. ${bio.summary}`: the bio now opens by
+// saying what he studies, so prefixing the role restated it in the first twelve
+// words of every search result.
+const description = bio.summary;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: siteName, template: `%s — ${siteName}` },
+  title: { default: siteName, template: `%s · ${siteName}` },
   description,
-  applicationName: `${bio.name} — Portfolio`,
+  applicationName: `${bio.name} Portfolio`,
   authors: [{ name: bio.name, url: siteUrl }],
   creator: bio.name,
   keywords: [
@@ -50,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: siteUrl,
-    siteName: `${bio.name} — Portfolio`,
+    siteName: `${bio.name} Portfolio`,
     title: siteName,
     description,
     locale: "en_US",
@@ -95,6 +99,7 @@ export default function RootLayout({
         <RouteTransition />
         <AchievementToast />
         <CommandPalette />
+        <ShortcutsOverlay />
         <SelectionSearch />
         <ConsoleEasterEgg />
         <KonamiListener />

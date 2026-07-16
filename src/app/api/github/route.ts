@@ -91,7 +91,7 @@ export async function GET() {
       fetchedAt: new Date().toISOString(),
       note:
         repos.length === 0
-          ? "github api unreachable or rate-limited — try again shortly."
+          ? "github api unreachable or rate-limited. try again shortly."
           : missing > 0
             ? `${missing} repo${missing === 1 ? "" : "s"} unavailable right now.`
             : undefined,

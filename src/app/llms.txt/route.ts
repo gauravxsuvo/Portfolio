@@ -11,7 +11,9 @@ export const dynamic = "force-static";
 export function GET() {
   const body = `# ${bio.name}
 
-> ${bio.role}. ${bio.summary}
+> ${bio.role}
+
+${bio.summary}
 
 - Location: ${bio.location}
 - Email: ${bio.email}
@@ -26,7 +28,7 @@ ${bio.focus.map((f) => `- ${f}`).join("\n")}
 
 ## Education
 
-- ${education.degree}, ${education.school} (${education.period}) — ${education.location}
+- ${education.degree}, ${education.school} (${education.period}), ${education.location}
 
 ## Projects
 
@@ -51,7 +53,7 @@ ${publications
     (p) => `### ${p.title}
 
 - Authors: ${p.authors.join(", ")}
-- Venue: ${p.venue} (${p.year}) — ${p.type}, ${p.status}
+- Venue: ${p.venue} (${p.year}), ${p.type}, ${p.status}
 ${p.links?.doi ? `- DOI: ${p.links.doi}\n` : ""}${p.links?.code ? `- Code: ${p.links.code}\n` : ""}
 ${p.abstract}`
   )
@@ -61,7 +63,7 @@ ${p.abstract}`
 
 ${experience
   .map(
-    (e) => `### ${e.role} — ${e.org} (${e.period})
+    (e) => `### ${e.role}, ${e.org} (${e.period})
 
 ${e.summary}
 

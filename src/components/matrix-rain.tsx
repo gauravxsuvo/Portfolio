@@ -112,7 +112,7 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
       {reducedMotion ? (
         <TerminalWindow title="secret found" meta="konami" accent="secondary">
           <p className="text-sm text-fg/80">
-            ↑↑↓↓←→←→BA — you found it. click anywhere to continue.
+            ↑↑↓↓←→←→BA. you found it. click anywhere to continue.
           </p>
         </TerminalWindow>
       ) : (

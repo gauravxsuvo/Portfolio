@@ -7,15 +7,8 @@ import { unlockAchievement } from "@/lib/achievements";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { useMounted } from "@/hooks/use-mounted";
-
-const LINKS = [
-  { href: "/", label: "~/home" },
-  { href: "/about", label: "~/about" },
-  { href: "/projects", label: "~/projects" },
-  { href: "/experience", label: "~/experience" },
-  { href: "/publications", label: "~/publications" },
-  { href: "/contact", label: "~/contact" },
-];
+import { SITE_ROUTES } from "@/lib/routes";
+import { isAppleDevice } from "@/lib/platform";
 
 export function SiteNav() {
   const pathname = usePathname();
@@ -25,10 +18,7 @@ export function SiteNav() {
 
   // Derived, not stored: the server has no idea what OS the visitor is on, so it
   // renders the neutral label and the client swaps it after hydration.
-  const modKey =
-    mounted && /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent)
-      ? "⌘"
-      : "ctrl";
+  const modKey = mounted && isAppleDevice() ? "⌘" : "ctrl";
 
   function handlePromptClick() {
     const now = Date.now();
@@ -59,7 +49,7 @@ export function SiteNav() {
                   handlePromptClick();
                 }
               }}
-              aria-label="hidden prompt — try clicking it a few times"
+              aria-label="hidden prompt, try clicking it a few times"
               className="cursor-pointer select-none text-fg/50"
             >
               :~$
@@ -85,7 +75,7 @@ export function SiteNav() {
             aria-label="Primary"
             className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
           >
-            {LINKS.map((link) => {
+            {SITE_ROUTES.map((link) => {
               const active =
                 link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
               return (

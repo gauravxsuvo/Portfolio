@@ -13,9 +13,13 @@ export function ProjectsExplorer({ projects }: { projects: Project[] }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // `description` is in scope on purpose: the shell's `grep` searches it, and a
+    // filter box sitting on the projects page that quietly searched less than the
+    // shell did was the more surprising of the two behaviours. Terms like
+    // "Theis" or "LangGraph" only appear in the long copy.
     const matches = q
       ? projects.filter((p) =>
-          [p.name, p.tagline, ...p.stack].some((field) =>
+          [p.name, p.tagline, p.description, p.year, ...p.stack].some((field) =>
             field.toLowerCase().includes(q)
           )
         )

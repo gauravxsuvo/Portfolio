@@ -3,9 +3,9 @@ import { bio } from "@/lib/data";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${bio.name} — Portfolio`,
+    name: `${bio.name} Portfolio`,
     short_name: bio.handle,
-    description: `${bio.role} — terminal-themed developer portfolio.`,
+    description: `${bio.role}. Terminal-themed portfolio.`,
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0a",

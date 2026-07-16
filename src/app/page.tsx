@@ -29,10 +29,12 @@ export default function Home() {
           <HeroLogo />
 
           <p className="mt-3 text-base text-primary text-glow sm:text-lg">
-            <Typewriter
-              text={`> ${bio.role.toLowerCase()} // shipping physics-informed ML and multi-agent systems`}
-              startDelay={1900}
-            />
+            {/* Just the role. The old line ended "// shipping physics-informed
+                ML and multi-agent systems", which was marketing-speak and a
+                second copy of the focus tags rendered right below it. The bio
+                underneath already says where he is, so location isn't here
+                either. */}
+            <Typewriter text={`> ${bio.role.toLowerCase()}`} startDelay={1900} />
           </p>
 
           {/* Prose stays narrow even though the column got wider — a 1100px line

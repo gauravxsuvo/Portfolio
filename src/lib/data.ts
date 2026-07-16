@@ -25,7 +25,7 @@ export const projects: Project[] = [
   {
     slug: "notschool",
     name: "notschool",
-    tagline: "Multi-agent learning-plan generator — team lead, 4 engineers",
+    tagline: "Multi-agent learning-plan generator. Team lead, 4 engineers.",
     description:
       "Led a four-person team to 37th in Asia-Pacific at the Google Cloud GenAI Academy Hackathon, a submission tier restricted to developers who cleared every codelab in a 192,660-developer program. Built the entire backend and agent layer in 3 days: a LangGraph orchestrator running four Gemini-backed agents for curriculum design, resource retrieval, calendar scheduling, and persistence. Shipped 21 FastAPI endpoints covering Google OAuth 2.0, HMAC-signed guest sessions, multimodal syllabus ingestion, quizzes, and a chat-history-aware tutor. Wired the YouTube Data API and Google Calendar in as Model Context Protocol tools, turning one image or text goal into a scheduled 7-day plan; ran it with 25+ early users.",
     stack: ["LangGraph", "Gemini", "FastAPI", "MCP", "Docker"],
@@ -104,13 +104,13 @@ export const experience: ExperienceEntry[] = [
   {
     role: "Freelance Video Editor & Graphic Designer",
     org: "Self-employed",
-    period: "2021 — 2024",
+    period: "2021-2024",
     location: "India",
     summary:
-      "Delivered video editing and brand design for 50+ paying clients over three years, sourcing every engagement through cold email, LinkedIn outreach, and referrals.",
+      "Video editing and brand design for 50+ paying clients over three years. I found every one of them myself, through cold email, LinkedIn and referrals.",
     highlights: [
-      "Worked as sole editor for the @Adityansh YouTube channel, cutting 10 to 12 videos that passed 1,000,000 combined views",
-      "Owned scoping, pricing, revisions, and deadlines across concurrent projects in Premiere Pro, Photoshop, and Illustrator",
+      "Sole editor for the @Adityansh YouTube channel. Cut 10 to 12 videos that passed 1,000,000 combined views.",
+      "Ran the scoping, pricing, revisions and deadlines myself, across concurrent projects in Premiere Pro, Photoshop and Illustrator.",
     ],
   },
 ];
@@ -127,9 +127,9 @@ export type EducationEntry = {
 export const education: EducationEntry = {
   school: "Indian Institute of Technology Guwahati",
   degree: "B.S. (Honours), Data Science and Artificial Intelligence",
-  period: "2026 — 2030 (Expected)",
+  period: "2026-2030 (Expected)",
   location: "Guwahati, India",
-  summary: "Undergraduate coursework spanning machine learning, statistics, and systems.",
+  summary: "Coursework in machine learning, statistics and systems.",
   highlights: [],
 };
 
@@ -174,9 +174,12 @@ export const bio = {
   linkedin: "https://www.linkedin.com/in/gauravxsuvo",
   website: "https://gauravxsuvo.vercel.app",
   orcid: "0009-0009-0810-5513",
-  role: "Data Science & AI Student — Full-Stack & ML Systems",
+  role: "Data Science & AI student",
   location: "India",
+  // Kept short and about the person, not the work. The projects, publications
+  // and skills sections already say what he builds, at length; repeating it here
+  // in the first person is what made this read like a cover letter.
   summary:
-    "I'm a Data Science and Artificial Intelligence student at IIT Guwahati. I'm drawn to problems where machine learning meets the physical world — physics-informed models, multi-agent systems, geospatial data — and I like understanding things end-to-end rather than treating any layer as a black box. Before university I ran a freelance video editing and design business for three years, which is probably why I still care how something looks and feels, not just whether it works. Outside of that, I'm slowly picking up Korean and Japanese.",
+    "I'm Gaurav! I'm an undergraduate student at IIT Guwahati. I build machine learning systems and the software around them.",
   focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
 };

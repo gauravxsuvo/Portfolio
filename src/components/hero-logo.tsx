@@ -96,7 +96,7 @@ export function HeroLogo() {
       <button
         type="button"
         onClick={handleClick}
-        aria-label={`${bio.name} — click to replay identity scan`}
+        aria-label={`${bio.name}, click to replay identity scan`}
         className="block text-left"
       >
         <h1 className="glitch-hover warp-text break-words text-2xl font-bold tracking-wide text-primary sm:text-4xl lg:text-5xl xl:text-6xl">

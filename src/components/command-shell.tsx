@@ -21,8 +21,18 @@ import {
   runShellCommand,
 } from "@/lib/shell-commands";
 import { unlockAchievement } from "@/lib/achievements";
+import {
+  appendHistory,
+  clearHistory,
+  readHistory,
+  reverseSearch,
+  writeHistory,
+} from "@/lib/shell-history";
 
 type Entry = { id: number; command: string; output: ReactNode; pending?: boolean };
+
+/** ctrl+r state. `skip` counts how many older matches we've stepped past. */
+type Search = { term: string; skip: number };
 
 const BANNER: Entry = {
   id: 0,
@@ -57,10 +67,30 @@ export function CommandShell() {
   const isFirstRender = useRef(true);
   const nextId = useRef(1);
 
-  // Command history, newest last. `cursor` walks it; -1 means "at the live line".
-  const historyRef = useRef<string[]>([]);
+  /**
+   * Command history, newest last, seeded straight from localStorage.
+   *
+   * State rather than a ref because ctrl+r renders the matched entry, so this is
+   * render data — a ref read during render wouldn't re-run the match when the
+   * list changed.
+   *
+   * The initializer is safe to run during a server render (readHistory returns []
+   * without a window) and safe to run again on the client with a different value,
+   * because nothing derived from history reaches the DOM until the user opens a
+   * search: `search` starts null, so the first client paint matches the server's
+   * regardless of what's in storage. That's what lets this skip the usual
+   * mounted-gate — which for a visible section would mean popping the shell in
+   * one frame late.
+   */
+  const [history, setHistory] = useState<string[]>(readHistory);
+  // `cursor` walks the history; -1 means "at the live line". These two stay refs
+  // — nothing renders them, and they're read and written inside one keystroke.
   const cursorRef = useRef(-1);
   const draftRef = useRef("");
+
+  // ctrl+r reverse-i-search. null when not searching.
+  const [search, setSearch] = useState<Search | null>(null);
+  const searchHit = search ? reverseSearch(history, search.term, search.skip) : null;
 
   useEffect(() => {
     // Skip on mount — scrolling the shell's own internal history list into
@@ -140,7 +170,6 @@ export function CommandShell() {
   }
 
   function recallHistory(direction: -1 | 1) {
-    const history = historyRef.current;
     if (history.length === 0) return;
 
     if (cursorRef.current === -1) {
@@ -159,7 +188,52 @@ export function CommandShell() {
     setValue(history[cursorRef.current]);
   }
 
+  /** Leave reverse-search, optionally dropping the found command on the line. */
+  function endSearch(accept: boolean) {
+    if (accept && searchHit) setValue(searchHit.command);
+    setSearch(null);
+  }
+
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    // ctrl+r: open reverse-i-search, or step to the next-older match if it's
+    // already open. Browsers bind ctrl+r to reload, so this must preventDefault
+    // before anything else gets a look at it.
+    if (e.ctrlKey && e.key.toLowerCase() === "r") {
+      e.preventDefault();
+      unlockAchievement("reverse-search");
+      setSearch((s) => {
+        // Seeded with whatever is already on the line, so typing a few letters
+        // and then hitting ctrl+r searches for them.
+        if (!s) return { term: value, skip: 0 };
+        // Hold at the oldest match instead of stepping into nothing — bash beeps
+        // and stays put rather than blanking the line you were looking at.
+        const next = s.skip + 1;
+        return reverseSearch(history, s.term, next) ? { ...s, skip: next } : s;
+      });
+      return;
+    }
+
+    if (search) {
+      // In search mode the input's text *is* the search term, so printable keys
+      // fall through to onChange as usual. Only the exits are special.
+      if (e.key === "Escape" || (e.ctrlKey && e.key.toLowerCase() === "g")) {
+        e.preventDefault();
+        endSearch(false);
+        return;
+      }
+      // Any arrow or tab means "I'm done searching, let me edit this" — readline
+      // leaves the search on a cursor key too. All four are listed rather than
+      // just the horizontal pair: letting ↑ fall through to recallHistory would
+      // load a *different* entry onto the line while the search prompt above it
+      // still advertised the old term.
+      if (e.key.startsWith("Arrow") || e.key === "Tab") {
+        e.preventDefault();
+        endSearch(true);
+        return;
+      }
+      // Enter falls through to the form's submit, which runs the match directly.
+    }
+
     if (e.key === "Tab") {
       e.preventDefault();
       handleTab();
@@ -203,26 +277,43 @@ export function CommandShell() {
     }
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const raw = value.trim();
+  /**
+   * Execute one line. Takes the text explicitly rather than reading `value`,
+   * because ctrl+r's Enter has to run the *matched* command — a setValue in the
+   * same tick hasn't landed yet, so reading state here would run the search term
+   * the user typed instead of the history entry they picked.
+   */
+  function runLine(raw: string) {
     if (!raw) return;
 
     setValue("");
-    historyRef.current = [...historyRef.current, raw];
+    setSearch(null);
     cursorRef.current = -1;
     draftRef.current = "";
+
+    // `history` still holds the list as it was *before* this line — which is
+    // exactly what the command sees, so `history` doesn't list itself.
+    const past = history;
+    const next = appendHistory(past, raw);
+    setHistory(next);
+    writeHistory(next);
 
     const [cmd, ...rest] = raw.split(/\s+/);
     const name = cmd.toLowerCase();
     const arg = rest.join(" ");
 
-    if (resolveCommand(name)?.name === "clear") {
+    const resolved = resolveCommand(name);
+    if (resolved?.name === "clear") {
       setEntries([]);
       return;
     }
+    if (resolved?.name === "history" && arg.trim().toLowerCase() === "-c") {
+      clearHistory();
+      setHistory([]);
+      push({ command: raw, output: <p className="text-fg/50">history cleared.</p> });
+      return;
+    }
 
-    const past = historyRef.current.slice(0, -1);
     const result = runShellCommand({ name, arg, raw, history: past, router });
 
     if (result instanceof Promise) {
@@ -248,9 +339,15 @@ export function CommandShell() {
     push({ command: raw, output: result });
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    // In search mode the line holds the term, not a command — run the match.
+    runLine((search && searchHit ? searchHit.command : value).trim());
+  }
+
   return (
     <TerminalWindow
-      title="guest@gaurav — shell"
+      title="guest@gaurav // shell"
       meta="interactive"
       bodyClassName="flex flex-col gap-3"
       className="trace-box"
@@ -285,23 +382,47 @@ export function CommandShell() {
       <form onSubmit={handleSubmit}>
         <PromptInput
           ref={inputRef}
-          promptLabel="guest@gauravxsuvo"
-          path="~$"
-          placeholder="type help to get started"
+          // bash swaps the whole prompt out during ctrl+r rather than decorating
+          // it, which is the clearest signal that Enter is about to do something
+          // different from what it usually does.
+          promptLabel={search ? "(reverse-i-search)" : "guest@gauravxsuvo"}
+          path={search ? `'${search.term}':` : "~$"}
+          placeholder={search ? "type to search history" : "type help to get started"}
           value={value}
-          ghost={ghost}
+          ghost={search ? "" : ghost}
           onChange={(e) => {
             setValue(e.target.value);
             cursorRef.current = -1;
+            // Editing the term restarts the walk from the newest match; keeping
+            // the old skip would silently hide hits you'd just typed toward.
+            if (search) setSearch({ term: e.target.value, skip: 0 });
           }}
           onKeyDown={handleKeyDown}
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          aria-label="Command shell input"
+          aria-label={search ? "Reverse history search" : "Command shell input"}
         />
       </form>
+
+      {search && (
+        <p className="-mt-1 text-xs" aria-live="polite">
+          {searchHit ? (
+            <>
+              <span className="text-fg/40">↳ </span>
+              <span className="text-primary">{searchHit.command}</span>
+              <span className="ml-2 text-fg/30">
+                ctrl+r older · ↹ edit · ⏎ run · esc cancel
+              </span>
+            </>
+          ) : (
+            <span className="text-fg/40">
+              {search.term ? `no history match for "${search.term}"` : "type to search history"}
+            </span>
+          )}
+        </p>
+      )}
     </TerminalWindow>
   );
 }

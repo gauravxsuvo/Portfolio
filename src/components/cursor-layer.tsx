@@ -10,6 +10,8 @@ const TRAIL_SPACING = 34;
 const MAX_TRAIL = 14;
 /** How hard the reticle chases the pointer. 1 = instant, lower = more drag. */
 const RING_EASE = 0.18;
+/** Squared px gap at which the ring counts as arrived and the loop can park. */
+const SETTLE_EPSILON = 0.01;
 
 const INTERACTIVE = 'a,button,[role="button"],summary,label,select,[data-cursor-link]';
 const TEXTUAL = 'input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),textarea';
@@ -51,6 +53,7 @@ function attachCursor({ dot, ring, trail }: Elements): () => void {
     if (e.pointerType !== "mouse") return;
     targetX = e.clientX;
     targetY = e.clientY;
+    wake();
 
     if (!visible) {
       visible = true;
@@ -91,13 +94,37 @@ function attachCursor({ dot, ring, trail }: Elements): () => void {
     root.dataset.cursorDown = "false";
   }
 
-  let raf = requestAnimationFrame(function tick() {
+  /**
+   * The ring eases toward the pointer, so it still needs frames after the last
+   * pointermove — but only until it arrives. Once it's within a subpixel of the
+   * target there is nothing left to interpolate, so the loop parks itself and a
+   * later move wakes it. Previously this ran at 60fps for as long as the tab was
+   * open, including while the pointer sat still or had left the window entirely.
+   */
+  let raf = 0;
+
+  function tick() {
     ringX += (targetX - ringX) * RING_EASE;
     ringY += (targetY - ringY) * RING_EASE;
     dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
     ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+
+    const dx = targetX - ringX;
+    const dy = targetY - ringY;
+    if (dx * dx + dy * dy < SETTLE_EPSILON) {
+      // Snap the last fraction of a pixel so the parked position is exact.
+      ringX = targetX;
+      ringY = targetY;
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      raf = 0;
+      return;
+    }
     raf = requestAnimationFrame(tick);
-  });
+  }
+
+  function wake() {
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
 
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.addEventListener("pointerleave", hide);

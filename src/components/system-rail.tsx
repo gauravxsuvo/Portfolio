@@ -157,7 +157,7 @@ export function SystemRail() {
         onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
         className="mt-3 w-full border border-border px-3 py-2 text-left text-[11px] text-fg/40 transition-colors hover:border-primary hover:text-primary"
       >
-        <span className="text-primary">⌕</span> search — press /
+        <span className="text-primary">⌕</span> search (press /)
       </button>
     </aside>
   );

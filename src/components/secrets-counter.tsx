@@ -38,7 +38,7 @@ export function SecretsCounter() {
         complete ? "text-secondary text-glow-amber" : "text-fg/50"
       }`}
     >
-      [{found}/{total}] secrets{complete ? " — all found" : ""}
+      [{found}/{total}] secrets{complete ? ", all found" : ""}
     </button>
   );
 }

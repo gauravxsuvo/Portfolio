@@ -5,7 +5,7 @@ import { OG_AMBER, OG_BG, OG_BORDER, OG_GREEN } from "./og-theme";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = `${bio.name} — ${bio.role}`;
+export const alt = `${bio.name}, ${bio.role}`;
 
 export default async function renderBanner() {
   const fonts = await loadJetBrainsMono();

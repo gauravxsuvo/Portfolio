@@ -8,6 +8,8 @@ import { OPEN_THEME_PANEL_EVENT, setThemeColor } from "@/lib/theme";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
 import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { unlockAchievement } from "@/lib/achievements";
+import { isModalCapturingKeys, isTypingTarget } from "@/lib/keyboard";
+import { OPEN_SHORTCUTS_EVENT } from "@/lib/shortcuts";
 
 type Item = {
   id: string;
@@ -51,6 +53,7 @@ export function CommandPalette() {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => {
@@ -114,6 +117,14 @@ export function CommandPalette() {
         },
       })),
 
+      {
+        id: "action-shortcuts",
+        label: "Keyboard shortcuts",
+        hint: "?",
+        group: "actions",
+        keywords: "keys help cheatsheet bindings",
+        run: () => window.dispatchEvent(new Event(OPEN_SHORTCUTS_EVENT)),
+      },
       {
         id: "action-display",
         label: "Open display settings",
@@ -184,8 +195,12 @@ export function CommandPalette() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      const typing = !!target && /^(input|textarea)$/i.test(target.tagName);
+      // Never steal keys from the boot overlay: it's a modal with its own input,
+      // and it sits above this one. Without the check, "/" typed at the boot
+      // prompt opened the palette on top of the screen the user hadn't cleared.
+      if (isModalCapturingKeys()) return;
+
+      const typing = isTypingTarget(e.target);
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -224,12 +239,38 @@ export function CommandPalette() {
     el?.scrollIntoView({ block: "nearest" });
   }, [active, open]);
 
-  function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  /**
+   * Escape and Tab are handled on the dialog rather than the input, so they work
+   * no matter which descendant has focus. Tab wraps between the input and the
+   * ESC hint's neighbours instead of walking out into the page underneath —
+   * aria-modal tells a screen reader the rest of the page is inert, but it does
+   * nothing to the tab order, so without this the two disagreed.
+   */
+  function onDialogKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
       close();
       return;
     }
+    if (e.key !== "Tab") return;
+
+    const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'input, button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables?.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown" || (e.key === "n" && e.ctrlKey)) {
       e.preventDefault();
       setActive((i) => (results.length ? (i + 1) % results.length : 0));
@@ -259,9 +300,11 @@ export function CommandPalette() {
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
+        onKeyDown={onDialogKeyDown}
         className="palette-in w-full max-w-xl border border-primary bg-bg"
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">

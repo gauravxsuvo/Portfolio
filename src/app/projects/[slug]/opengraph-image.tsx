@@ -5,7 +5,7 @@ import { projects } from "@/lib/data";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Project — Gaurav Raj Singh's portfolio";
+export const alt = "Project · Gaurav Raj Singh's portfolio";
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

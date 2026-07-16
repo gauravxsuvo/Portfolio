@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { unlockAchievement } from "@/lib/achievements";
+import { isModalCapturingKeys, isTypingTarget } from "@/lib/keyboard";
 
 const MAP: Record<string, string> = {
   h: "/",
@@ -10,6 +11,7 @@ const MAP: Record<string, string> = {
   p: "/projects",
   e: "/experience",
   c: "/contact",
+  r: "/publications",
 };
 
 export function NavShortcuts() {
@@ -19,8 +21,9 @@ export function NavShortcuts() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (target && /^(input|textarea)$/i.test(target.tagName)) return;
+      // The boot overlay has its own prompt; typing "g" there is text, not a jump.
+      if (isModalCapturingKeys()) return;
+      if (isTypingTarget(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       const key = e.key.toLowerCase();

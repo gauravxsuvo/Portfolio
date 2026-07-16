@@ -13,6 +13,7 @@ import {
   setThemeColor,
 } from "@/lib/theme";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
+import { SHORTCUT_GROUPS } from "@/lib/shortcuts";
 import {
   ACHIEVEMENTS,
   getUnlockedAchievements,
@@ -67,7 +68,7 @@ const SECTION_IDS: Record<string, string> = {
 const JOKES = [
   "there are 10 kinds of people: those who understand binary, and those who don't.",
   'a SQL query walks into a bar, walks up to two tables and asks, "can I join you?"',
-  "!false — it's funny because it's true.",
+  "!false. it's funny because it's true.",
   "why do programmers prefer dark mode? because light attracts bugs.",
   "i'd tell you a UDP joke, but you might not get it.",
   "there are two hard things in CS: cache invalidation, naming things, and off-by-one errors.",
@@ -75,16 +76,27 @@ const JOKES = [
   "my code doesn't have bugs. it just develops random unexpected features.",
 ];
 
+/**
+ * Long-form man pages. Only for commands whose one-line `desc` genuinely leaves
+ * something out — everything else is generated from the registry by `man` below,
+ * so a new command is documented the moment it's added rather than whenever
+ * someone remembers to write a page for it. (This table used to be the whole of
+ * `man`: 8 entries against ~50 commands, so `man help` said "No manual entry".)
+ */
 const MAN_PAGES: Record<string, string> = {
-  cd: "cd <route> — change directory (route). aliases: ~, home, about, projects, experience, publications, contact.",
-  ls: "ls — list known routes on this system.",
-  grep: "grep <term> — search projects, publications, skills and experience for a term.",
+  cd: "change directory. accepts any route name, with or without a leading slash. bare route names work on their own too, so `about` and `cd about` do the same thing.",
+  grep: "search projects, publications, skills and experience. multiple words are ANDed and need not be adjacent, so `multi-agent systems` matches a group containing both words.",
   theme:
-    "theme [preset|reset|#hex] — set the phosphor accent color, or open the display panel with no args.",
-  sudo: "sudo — attempt to run a command as root. permission will be denied. every time.",
-  tree: "tree — print the site as a directory tree.",
-  cat: "cat <file> — print a file. try `tree` to see what exists.",
-  stats: "stats — fetch live repo stats from the GitHub API (server-cached).",
+    "set the phosphor accent colour. takes a preset id, a #rrggbb hex, or `reset`; with no argument it opens the display panel. lightness is floored to whatever keeps the text readable on black.",
+  sudo: "attempt to run a command as root. permission will be denied. every time.",
+  cat: "print a file. try `tree` to see what exists.",
+  stats:
+    "fetch live repo stats from the GitHub API. proxied and cached server-side for an hour, so it costs the site's rate limit rather than yours.",
+  unlock:
+    "scroll to a homepage section and mark it visited. unlocking all six earns an achievement.",
+  man: "print the manual for a command. with no argument, lists every documented topic.",
+  history:
+    "list commands you've run. history persists across reloads and routes; `history -c` wipes it. ctrl+r searches it backwards.",
 };
 
 function Err({ children }: { children: ReactNode }) {
@@ -174,7 +186,7 @@ function search(term: string): Hit[] {
     if (matchesAll(haystack)) {
       hits.push({
         kind: "experience",
-        title: `${e.role} — ${e.org}`,
+        title: `${e.role}, ${e.org}`,
         detail: e.period,
         href: "/experience",
       });
@@ -204,7 +216,7 @@ const FILES: Record<string, () => ReactNode> = {
       ))}
     </Out>
   ),
-  "education.txt": () => <Out>education lives on ~/about — try `cd about`.</Out>,
+  "education.txt": () => <Out>education lives on ~/about. try `cd about`.</Out>,
   ".secret": () => (
     <Out>
       <p className="text-secondary">you weren&apos;t supposed to find this.</p>
@@ -255,7 +267,7 @@ export const COMMANDS: Command[] = [
     run: () => (
       <Out>
         <p>
-          {bio.name} — {bio.role}
+          {bio.name}, {bio.role}
         </p>
         <p>{bio.location}</p>
         <p>{bio.focus.join(", ")}</p>
@@ -367,7 +379,7 @@ export const COMMANDS: Command[] = [
                   <dt className="text-primary">{r.name}</dt>
                   <dd className="tabular-nums text-secondary">★ {r.stars}</dd>
                   <dd className="truncate text-fg/50">
-                    {r.language ?? "—"}
+                    {r.language ?? "n/a"}
                     {r.pushedAt
                       ? ` · pushed ${new Date(r.pushedAt).toLocaleDateString()}`
                       : ""}
@@ -480,31 +492,32 @@ export const COMMANDS: Command[] = [
     name: "shortcuts",
     aliases: ["keys"],
     desc: "keyboard cheatsheet",
-    run: () => (
-      <Out>
-        <p>
-          <span className="text-secondary">ctrl/⌘ + k</span> command palette{"   "}
-          <span className="text-secondary">/</span> same
-        </p>
-        <p>
-          <span className="text-secondary">↑ ↓</span> shell history{"   "}
-          <span className="text-secondary">tab</span> complete{"   "}
-          <span className="text-secondary">ctrl+l</span> clear
-        </p>
-        <p>
-          <span className="text-secondary">g h</span> home{"   "}
-          <span className="text-secondary">g a</span> about{"   "}
-          <span className="text-secondary">g p</span> projects{"   "}
-          <span className="text-secondary">g e</span> experience{"   "}
-          <span className="text-secondary">g c</span> contact
-        </p>
-        <p className="text-fg/40">(press g, then the letter — not in a text field)</p>
-      </Out>
-    ),
+    // Prints inline rather than opening the ? overlay: you asked a shell a
+    // question, so it answers in the scrollback. The table is shared with the
+    // overlay, so the two can't drift apart.
+    run: () => {
+      return (
+        <Out>
+          {SHORTCUT_GROUPS.map((group) => (
+            <div key={group.title} className="mt-1 first:mt-0">
+              <p className="text-fg/40">{group.title}</p>
+              {group.items.map((item) => (
+                <p key={item.keys}>
+                  <span className="text-secondary">{item.keys}</span>{" "}
+                  <span className="text-fg/70">{item.label}</span>
+                </p>
+              ))}
+            </div>
+          ))}
+          <p className="mt-1 text-fg/40">(press ? any time for this as an overlay)</p>
+        </Out>
+      );
+    },
   },
   {
     name: "history",
-    desc: "show commands run this session",
+    usage: "history [-c]",
+    desc: "show past commands (-c clears)",
     run: ({ history }) =>
       history.length === 0 ? (
         <p className="text-fg/50">no history yet.</p>
@@ -556,7 +569,7 @@ export const COMMANDS: Command[] = [
       unlockAchievement("sudo");
       if (target === "make me a sandwich") {
         unlockAchievement("sandwich");
-        return <p className="text-primary">okay. 🥪 (xkcd 149 — you had to.)</p>;
+        return <p className="text-primary">okay. 🥪 (xkcd 149. you had to.)</p>;
       }
       if (target.startsWith("rm -rf")) {
         return (
@@ -591,10 +604,59 @@ export const COMMANDS: Command[] = [
   { name: "uname", run: () => <Out>SuvoOS 3.1 (portfolio-edition) x86_64 GNU/React</Out> },
   {
     name: "man",
+    usage: "man <command>",
+    desc: "read the manual for a command",
     run: ({ arg }) => {
       const target = arg.trim().toLowerCase();
-      const page = MAN_PAGES[target];
-      return page ? <Out>{page}</Out> : <Err>No manual entry for {target || "?"}</Err>;
+
+      if (!target) {
+        return (
+          <Out>
+            <p>what manual page do you want?</p>
+            <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-fg/50">
+              {MAN_TOPICS.map((t) => (
+                <span key={t}>{t}</span>
+              ))}
+            </p>
+          </Out>
+        );
+      }
+
+      const command = resolveCommand(target);
+      if (!command) return <Err>No manual entry for {target}</Err>;
+
+      // The hand-written page when there is one, else the registry's own
+      // description — every command has at least a name and a synopsis.
+      const body = MAN_PAGES[command.name] ?? command.desc;
+      const aliases = command.aliases ?? [];
+
+      return (
+        <Out>
+          <p className="text-secondary">
+            {command.name.toUpperCase()}(1){" "}
+            <span className="text-fg/40">· SuvoOS shell manual</span>
+          </p>
+          <p className="mt-1.5 text-secondary">SYNOPSIS</p>
+          <p className="pl-4">{command.usage ?? command.name}</p>
+          {body && (
+            <>
+              <p className="mt-1.5 text-secondary">DESCRIPTION</p>
+              <p className="pl-4">{body}</p>
+            </>
+          )}
+          {aliases.length > 0 && (
+            <>
+              <p className="mt-1.5 text-secondary">ALIASES</p>
+              <p className="pl-4">{aliases.join(", ")}</p>
+            </>
+          )}
+          {!body && (
+            <p className="mt-1.5 text-fg/40">
+              (this one is undocumented on purpose. run it and find out.)
+            </p>
+          )}
+        </Out>
+      );
     },
   },
   {
@@ -624,7 +686,7 @@ export const COMMANDS: Command[] = [
           <p className="text-fg/40">content-type: text/plain</p>
           <p className="mt-1">this shell doesn&apos;t have a network stack. but nice instinct.</p>
           <p className="text-fg/50">
-            (the site <em>does</em> have a real API though — try{" "}
+            (the site <em>does</em> have a real API though. try{" "}
             <span className="text-secondary">stats</span>)
           </p>
         </Out>
@@ -666,7 +728,7 @@ brewing... this may take a while.`}
     name: "party",
     run: () => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        return <Dim>reduced motion is on — imagine confetti.</Dim>;
+        return <Dim>reduced motion is on. imagine confetti.</Dim>;
       }
       unlockAchievement("party");
       startParty();
@@ -691,7 +753,7 @@ brewing... this may take a while.`}
       const editor = raw.split(/\s+/)[0].toLowerCase();
       return (
         <Out>
-          entering {editor}... just kidding — escaped safely. (real vim users would still be
+          entering {editor}... just kidding, escaped safely. (real vim users would still be
           stuck on :q!)
         </Out>
       );
@@ -765,6 +827,15 @@ export function resolveCommand(name: string): Command | undefined {
   return BY_NAME.get(name);
 }
 
+/**
+ * Topics `man` will list with no argument: the documented commands only. The
+ * hidden eggs still have a page if you already know to ask for one, but printing
+ * their names in a directory would give the game away.
+ */
+const MAN_TOPICS: string[] = COMMANDS.filter((c) => c.desc)
+  .map((c) => c.name)
+  .sort();
+
 /** Every name a user could type — commands, aliases and bare route names. */
 export const COMPLETIONS: string[] = [
   ...new Set([...BY_NAME.keys(), ...Object.keys(ROUTES)]),
@@ -772,15 +843,29 @@ export const COMPLETIONS: string[] = [
   .filter((n) => /^[a-z0-9:._-]+$/i.test(n))
   .sort();
 
-/** Argument completions, so `cd pro<tab>` and `cat sk<tab>` work too. */
+/**
+ * Argument completions, so `cd pro<tab>` and `cat sk<tab>` work too.
+ *
+ * Resolves through aliases first — keyed on the raw token, `secrets <tab>` and
+ * `gh <tab>` offered nothing while their canonical names worked fine.
+ */
 export function completionsFor(command: string): string[] {
-  if (command === "cd") return Object.keys(ROUTES);
-  if (command === "cat") return Object.keys(FILES);
-  if (command === "theme") return [...PRESETS.map((p) => p.id), "reset"];
-  if (command === "unlock") return Object.keys(SECTION_IDS);
-  if (command === "man") return Object.keys(MAN_PAGES);
-  if (command === "achievements") return ["reset"];
-  return [];
+  switch (resolveCommand(command)?.name ?? command) {
+    case "cd":
+      return Object.keys(ROUTES);
+    case "cat":
+      return Object.keys(FILES);
+    case "theme":
+      return [...PRESETS.map((p) => p.id), "reset"];
+    case "unlock":
+      return Object.keys(SECTION_IDS);
+    case "man":
+      return MAN_TOPICS;
+    case "achievements":
+      return ["reset"];
+    default:
+      return [];
+  }
 }
 
 export function runShellCommand(ctx: CommandContext & { name: string }): ReactNode | Promise<ReactNode> {
@@ -791,12 +876,16 @@ export function runShellCommand(ctx: CommandContext & { name: string }): ReactNo
     return navigate(router, ROUTES[name]);
   }
 
-  if (name === "achievements" && arg.trim().toLowerCase() === "reset") {
+  const command = resolveCommand(name);
+
+  // Keyed off the resolved command, not the typed name: `achievements reset`
+  // wiped the board but its documented alias `secrets reset` fell through to the
+  // plain listing and silently did nothing.
+  if (command?.name === "achievements" && arg.trim().toLowerCase() === "reset") {
     resetAchievements();
     return <Dim>achievement board wiped. go find them again.</Dim>;
   }
 
-  const command = resolveCommand(name);
   if (!command) {
     const near = COMPLETIONS.find((c) => c.startsWith(name.slice(0, 2)) && c !== name);
     return (
