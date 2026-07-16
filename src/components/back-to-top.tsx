@@ -33,7 +33,7 @@ export function BackToTop() {
       aria-label="Scroll back to top"
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
-      className={`fixed bottom-[max(5rem,calc(env(safe-area-inset-bottom)+5rem))] left-4 z-[56] border border-border bg-bg/90 px-2.5 py-1.5 text-xs text-fg/60 backdrop-blur-sm transition-all duration-200 hover:border-primary hover:text-primary ${
+      className={`floating-bottom fixed left-4 z-[56] border border-border bg-bg/90 px-2.5 py-1.5 text-xs text-fg/60 backdrop-blur-sm transition-all duration-200 hover:border-primary hover:text-primary ${
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
       }`}
     >

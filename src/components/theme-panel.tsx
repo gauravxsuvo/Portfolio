@@ -165,7 +165,7 @@ function ThemePanelInner() {
         // screen, so the floating trigger would sit on top of its own controls.
         // Hide it there while open; on desktop the panel floats above it and
         // there's no collision.
-        className={`fixed bottom-[max(5rem,calc(env(safe-area-inset-bottom)+5rem))] right-4 z-[56] bg-bg/90 text-xs backdrop-blur-sm ${
+        className={`floating-bottom fixed right-4 z-[56] bg-bg/90 text-xs backdrop-blur-sm ${
           open ? "max-sm:hidden" : ""
         }`}
       >

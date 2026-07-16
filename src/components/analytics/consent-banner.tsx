@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BracketButton } from "@/components/ui/bracket-button";
@@ -51,11 +52,59 @@ export function ConsentBanner() {
   // so asking for consent there would be asking about collection that isn't
   // happening — and it would sit over the stats.
   const onAdmin = pathname === "/admin" || pathname?.startsWith("/admin/");
+  const visible = consent === "unset" && booted && !onAdmin;
 
-  if (consent !== "unset" || !booted || onAdmin) return null;
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Reserve space at the bottom of the page for this bar.
+   *
+   * It's position:fixed, so it's out of flow and sits *on top of* whatever is
+   * beneath it — which is the footer, containing the only links to the privacy,
+   * cookies, terms, security and accessibility pages. The result was that the
+   * legal links were not merely hidden but unclickable (elementFromPoint at the
+   * terms link returned this bar), on every visit until someone answered the
+   * prompt. A consent notice that buries the policies it points at is worse
+   * than no notice.
+   *
+   * Measured rather than hardcoded: the bar is one line on desktop and three on
+   * a narrow phone, and the height changes on rotate or resize — a magic number
+   * here would be wrong at most widths. The ResizeObserver keeps it honest.
+   *
+   * The height also goes out as --consent-height, because the footer isn't the
+   * only casualty: the back-to-top and display buttons are fixed to the bottom
+   * at z-56, under this bar's z-60, so they were being covered too. They add
+   * the variable to their own offset (see .floating-bottom in globals.css)
+   * rather than each re-measuring.
+   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!visible || !el) return;
+
+    const apply = () => {
+      const h = el.offsetHeight;
+      document.body.style.paddingBottom = `${h}px`;
+      document.documentElement.style.setProperty("--consent-height", `${h}px`);
+    };
+    apply();
+
+    const observer = new ResizeObserver(apply);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      // Must be cleared, not left behind: once the bar is dismissed these would
+      // be a permanent gap under the footer and a permanently raised set of
+      // floating buttons for the rest of the session.
+      document.body.style.paddingBottom = "";
+      document.documentElement.style.removeProperty("--consent-height");
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   return (
     <div
+      ref={ref}
       role="region"
       aria-label="Analytics consent"
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-bg/95 backdrop-blur-sm"

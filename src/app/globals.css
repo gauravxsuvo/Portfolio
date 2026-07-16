@@ -692,3 +692,26 @@ html[data-cursor-down="true"] .cursor-ring {
   background: var(--color-muted);
   border: 1px solid var(--color-border);
 }
+
+/*
+ * Bottom-anchored floating controls (back-to-top, display panel trigger).
+ *
+ * They sit at z-56, below the consent bar's z-60, so while that bar is up it
+ * covered them — on a phone it's ~150px tall and they live 5rem from the
+ * bottom. --consent-height is published by the consent banner while it's
+ * mounted and removed when it isn't, so this falls back to 0px and the buttons
+ * return to their normal place with no JS involved on the way out.
+ *
+ * env(safe-area-inset-bottom) keeps them clear of the iOS home indicator; the
+ * max() is what stops a device with no inset losing the 5rem baseline.
+ */
+.floating-bottom {
+  bottom: calc(max(5rem, env(safe-area-inset-bottom) + 5rem) + var(--consent-height, 0px));
+  transition: bottom 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-bottom {
+    transition: none;
+  }
+}
