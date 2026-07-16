@@ -7,10 +7,18 @@ import { writeConsent } from "@/lib/analytics/consent";
 import { discardQueue } from "@/lib/analytics/client";
 import { useBooted, useConsent } from "@/hooks/use-consent";
 
+const LINK = "text-primary underline underline-offset-2 decoration-border hover:text-glow";
+
 /**
- * The consent prompt, shaped like a shell permission request because a generic
- * cookie bar would be the one element on this site that looks bought rather
- * than built.
+ * The consent prompt: one line, two buttons, links to the detail.
+ *
+ * The copy is short on purpose. An earlier version explained the visitor ID,
+ * the lack of ad networks and the right to withdraw inline, which was ~260px of
+ * text on a phone — a banner nobody reads is worse than a short one they do,
+ * and it made the site's first impression a legal notice. Consent still has to
+ * be *informed*, but the standard (and legally accepted) way to do that is a
+ * plain statement of what's happening plus a link to the full policy, which is
+ * what /privacy and /cookies are for.
  *
  * Deliberate choices that are legal requirements, not styling:
  *
@@ -52,30 +60,29 @@ export function ConsentBanner() {
       aria-label="Analytics consent"
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-bg/95 backdrop-blur-sm"
     >
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-4 sm:px-6 md:flex-row md:items-center md:gap-6">
-        <div className="min-w-0 flex-1 text-xs leading-relaxed text-fg/70 sm:text-sm">
-          <p className="mb-1 font-semibold text-secondary">
-            <span aria-hidden="true">$ </span>
-            analytics --request-consent
-          </p>
-          <p>
-            I&apos;d like to count visits and see which parts of this site people actually
-            use. That means storing an ID in your browser to recognise you on a return
-            visit. It&apos;s my own analytics — first-party, no ad networks, nothing sold
-            or shared, and no data leaves this site.{" "}
-            <Link
-              href="/privacy"
-              className="text-primary underline underline-offset-4 decoration-border hover:text-glow"
-            >
-              What gets collected
-            </Link>
-            . You can change your mind any time.
-          </p>
-        </div>
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:gap-6 md:py-3.5">
+        <p className="min-w-0 flex-1 text-xs leading-relaxed text-fg/60 sm:text-[13px]">
+          <span className="text-secondary" aria-hidden="true">
+            $ analytics --consent{" "}
+          </span>
+          <span className="text-fg/70">
+            This site uses first-party analytics to measure traffic. No advertising, no
+            third-party trackers, nothing sold.
+          </span>{" "}
+          <Link href="/privacy" className={LINK}>
+            Privacy
+          </Link>
+          <span className="px-1 text-border" aria-hidden="true">
+            ·
+          </span>
+          <Link href="/cookies" className={LINK}>
+            Cookies
+          </Link>
+        </p>
 
         {/* Equal visual weight, and DECLINE first in DOM order so a keyboard or
             screen-reader user reaches the privacy-preserving option first. */}
-        <div className="flex shrink-0 flex-wrap gap-3">
+        <div className="flex shrink-0 gap-2.5">
           <BracketButton onClick={() => decide("denied")} variant="ghost">
             DECLINE
           </BracketButton>
