@@ -133,8 +133,8 @@ export default function AccessibilityPage() {
             <p>
               The display panel (the{" "}
               <span className="text-secondary">[DISPLAY]</span> control, or{" "}
-              <code className="text-fg/50">theme</code> in the shell) switches off the CRT
-              overlay and changes the colour. Setting &quot;reduce motion&quot; in your
+              <code className="text-fg/50">theme</code>{" "}
+              in the shell) switches off the CRT overlay and changes the colour. Setting &quot;reduce motion&quot; in your
               operating system does most of it automatically, without touching anything here.
             </p>
           </Section>

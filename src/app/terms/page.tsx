@@ -97,8 +97,8 @@ export default function TermsPage() {
                 <dt className="mb-1 text-fg/50">The content</dt>
                 <dd>
                   My bio, project write-ups, publication abstracts, and the design of this
-                  site are <strong className="text-fg">not</strong> covered by that MIT
-                  license. They&apos;re mine, all rights reserved. Quote a sentence or two
+                  site are <strong className="text-fg">not</strong>{" "}
+                  covered by that MIT license. They&apos;re mine, all rights reserved. Quote a sentence or two
                   with credit and a link — that&apos;s fair and I&apos;d appreciate it. Just
                   don&apos;t republish the writing as yours or present my projects as your
                   own work.
@@ -135,8 +135,8 @@ export default function TermsPage() {
             </p>
             <p>
               Security research is a different thing, and it&apos;s welcome. If you find a
-              vulnerability, tell me at <A href={`mailto:${bio.email}`}>{bio.email}</A> before
-              you tell anyone else, and I&apos;ll be glad you did.
+              vulnerability, tell me at <A href={`mailto:${bio.email}`}>{bio.email}</A>{" "}
+              before you tell anyone else, and I&apos;ll be glad you did.
             </p>
           </Section>
 

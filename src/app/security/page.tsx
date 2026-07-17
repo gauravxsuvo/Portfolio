@@ -72,8 +72,8 @@ export default function SecurityPage() {
         <div className="prose-measure flex flex-col text-sm text-fg/70">
           <p className="mb-6 text-fg">
             Found something broken in {siteHost}? Please tell me. Email{" "}
-            <A href={`mailto:${bio.email}`}>{bio.email}</A> and I&apos;ll actually read it.
-            No bug bounty — this is a portfolio, not a company — but I&apos;ll fix the thing
+            <A href={`mailto:${bio.email}`}>{bio.email}</A>{" "}
+            and I&apos;ll actually read it. No bug bounty — this is a portfolio, not a company — but I&apos;ll fix the thing
             and credit you if you want it.
           </p>
 
@@ -129,8 +129,8 @@ export default function SecurityPage() {
             <p className="mb-2">These aren&apos;t mine to fix — please report them upstream:</p>
             <ul className="ml-4 flex list-disc flex-col gap-1.5 marker:text-border">
               <li>
-                Anything in my <A href={bio.github} external>GitHub repositories</A> as a
-                platform issue — that&apos;s GitHub. (Bugs in <em>my</em> code in those repos
+                Anything in my <A href={bio.github} external>GitHub repositories</A>{" "}
+                as a platform issue — that&apos;s GitHub. (Bugs in <em>my</em> code in those repos
                 are welcome, just open an issue there.)
               </li>
               <li>Vercel, Neon, and any <code className="text-fg/50">*.vercel.app</code> deployment infrastructure.</li>
@@ -162,7 +162,7 @@ export default function SecurityPage() {
               plus framing, form hijacking, and <code className="text-fg/50">&lt;base&gt;</code>{" "}
               injection. HSTS with a two-year max-age. No third-party script, tag manager, or
               ad network anywhere — so nothing on this page can watch you, because nothing on
-              this page is theirs. Your IP is never stored; the analytics keep a
+              this page is theirs. The analytics never store your IP; they keep a
               daily-rotating salted hash instead. Details on the{" "}
               <A href="/privacy">privacy page</A>.
             </p>

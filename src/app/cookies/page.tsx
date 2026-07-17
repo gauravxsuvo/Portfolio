@@ -90,8 +90,8 @@ export default function CookiesPage() {
       <TerminalWindow title="cookies.txt" meta="R/O" className="trace-box">
         <div className="prose-measure flex flex-col text-sm text-fg/70">
           <p className="mb-6 text-fg">
-            This site sets <strong className="text-primary">no cookies at all</strong> for
-            visitors. Not one. What it does use is localStorage, which is the same idea and
+            This site sets <strong className="text-primary">no cookies at all</strong>{" "}
+            for visitors. Not one. What it does use is localStorage, which is the same idea and
             gets treated the same way here — including asking first for anything that
             isn&apos;t strictly necessary.
           </p>
@@ -121,8 +121,8 @@ export default function CookiesPage() {
           <Section>
             <H3>Analytics — only if you say yes</H3>
             <p className="mb-3">
-              These are <strong className="text-fg">not</strong> written until you accept the
-              prompt, and they&apos;re deleted the moment you decline or withdraw. If you
+              These are <strong className="text-fg">not</strong>{" "}
+              written until you accept the prompt, and they&apos;re deleted the moment you decline or withdraw. If you
               never accept, these keys never exist on your device.
             </p>
             <StorageTable entries={analyticsEntries} />
@@ -175,8 +175,8 @@ export default function CookiesPage() {
           <Section>
             <H3>Related</H3>
             <p>
-              The <A href="/privacy">privacy policy</A> covers what the analytics actually
-              record and how long they&apos;re kept. The <A href="/terms">terms</A> cover
+              The <A href="/privacy">privacy policy</A>{" "}
+              covers what the analytics actually record and how long they&apos;re kept. The <A href="/terms">terms</A> cover
               everything else. Questions:{" "}
               <a
                 href={`mailto:${bio.email}`}
