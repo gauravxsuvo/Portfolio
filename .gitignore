@@ -44,9 +44,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local-only notes, kept out of the repo
-
-
-
 # source resume docs (contain phone number) — not served anywhere on the site
 /info_resources
