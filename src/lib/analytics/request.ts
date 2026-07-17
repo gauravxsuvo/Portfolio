@@ -123,22 +123,87 @@ export function hashIp(ip: string | null): string | null {
  *                      bug that rate-limits the CDN instead of the visitor.)
  */
 export function getClientIp(headers: Headers): string | null {
-  const cf = headers.get("cf-connecting-ip");
-  if (cf) return cf.trim();
-  const trueClient = headers.get("true-client-ip");
-  if (trueClient) return trueClient.trim();
+  const cf = take(headers.get("cf-connecting-ip"));
+  if (cf) return cf;
+  const trueClient = take(headers.get("true-client-ip"));
+  if (trueClient) return trueClient;
   const forwarded = headers.get("x-forwarded-for");
   if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
+    const first = take(forwarded.split(",")[0]);
     if (first) return first;
   }
-  return headers.get("x-real-ip") ?? null;
+  return take(headers.get("x-real-ip"));
+}
+
+/**
+ * The longest thing that can honestly be an IP is an IPv4-mapped IPv6 address
+ * with a zone index — 45 characters. Anything longer is not a truncated address,
+ * it's a different kind of object wearing the header's name.
+ *
+ * This is belt-and-braces behind viaTrustedEdge(): through Cloudflare these
+ * headers are overwritten and can't be chosen by the caller, so the bound should
+ * never bite. It's here because the value lands in admin_logins.ip as TEXT and
+ * is the rate limiter's Map key, and neither of those should be sized by
+ * whatever a header budget happens to allow on the day the edge gate is
+ * unset — which is dev, previews, and any deploy where the secret went missing.
+ */
+const MAX_IP_LENGTH = 45;
+
+function take(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  if (!v || v.length > MAX_IP_LENGTH) return null;
+  return v;
 }
 
 export type Geo = { country: string | null; region: string | null; city: string | null };
 
 /** Cloudflare uses these for "unknown" and "Tor exit node" respectively. */
 const CF_NON_COUNTRIES = new Set(["XX", "T1"]);
+
+/**
+ * Geo is header-derived, and a header is only ever as trustworthy as the proxy
+ * that overwrote it. Two things make that worth enforcing here rather than
+ * assuming it upstream:
+ *
+ *   - A request that reaches the app's *.vercel.app hostname never met
+ *     Cloudflare, so every cf-* header on it is a string the caller typed. The
+ *     route-level viaTrustedEdge() gate is what closes that, but a value this
+ *     module hands to an INSERT should not depend on a caller remembering to
+ *     check first.
+ *   - Cloudflare only guarantees overwriting the headers it actually manages.
+ *     cf-ipcity / cf-region exist only with the "Add visitor location headers"
+ *     Managed Transform switched on — and when it's off, an inbound copy is not
+ *     something to rely on being stripped.
+ *
+ * So both are validated by shape, not by trust. Country is the only field with a
+ * real grammar (ISO 3166-1 alpha-2), so anything that isn't two letters is
+ * dropped outright rather than stored as a curiosity. City and region are free
+ * text in every country on earth, so they only get a length bound and a control-
+ * character strip — enough to keep them from being a payload.
+ *
+ * The length bound is the load-bearing half. Every other string on the ingest
+ * path is clamped (see LIMITS in events.ts, which states the invariant these
+ * columns were quietly breaking: a row only stays small if nothing on it can
+ * grow unbounded). Geo was the exception, and TEXT columns fed straight from a
+ * ~16KB header budget are how a 0.5GB free tier gets filled by someone with a
+ * loop and a curl command.
+ */
+const MAX_GEO_LENGTH = 80;
+const ISO_COUNTRY_RE = /^[A-Z]{2}$/;
+
+/** Two letters or nothing. "XX"/"T1" are Cloudflare's non-answers, not places. */
+function cleanCountry(value: string | null | undefined): string | null {
+  const v = value?.trim().toUpperCase();
+  if (!v || CF_NON_COUNTRIES.has(v) || !ISO_COUNTRY_RE.test(v)) return null;
+  return v;
+}
+
+/** Free text, so: bounded, and stripped of anything that isn't printable. */
+function cleanPlace(value: string | null): string | null {
+  if (!value) return null;
+  const stripped = value.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  return stripped ? stripped.slice(0, MAX_GEO_LENGTH) : null;
+}
 
 /**
  * Where the visitor actually is.
@@ -166,18 +231,21 @@ const CF_NON_COUNTRIES = new Set(["XX", "T1"]);
  * Storing nothing beats storing "Singapore" for someone in Agra.
  */
 export function getGeo(headers: Headers): Geo {
+  // Decode, then clean. Order matters: percent-decoding is what can *produce* a
+  // control character or a longer string than the header showed, so validating
+  // before it would be validating the wrong value.
   const decode = (value: string | null): string | null => {
     if (!value) return null;
     try {
       // Vercel percent-encodes city names so the header stays ASCII-safe.
-      return decodeURIComponent(value).trim() || null;
+      return cleanPlace(decodeURIComponent(value));
     } catch {
-      return value.trim() || null;
+      return cleanPlace(value);
     }
   };
 
   const cfCountryRaw = headers.get("cf-ipcountry")?.trim().toUpperCase() || null;
-  const cfCountry = cfCountryRaw && !CF_NON_COUNTRIES.has(cfCountryRaw) ? cfCountryRaw : null;
+  const cfCountry = cleanCountry(cfCountryRaw);
 
   // The *presence* of any Cloudflare header is the signal that matters, not its
   // value: it means Vercel's edge saw a Cloudflare PoP rather than the visitor,
@@ -187,7 +255,8 @@ export function getGeo(headers: Headers): Geo {
   // invitation to believe the PoP's location instead.
   const behindCloudflare = cfCountryRaw !== null || headers.has("cf-ray");
 
-  const country = cfCountry ?? (behindCloudflare ? null : headers.get("x-vercel-ip-country")?.trim().toUpperCase() || null);
+  const country =
+    cfCountry ?? (behindCloudflare ? null : cleanCountry(headers.get("x-vercel-ip-country")));
 
   // Present only with Cloudflare's "Add visitor location headers" Managed
   // Transform enabled (free tier). Computed from the real visitor IP.
@@ -205,7 +274,7 @@ export function getGeo(headers: Headers): Geo {
 
   return {
     country,
-    region: headers.get("x-vercel-ip-country-region")?.trim() || null,
+    region: cleanPlace(headers.get("x-vercel-ip-country-region")),
     city: decode(headers.get("x-vercel-ip-city")),
   };
 }

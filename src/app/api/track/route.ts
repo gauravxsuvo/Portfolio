@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { insertEvents, ensureSchema, isDbConfigured, purgeOldEvents, type InsertableEvent } from "@/lib/analytics/db";
 import { purgeOldLogins } from "@/lib/analytics/admin-log";
 import { isEventName, propsAreValid, LIMITS, type EventProps } from "@/lib/analytics/events";
+import { viaTrustedEdge } from "@/lib/analytics/origin";
 import {
   getClientIp,
   getGeo,
@@ -24,12 +25,15 @@ import {
  * abuse is bad chart data rather than a compromised site.
  *
  * Defences, in the order they apply:
- *   1. Same-origin check      — blocks casual cross-site POST floods.
- *   2. Body size cap          — read as text first; a 2GB body must not be
+ *   1. Trusted-edge check     — proof the request came through our Cloudflare,
+ *                               which is the only reason the headers below mean
+ *                               anything. See the note at the top of POST().
+ *   2. Same-origin check      — blocks casual cross-site POST floods.
+ *   3. Body size cap          — read as text first; a 2GB body must not be
  *                               handed to JSON.parse().
- *   3. Bot filter             — keeps crawler noise out of the data.
- *   4. Per-IP rate limit      — bounds a single flooder.
- *   5. Strict field validation — closed event vocabulary, clamped lengths.
+ *   4. Bot filter             — keeps crawler noise out of the data.
+ *   5. Per-IP rate limit      — bounds a single flooder.
+ *   6. Strict field validation — closed event vocabulary, clamped lengths.
  *
  * It always answers 204. Telling an unauthenticated caller *why* their payload
  * was rejected just tells an abuser what to fix, and the browser has nothing
@@ -157,6 +161,32 @@ function cleanDimension(value: unknown): number | null {
 }
 
 export async function POST(req: Request) {
+  /**
+   * First, before any header is read for anything.
+   *
+   * The rate limiter below is keyed on getClientIp(), and getClientIp() trusts
+   * cf-connecting-ip for one reason only: Cloudflare overwrites it, so a client
+   * can't choose its own value. That reasoning is void for a request that never
+   * went through Cloudflare — and Vercel answers on its own public *.vercel.app
+   * hostname, so such a request is a curl command away.
+   *
+   * On that path every defence here quietly inverts. The per-IP request and
+   * event caps are keyed on a value the caller picks, so rotating the header
+   * per request means no limit at all. hashIp() hashes an invented address, so
+   * "unique visitors" counts whatever the attacker felt like typing. getGeo()
+   * reads invented cf-* headers. The limiter isn't weakened by this; it's
+   * dissolved, and the write path behind it is the site's only database.
+   *
+   * /api/admin/* has had this gate for exactly the same reason. It belongs here
+   * too — this route is unauthenticated, which makes it the *easier* target, not
+   * a less important one.
+   *
+   * Unset ORIGIN_VERIFY_SECRET means "not enforced", so dev, previews and fresh
+   * clones are unaffected. 204 like every other rejection: this endpoint never
+   * explains itself to a caller.
+   */
+  if (!viaTrustedEdge(req.headers)) return NO_CONTENT;
+
   if (!isDbConfigured()) return NO_CONTENT;
   if (!isSameOrigin(req)) return NO_CONTENT;
 
