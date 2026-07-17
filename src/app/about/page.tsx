@@ -19,9 +19,11 @@ export default function AboutPage() {
       <section id="section-whoami" data-label="whoami" className="scroll-mt-24" aria-labelledby="whoami-heading">
         <SectionLabel id="whoami-heading" index="00" label="whoami" />
         <TerminalWindow title="about.txt" meta="R/O" className="trace-box">
-          <p className="text-sm sm:text-base leading-relaxed text-fg/80">
-            {bio.summary}
-          </p>
+          <div className="prose-measure flex flex-col gap-4 text-sm leading-relaxed text-fg/80 sm:text-base">
+            {bio.about.map((para) => (
+              <p key={para}>{para}</p>
+            ))}
+          </div>
           <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
             <div className="flex gap-2">
               <dt className="text-fg/40">name:</dt>

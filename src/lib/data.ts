@@ -183,5 +183,15 @@ export const bio = {
   // in the first person is what made this read like a cover letter.
   summary:
     "I'm Gaurav! I'm an undergraduate student at IIT Guwahati. I build machine learning systems and the software around them.",
+  // The longer, first-person narrative — rendered only on /about. `summary`
+  // above stays short on purpose: it's the hero line, the meta description and
+  // the shell's `about.txt`, where a paragraph would be too much.
+  about: [
+    "I'm an undergraduate at IIT Guwahati studying Data Science and Artificial Intelligence. I like building machine learning systems, and using data, mathematics and software engineering to solve real problems.",
+    "I've always been drawn to how things work under the hood — reading a paper, reimplementing an idea from scratch, or debugging a project for hours until it finally clicks. Most of my free time goes into experimenting with new tools and building things because I'm curious, not because I have to.",
+    "My interests sit where machine learning, scientific computing, AI systems and software engineering meet — especially scientific ML, data-driven modeling, and building reliable systems around models rather than just the models themselves. Longer term, I want to work on research and engineering that pushes scientific computing and education forward with AI.",
+    "I like working with people, too. I've led hackathon teams, run freelance projects, and mentored where I could, and I tend to take on things that push me past my comfort zone — that's where I learn the most. Away from the terminal you'll usually find me gaming, poking at the latest AI tools, or building throwaway side projects for fun.",
+    "Right now I'm looking for opportunities in machine learning engineering, AI research, AI systems and business intelligence — meaningful work where I can keep growing as an engineer and a researcher.",
+  ],
   focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
 };
