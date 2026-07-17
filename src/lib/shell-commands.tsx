@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { useRouter } from "next/navigation";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
+import { TopMonitor } from "@/components/top-monitor";
 import { bio, experience, projects, publications, skillGroups } from "@/lib/data";
 import { siteHost } from "@/lib/site";
 import { PRESETS, DEFAULT_PRIMARY_HEX, hslToHex, normalizeHex } from "@/lib/color";
@@ -102,6 +103,7 @@ const MAN_PAGES: Record<string, string> = {
   unlock:
     "scroll to a homepage section and mark it visited. unlocking all six earns an achievement.",
   man: "print the manual for a command. with no argument, lists every documented topic.",
+  top: "a simulated process monitor. refreshes live for a few seconds, then freezes on a snapshot — run it again to refresh. the processes are a wink at what this portfolio is about, not a real task list.",
   history:
     "list commands you've run. history persists across reloads and routes; `history -c` wipes it. ctrl+r searches it backwards.",
 };
@@ -411,6 +413,12 @@ export const COMMANDS: Command[] = [
     name: "neofetch",
     desc: "show system info",
     run: () => <NeofetchPanel />,
+  },
+  {
+    name: "top",
+    aliases: ["htop", "ps"],
+    desc: "live process monitor",
+    run: () => <TopMonitor />,
   },
   {
     name: "theme",
