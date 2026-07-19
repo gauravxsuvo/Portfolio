@@ -253,13 +253,26 @@ html[data-mode="retro"] .divider-scan::after {
   }
 }
 
-/* 4. Phosphor mist — the haze in front of a tube in a dark room.
-      Three blurred blobs on long, mutually-prime durations so the composite
-      never visibly repeats. filter:blur on a large element is the one
-      expensive thing in this file, which is why there are three of them and
-      not ten, and why they animate transform/opacity only (no repaint).
-      Fixed and behind everything: content is lifted above by `relative z-[1]`
-      on the frame wrappers, same as the ambient canvas. */
+/* 4. Phosphor mist — the glow of a tube lighting the dark around it.
+ *
+ * Two rules make this read as light rather than as decoration, and the first
+ * version broke both:
+ *
+ * 1. ONE HUE FAMILY. Light in a room has a single colour temperature. Pulling
+ *    three arbitrary accent slots meant ANSI got red, cyan and green haze at
+ *    once — three saturated hues that muddy where they overlap and read as
+ *    "someone put coloured circles back there". Each template now names two
+ *    *analogous* mist hues (30-65° apart) in --mist-1/--mist-2, so the glow has
+ *    depth without ever looking like separate lights.
+ * 2. IT MUST NOT LOOK LIKE OBJECTS. Anything that reads as a shape with an
+ *    edge and a path is a floating ball, not atmosphere. Hence: much lower
+ *    opacity, far heavier blur, deliberate anchoring (top-left, bottom-right —
+ *    a light source above and its bounce below) rather than scattered, and a
+ *    drift range small enough that you can't track one across the screen.
+ *
+ * Two blobs, not three: filter:blur on a huge element is the one genuinely
+ * expensive thing in this file, and the third was adding cost, not depth.
+ */
 .phosphor-mist {
   position: fixed;
   inset: 0;
@@ -270,11 +283,10 @@ html[data-mode="retro"] .divider-scan::after {
 
 .phosphor-mist-blob {
   position: absolute;
-  width: 46vmax;
-  height: 46vmax;
+  width: 62vmax;
+  height: 62vmax;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.14;
+  filter: blur(130px);
   will-change: transform;
 }
 
@@ -286,59 +298,66 @@ html[data-mode="retro"] .divider-scan::after {
 }
 
 .phosphor-mist-blob:nth-child(1) {
-  top: -12vmax;
-  left: -8vmax;
-  background: radial-gradient(circle, var(--color-ansi-1) 0%, transparent 68%);
-  animation: mist-drift-a 47s ease-in-out infinite;
+  top: -26vmax;
+  left: -18vmax;
+  opacity: 0.1;
+  background: radial-gradient(circle closest-side, var(--mist-1) 0%, transparent 100%);
+  animation: mist-drift-a 53s ease-in-out infinite;
 }
 
 .phosphor-mist-blob:nth-child(2) {
-  top: 18vmax;
-  right: -14vmax;
-  background: radial-gradient(circle, var(--color-ansi-2) 0%, transparent 68%);
-  animation: mist-drift-b 61s ease-in-out infinite;
+  right: -22vmax;
+  bottom: -28vmax;
+  opacity: 0.075;
+  background: radial-gradient(circle closest-side, var(--mist-2) 0%, transparent 100%);
+  animation: mist-drift-b 71s ease-in-out infinite;
 }
 
-.phosphor-mist-blob:nth-child(3) {
-  bottom: -18vmax;
-  left: 28vw;
-  background: radial-gradient(circle, var(--color-ansi-4) 0%, transparent 68%);
-  animation: mist-drift-c 53s ease-in-out infinite;
+/* Defaults, and the mono case: one phosphor means one colour of light. Both
+   variables point at the same value there, which is the honest answer rather
+   than inventing a second hue the palette doesn't have. */
+:root {
+  --mist-1: var(--color-primary);
+  --mist-2: var(--color-primary);
 }
 
-/* Mono has no accent slots driving it — one phosphor, so one colour of haze. */
-html[data-mode="mono"] .phosphor-mist-blob {
-  background: radial-gradient(circle, var(--color-primary) 0%, transparent 68%);
-  opacity: 0.1;
+/* Analogous pairs, one per template — see rule 1 above. */
+html[data-mode="retro"][data-retro="ansi"] {
+  --mist-1: #6ab0ff; /* blue      213° */
+  --mist-2: #5ff5f5; /* cyan      180° */
+}
+html[data-mode="retro"][data-retro="synthwave"] {
+  --mist-1: #b57bff; /* violet    265° */
+  --mist-2: #ff4fd8; /* magenta   313° */
+}
+html[data-mode="retro"][data-retro="arcade"] {
+  --mist-1: #ff2ec4; /* magenta   313° */
+  --mist-2: #ff6b35; /* orange     18° */
+}
+html[data-mode="retro"][data-retro="vaporwave"] {
+  --mist-1: #c9b6ff; /* lavender  256° */
+  --mist-2: #ffb3de; /* pink      325° */
 }
 
+/* Small ranges on purpose: enough that the light breathes, not enough that you
+   can watch a shape travel. */
 @keyframes mist-drift-a {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(14vw, 8vh, 0) scale(1.18);
+    transform: translate3d(5vw, 4vh, 0) scale(1.08);
   }
 }
 
 @keyframes mist-drift-b {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) scale(1.1);
+    transform: translate3d(0, 0, 0) scale(1.06);
   }
   50% {
-    transform: translate3d(-16vw, 12vh, 0) scale(0.9);
-  }
-}
-
-@keyframes mist-drift-c {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(0.95);
-  }
-  50% {
-    transform: translate3d(-10vw, -10vh, 0) scale(1.2);
+    transform: translate3d(-4vw, -5vh, 0) scale(0.96);
   }
 }
 
