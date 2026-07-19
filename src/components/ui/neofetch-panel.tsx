@@ -32,10 +32,10 @@ const MONO_SWATCHES = [
 const RETRO_SWATCHES = [
   { label: "primary", className: "bg-primary" },
   { label: "cyan", className: "bg-[var(--color-ansi-cyan)]" },
-  { label: "magenta", className: "bg-[var(--color-ansi-magenta)]" },
   { label: "amber", className: "bg-[var(--color-ansi-amber)]" },
-  { label: "border", className: "bg-border" },
-  { label: "error", className: "bg-error" },
+  { label: "lime", className: "bg-[var(--color-ansi-lime)]" },
+  { label: "purple", className: "bg-[var(--color-ansi-purple)]" },
+  { label: "orange", className: "bg-[var(--color-ansi-orange)]" },
 ];
 
 /**

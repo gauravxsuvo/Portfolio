@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { OG_BG, OG_GREEN } from "@/lib/og-theme";
+import { OG_BG, OG_MAGENTA } from "@/lib/og-theme";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
@@ -20,7 +20,7 @@ export default function AppleIcon() {
         <div
           style={{
             display: "flex",
-            color: OG_GREEN,
+            color: OG_MAGENTA,
             fontWeight: 700,
             fontSize: 104,
           }}

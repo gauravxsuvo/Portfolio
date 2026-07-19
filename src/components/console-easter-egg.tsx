@@ -5,8 +5,10 @@ import { bio } from "@/lib/data";
 import { unlockAchievement } from "@/lib/achievements";
 import { isAppleDevice } from "@/lib/platform";
 
-const GREEN = "color:#33ff00;font-family:monospace";
-const AMBER = "color:#ffb000;font-family:monospace";
+// Tracks the site's default (retro) palette rather than the old green.
+const MAGENTA = "color:#ff4fd8;font-family:monospace";
+const CYAN = "color:#22e0ff;font-family:monospace";
+const AMBER = "color:#ffc233;font-family:monospace";
 
 declare global {
   interface Window {
@@ -18,7 +20,7 @@ export function ConsoleEasterEgg() {
   useEffect(() => {
     console.log(
       `%cguest@${bio.handle}:~$ %cwhoami`,
-      GREEN,
+      MAGENTA,
       AMBER
     );
     console.log(
@@ -35,7 +37,7 @@ export function ConsoleEasterEgg() {
         "",
         `  hire()        ← run this`,
       ].join("\n"),
-      GREEN
+      CYAN
     );
 
     // Defining a global is the whole joke — it only pays off if someone actually

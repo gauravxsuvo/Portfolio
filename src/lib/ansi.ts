@@ -8,12 +8,22 @@
  * what lets server components participate without knowing the client's mode.
  */
 
+/**
+ * Cycle order matters: adjacent entries are what land next to each other in a
+ * nav row or a rainbow wordmark, so they alternate warm/cool rather than
+ * running the spectrum in order (which puts magenta beside purple and reads as
+ * a gradient smear at small sizes).
+ */
 const ANSI_ACCENT_VARS = [
-  "--color-ansi-green",
-  "--color-ansi-cyan",
   "--color-ansi-magenta",
+  "--color-ansi-cyan",
   "--color-ansi-amber",
+  "--color-ansi-lime",
+  "--color-ansi-purple",
+  "--color-ansi-orange",
 ] as const;
+
+export const ANSI_ACCENT_COUNT = ANSI_ACCENT_VARS.length;
 
 /** CSS value for the nth accent in the cycle, e.g. `var(--color-ansi-cyan)`. */
 export function ansiAccent(index: number): string {

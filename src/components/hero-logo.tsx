@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { unlockAchievement } from "@/lib/achievements";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { retroAccentStyle } from "@/lib/ansi";
 import { bio } from "@/lib/data";
 
 // ASCII only: the hero renders in VT323 now, which has no CJK glyphs — a
@@ -106,8 +107,16 @@ export function HeroLogo() {
             a weight — the CRT lettering is the emphasis. */}
         <h1 className="glitch-hover warp-text break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
           <span className="sr-only">{bio.name}</span>
+          {/* One span per character so retro mode can run the accent cycle
+              through the wordmark. In mono the .retro-accent rule is inert and
+              every span simply inherits the h1's single phosphor colour, so
+              this costs nothing but the extra elements. */}
           <span aria-hidden="true">
-            {shown}
+            {[...shown].map((ch, i) => (
+              <span key={i} className="retro-accent" style={retroAccentStyle(i)}>
+                {ch}
+              </span>
+            ))}
             <span className={done ? "animate-blink" : ""}>_</span>
           </span>
         </h1>

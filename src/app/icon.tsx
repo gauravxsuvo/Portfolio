@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { OG_BG, OG_GREEN } from "@/lib/og-theme";
+import { OG_BG, OG_MAGENTA } from "@/lib/og-theme";
 
 const SIZES = [16, 32, 48] as const;
 
@@ -29,7 +29,7 @@ export default async function Icon({ id }: { id: Promise<string | number> }) {
         <div
           style={{
             display: "flex",
-            color: OG_GREEN,
+            color: OG_MAGENTA,
             fontWeight: 700,
             fontSize: Math.round(px * 0.58),
           }}

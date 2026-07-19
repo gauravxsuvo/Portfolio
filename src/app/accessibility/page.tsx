@@ -58,7 +58,7 @@ const SHORTFALLS: { title: string; detail: string }[] = [
   {
     title: "The whole thing is monospace on black",
     detail:
-      "That's the point of the design, but it's a real tradeoff. Monospace is harder to read at length for some people with dyslexia, and the pixel-style heading font trades some legibility for the CRT look (body text stays in a normal monospace). Both built-in palettes — the colorful retro default and the single-phosphor mono mode — clear WCAG AA contrast for body text, but if a low-contrast custom color is picked in display settings, that guarantee is gone — the picker lets you make it unreadable and I haven't clamped it.",
+      "That's the point of the design, but it's a real tradeoff. Monospace is harder to read at length for some people with dyslexia, and the pixel-style heading font trades some legibility for the CRT look (body text stays in a normal monospace). Every colour in both built-in palettes — the colourful retro default and the single-phosphor mono mode — clears WCAG AA contrast on the background, the dimmest at about 7:1. But if a low-contrast custom colour is picked in display settings, that guarantee is gone — the picker lets you make it unreadable and I haven't clamped it.",
   },
   {
     title: "The shell is not a great screen reader experience",

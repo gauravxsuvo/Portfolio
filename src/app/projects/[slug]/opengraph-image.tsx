@@ -1,7 +1,18 @@
 import { ImageResponse } from "next/og";
 import { loadJetBrainsMono } from "@/lib/og-fonts";
-import { OG_BG, OG_BORDER, OG_GREEN, STATUS_STYLE } from "@/lib/og-theme";
+import {
+  OG_BG,
+  OG_BORDER,
+  OG_CYAN,
+  OG_LIME,
+  OG_MAGENTA,
+  OG_PURPLE,
+  STATUS_STYLE,
+} from "@/lib/og-theme";
 import { projects } from "@/lib/data";
+
+/** Matches the site's accent cycle, so the stack chips read the same way. */
+const STACK_COLORS = [OG_MAGENTA, OG_CYAN, OG_LIME, OG_PURPLE];
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -66,19 +77,19 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             flexDirection: "column",
             border: `2px solid ${OG_BORDER}`,
             padding: "44px 56px",
-            boxShadow: `inset 0 0 160px rgba(51,255,0,0.07)`,
+            boxShadow: `inset 0 0 160px rgba(255,79,216,0.08)`,
           }}
         >
-          <div style={{ display: "flex", fontSize: 18, color: OG_GREEN, opacity: 0.5, letterSpacing: 2 }}>
+          <div style={{ display: "flex", fontSize: 18, color: OG_PURPLE, opacity: 0.7, letterSpacing: 2 }}>
             {`+--- PROJECT / ${slug} ---+`}
           </div>
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_GREEN, opacity: 0.55, marginTop: 30 }}>
+          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 30 }}>
             {`guest@gauravxsuvo:~$ cat projects/${slug}/README.md`}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 26 }}>
-            <div style={{ display: "flex", fontSize: 58, fontWeight: 700, color: OG_GREEN }}>{name}</div>
+            <div style={{ display: "flex", fontSize: 58, fontWeight: 700, color: OG_MAGENTA }}>{name}</div>
             <div
               style={{
                 display: "flex",
@@ -93,22 +104,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             </div>
           </div>
 
-          <div style={{ display: "flex", fontSize: 26, color: OG_GREEN, opacity: 0.75, marginTop: 14 }}>
+          <div style={{ display: "flex", fontSize: 26, color: "#e6e0f0", opacity: 0.85, marginTop: 14 }}>
             {tagline}
           </div>
 
-          <div style={{ display: "flex", fontSize: 20, color: OG_GREEN, opacity: 0.45, marginTop: 36 }}>
+          <div style={{ display: "flex", fontSize: 20, color: OG_CYAN, opacity: 0.6, marginTop: 36 }}>
             stack:
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-            {stack.map((tech) => (
+            {stack.map((tech, i) => (
               <div
                 key={tech}
                 style={{
                   display: "flex",
                   fontSize: 18,
-                  color: OG_GREEN,
-                  opacity: 0.85,
+                  color: STACK_COLORS[i % STACK_COLORS.length],
                   border: `1px solid ${OG_BORDER}`,
                   padding: "5px 12px",
                 }}
@@ -118,7 +128,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             ))}
           </div>
 
-          <div style={{ display: "flex", fontSize: 20, color: OG_GREEN, opacity: 0.7, marginTop: "auto" }}>
+          <div style={{ display: "flex", fontSize: 20, color: OG_MAGENTA, opacity: 0.8, marginTop: "auto" }}>
             guest@gauravxsuvo:~$ _
           </div>
         </div>
@@ -128,8 +138,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             display: "flex",
             justifyContent: "space-between",
             fontSize: 16,
-            color: OG_GREEN,
-            opacity: 0.35,
+            color: OG_PURPLE,
+            opacity: 0.6,
             marginTop: 14,
           }}
         >

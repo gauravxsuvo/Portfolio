@@ -12,26 +12,41 @@
   --color-muted: color-mix(in srgb, var(--color-primary) 50%, black);
   --color-border: color-mix(in srgb, var(--color-primary) 50%, black);
 
-  /* The ANSI accent set. Defined in every mode so components can reference
-     them unconditionally; retro mode is where the UI actually cycles through
-     them. All four clear WCAG AA (4.5:1) against #0a0a0a. */
-  --color-ansi-green: #33ff00;
-  --color-ansi-cyan: #2ee6ff;
-  --color-ansi-magenta: #ff5cd0;
-  --color-ansi-amber: #ffb000;
+  /* The ANSI accent set — a six-colour cycle. Defined in every mode so
+     components can reference them unconditionally; retro mode is where the UI
+     actually cycles through them. Every one clears WCAG AA (4.5:1) against the
+     background, the dimmest (magenta) at 6.9:1. */
+  --color-ansi-magenta: #ff4fd8;
+  --color-ansi-cyan: #22e0ff;
+  --color-ansi-amber: #ffc233;
+  --color-ansi-lime: #7cff4d;
+  --color-ansi-purple: #b57bff;
+  --color-ansi-orange: #ff7a45;
 }
 
 /* ---------------------------------------------------------------------------
    Retro mode (the default for new visitors — see THEME_INIT_SCRIPT).
-   Body text goes warm paper-white and the ANSI set cycles through headings,
-   tags and nav via the .retro-* utilities below. Mono mode is the absence of
-   this block: one phosphor color written inline on <html> by lib/theme.ts.
-   --color-primary stays green here, so prompts, borders and muted tones keep
-   the terminal's green backbone under the colorful accents.
+
+   This is a *colour* CRT, not a phosphor tube: magenta leads, cyan and amber
+   answer it, and the full six-colour cycle runs through headings, the hero,
+   nav, tags and links via the .retro-* utilities below. Green is one entry in
+   that cycle rather than the backbone — deliberately, because primary is what
+   prompts, borders, buttons and both canvases derive from, so leaving it green
+   is what made an earlier version of this mode still read as a green terminal
+   with coloured headings.
+
+   Mono mode is the absence of this block: one phosphor colour (green by
+   default) written inline on <html> by lib/theme.ts, driving everything.
    --------------------------------------------------------------------------- */
 html[data-mode="retro"] {
-  --color-fg: #ded8c4;
+  --color-fg: #e6e0f0;
+  --color-primary: var(--color-ansi-magenta);
+  --color-secondary: var(--color-ansi-amber);
   --color-accent: var(--color-ansi-cyan);
+  /* Violet rather than a dimmed magenta: box strokes sit under every accent in
+     the cycle, so they need to be the one neutral that doesn't take a side. */
+  --color-muted: color-mix(in srgb, var(--color-ansi-purple) 42%, black);
+  --color-border: color-mix(in srgb, var(--color-ansi-purple) 42%, black);
 }
 
 /* Per-element accent, fed by an inline `--retro-accent` set in JSX (a cycle
@@ -60,6 +75,20 @@ html[data-mode="retro"] .retro-fill {
   background: var(--retro-accent, var(--color-primary));
   border-color: var(--retro-accent, var(--color-primary));
   color: var(--color-bg);
+}
+
+/* The hero wordmark runs the whole cycle, one colour per character. The glow
+   below has to resolve per-character too, which is why retro's .warp-text
+   switches to currentColor: text-shadow inherits, and currentColor resolves
+   against each span's own colour rather than the h1's. */
+html[data-mode="retro"] .warp-text {
+  text-shadow:
+    calc(var(--scroll-warp) * var(--scroll-dir) * 2px) 0 0
+      color-mix(in srgb, var(--color-error) 60%, transparent),
+    calc(var(--scroll-warp) * var(--scroll-dir) * -2px) 0 0
+      color-mix(in srgb, var(--color-ansi-cyan) 60%, transparent),
+    0 0 6px color-mix(in srgb, currentColor 55%, transparent),
+    0 0 16px color-mix(in srgb, currentColor 25%, transparent);
 }
 
 @theme inline {
@@ -709,6 +738,11 @@ html[data-cursor-down="true"] .cursor-ring {
   }
   .warp-text {
     text-shadow: 0 0 5px color-mix(in srgb, var(--color-primary) 60%, transparent);
+  }
+  /* Retro's .warp-text is more specific than the rule above, so dropping the
+     chromatic split needs a matching selector or it survives here. */
+  html[data-mode="retro"] .warp-text {
+    text-shadow: 0 0 6px color-mix(in srgb, currentColor 55%, transparent);
   }
 }
 

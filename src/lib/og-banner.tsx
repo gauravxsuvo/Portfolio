@@ -1,7 +1,10 @@
 import { ImageResponse } from "next/og";
 import { loadJetBrainsMono } from "./og-fonts";
 import { bio } from "./data";
-import { OG_AMBER, OG_BG, OG_BORDER, OG_GREEN } from "./og-theme";
+import { OG_AMBER, OG_BG, OG_BORDER, OG_CYAN, OG_LIME, OG_MAGENTA, OG_PURPLE } from "./og-theme";
+
+/** Same idea as the site's accent cycle: the focus tags run through it. */
+const TAG_COLORS = [OG_MAGENTA, OG_CYAN, OG_AMBER, OG_LIME];
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -30,44 +33,43 @@ export default async function renderBanner() {
             flexDirection: "column",
             border: `2px solid ${OG_BORDER}`,
             padding: "40px 56px",
-            boxShadow: `inset 0 0 160px rgba(51,255,0,0.07)`,
+            boxShadow: `inset 0 0 160px rgba(255,79,216,0.08)`,
           }}
         >
-          <div style={{ display: "flex", fontSize: 18, color: OG_GREEN, opacity: 0.5, letterSpacing: 2 }}>
+          <div style={{ display: "flex", fontSize: 18, color: OG_PURPLE, opacity: 0.7, letterSpacing: 2 }}>
             +--- GAURAV@PORTFOLIO:~$ ---+
           </div>
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_GREEN, opacity: 0.55, marginTop: 24 }}>
+          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 24 }}>
             guest@gauravxsuvo:~$ whoami
           </div>
-          <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: OG_GREEN, marginTop: 6 }}>
+          <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: OG_MAGENTA, marginTop: 6 }}>
             {bio.name}
           </div>
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_GREEN, opacity: 0.55, marginTop: 28 }}>
+          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 28 }}>
             guest@gauravxsuvo:~$ cat role.txt
           </div>
           <div style={{ display: "flex", fontSize: 24, color: OG_AMBER, marginTop: 4 }}>
             {"> "}
             {bio.role}
           </div>
-          <div style={{ display: "flex", fontSize: 20, color: OG_GREEN, opacity: 0.6, marginTop: 2 }}>
+          <div style={{ display: "flex", fontSize: 20, color: OG_LIME, opacity: 0.8, marginTop: 2 }}>
             {"> "}
             {bio.location}
           </div>
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_GREEN, opacity: 0.55, marginTop: 28 }}>
+          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 28 }}>
             guest@gauravxsuvo:~$ ls focus/
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-            {bio.focus.map((tag) => (
+            {bio.focus.map((tag, i) => (
               <div
                 key={tag}
                 style={{
                   display: "flex",
                   fontSize: 18,
-                  color: OG_GREEN,
-                  opacity: 0.85,
+                  color: TAG_COLORS[i % TAG_COLORS.length],
                   border: `1px solid ${OG_BORDER}`,
                   padding: "5px 12px",
                 }}
@@ -77,7 +79,7 @@ export default async function renderBanner() {
             ))}
           </div>
 
-          <div style={{ display: "flex", fontSize: 20, color: OG_GREEN, opacity: 0.7, marginTop: "auto" }}>
+          <div style={{ display: "flex", fontSize: 20, color: OG_MAGENTA, opacity: 0.8, marginTop: "auto" }}>
             guest@gauravxsuvo:~$ _
           </div>
         </div>
@@ -87,8 +89,8 @@ export default async function renderBanner() {
             display: "flex",
             justifyContent: "space-between",
             fontSize: 16,
-            color: OG_GREEN,
-            opacity: 0.35,
+            color: OG_PURPLE,
+            opacity: 0.6,
             marginTop: 14,
           }}
         >
