@@ -1,11 +1,31 @@
 import { DEFAULT_PRIMARY_HEX, normalizeHex } from "./color";
 
 export const THEME_STORAGE_KEY = "suvo:theme-primary";
+export const THEME_MODE_STORAGE_KEY = "suvo:theme-mode";
 export const CRT_STORAGE_KEY = "suvo:crt-enabled";
 export const THEME_CHANGE_EVENT = "suvo:theme-change";
+export const THEME_MODE_CHANGE_EVENT = "suvo:theme-mode-change";
 export const OPEN_THEME_PANEL_EVENT = "suvo:open-theme-panel";
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/**
+ * Two display modes:
+ *  - "retro": the default. Warm paper-white body text with the ANSI accent set
+ *    (green/cyan/magenta/amber) cycling through headings, tags and nav — the
+ *    look of a real color terminal. Palette lives in CSS under
+ *    `html[data-mode="retro"]`.
+ *  - "mono": the single-phosphor look. One primary color (user-pickable via
+ *    the display panel) drives everything, applied as inline custom properties.
+ *
+ * The inline/CSS split is the whole mechanism: mono writes --color-* inline on
+ * <html> (they must outrank the stylesheet, the color is user-chosen), so
+ * entering retro has to *remove* those inline properties or the retro palette
+ * never shows through.
+ */
+export type ThemeMode = "retro" | "mono";
+
+export const DEFAULT_THEME_MODE: ThemeMode = "retro";
 
 /**
  * Who wrote the theme. The display panel broadcasts its own changes so the rest
@@ -120,6 +140,55 @@ export function previewThemeColor(hex: string, source: ThemeSource = "panel"): v
   broadcastThemeChange(hex, source, false);
 }
 
+export function readStoredThemeMode(): ThemeMode | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+    return raw === "retro" || raw === "mono" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Same resolution the pre-hydration script uses: an explicit stored choice
+ * wins; a stored custom phosphor from before modes existed means the visitor
+ * had picked a color, so they get mono rather than having their choice
+ * repainted; everyone else gets the retro default.
+ */
+export function resolveThemeMode(): ThemeMode {
+  return readStoredThemeMode() ?? (readStoredThemeColor() ? "mono" : DEFAULT_THEME_MODE);
+}
+
+export function applyThemeMode(mode: ThemeMode): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.mode = mode;
+  const style = document.documentElement.style;
+  if (mode === "retro") {
+    // The retro palette is stylesheet-driven; inline properties left over from
+    // mono (or from `party`) would outrank it, so clear them.
+    style.removeProperty("--color-primary");
+    style.removeProperty("--color-fg");
+    style.removeProperty("--color-accent");
+  } else {
+    applyThemeColor(readStoredThemeColor() ?? DEFAULT_PRIMARY_HEX);
+  }
+}
+
+/** Commit a mode everywhere: paint it, remember it, tell everyone. */
+export function setThemeMode(mode: ThemeMode): void {
+  applyThemeMode(mode);
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(THEME_MODE_STORAGE_KEY, mode);
+  } catch {
+    // storage unavailable — the mode just won't persist across reloads
+  }
+  window.dispatchEvent(
+    new CustomEvent<{ mode: ThemeMode }>(THEME_MODE_CHANGE_EVENT, { detail: { mode } })
+  );
+}
+
 export function readCrtEnabled(): boolean {
   if (typeof window === "undefined") return true;
   try {
@@ -142,15 +211,23 @@ export function setCrtEnabled(enabled: boolean): void {
 
 // Dependency-free literal: runs as a raw <script> before hydration, so it can't
 // import anything. Only replays already-validated storage — no guardrail logic.
+// Mode resolution mirrors resolveThemeMode(): explicit choice > legacy custom
+// color (implies mono) > retro default. The stored hex is only painted in mono;
+// in retro the stylesheet palette must win, so no inline properties are set.
 export const THEME_INIT_SCRIPT = `(function(){try{
+var d=document.documentElement;
+var m=localStorage.getItem(${JSON.stringify(THEME_MODE_STORAGE_KEY)});
 var v=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
-if(v&&/^#[0-9a-f]{6}$/i.test(v)){
-var s=document.documentElement.style;
+var ok=v&&/^#[0-9a-f]{6}$/i.test(v);
+if(m!=="retro"&&m!=="mono"){m=ok?"mono":"retro";}
+d.dataset.mode=m;
+if(m==="mono"&&ok){
+var s=d.style;
 s.setProperty("--color-primary",v);
 s.setProperty("--color-fg",v);
 s.setProperty("--color-accent",v);
 }
 if(localStorage.getItem(${JSON.stringify(CRT_STORAGE_KEY)})==="0"){
-document.documentElement.dataset.crt="off";
+d.dataset.crt="off";
 }
 }catch(e){}})();`;

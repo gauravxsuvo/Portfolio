@@ -5,7 +5,10 @@ import { unlockAchievement } from "@/lib/achievements";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { bio } from "@/lib/data";
 
-const SCRAMBLE_CHARS = "!<>-_\\/[]{}=+*^?#01アイウエオカキクケコ";
+// ASCII only: the hero renders in VT323 now, which has no CJK glyphs — a
+// katakana scramble char would fall back to JetBrains Mono mid-animation and
+// make the line jitter as glyph widths change under it.
+const SCRAMBLE_CHARS = "!<>-_\\/[]{}=+*^?#$%&@01";
 const CHAR_STEP_FRAMES = 3;
 const SETTLE_FRAMES = 6;
 const TICK_MS = 35;
@@ -99,7 +102,9 @@ export function HeroLogo() {
         aria-label={`${bio.name}, click to replay identity scan`}
         className="block text-left"
       >
-        <h1 className="glitch-hover warp-text break-words text-2xl font-bold tracking-wide text-primary sm:text-4xl lg:text-5xl xl:text-6xl">
+        {/* VT323 runs narrow and has no bold, so it gets a size bump instead of
+            a weight — the CRT lettering is the emphasis. */}
+        <h1 className="glitch-hover warp-text break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
           <span className="sr-only">{bio.name}</span>
           <span aria-hidden="true">
             {shown}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { projects, publications, bio } from "@/lib/data";
 import { PRESETS } from "@/lib/color";
-import { OPEN_THEME_PANEL_EVENT, setThemeColor } from "@/lib/theme";
+import { OPEN_THEME_PANEL_EVENT, setThemeColor, setThemeMode } from "@/lib/theme";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
 import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { unlockAchievement } from "@/lib/achievements";
@@ -105,6 +105,29 @@ export function CommandPalette() {
         run: go("/publications"),
       })),
 
+      {
+        id: "theme-mode-retro",
+        label: "Retro mode",
+        hint: "ansi colors (default)",
+        group: "display",
+        keywords: "theme mode colorful ansi rainbow default",
+        run: () => {
+          setThemeMode("retro");
+          unlockAchievement("theme");
+        },
+      },
+      {
+        id: "theme-mode-mono",
+        label: "Mono mode",
+        hint: "one phosphor color",
+        group: "display",
+        keywords: "theme mode single phosphor",
+        run: () => {
+          setThemeMode("mono");
+          unlockAchievement("theme");
+        },
+      },
+
       ...PRESETS.map((preset) => ({
         id: `theme-${preset.id}`,
         label: preset.label,
@@ -112,6 +135,8 @@ export function CommandPalette() {
         group: "phosphor",
         keywords: `theme color ${preset.id}`,
         run: () => {
+          // Picking a color implies mono, same as the panel and the shell.
+          setThemeMode("mono");
           setThemeColor(preset.hex, "shell");
           unlockAchievement("theme");
         },

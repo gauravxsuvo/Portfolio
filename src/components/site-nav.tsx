@@ -9,6 +9,7 @@ import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { useMounted } from "@/hooks/use-mounted";
 import { SITE_ROUTES } from "@/lib/routes";
 import { isAppleDevice } from "@/lib/platform";
+import { retroAccentStyle } from "@/lib/ansi";
 
 export function SiteNav() {
   const pathname = usePathname();
@@ -75,7 +76,7 @@ export function SiteNav() {
             aria-label="Primary"
             className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
           >
-            {SITE_ROUTES.map((link) => {
+            {SITE_ROUTES.map((link, i) => {
               const active =
                 link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
               return (
@@ -83,10 +84,11 @@ export function SiteNav() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
+                  style={retroAccentStyle(i)}
                   className={`glitch-hover shrink-0 border px-2.5 py-1 text-xs transition-colors duration-100 sm:text-sm ${
                     active
-                      ? "border-primary bg-primary text-bg"
-                      : "border-border text-fg/70 hover:border-primary hover:text-primary"
+                      ? "retro-fill border-primary bg-primary text-bg"
+                      : "retro-hover border-border text-fg/70 hover:border-primary hover:text-primary"
                   }`}
                 >
                   {link.label}

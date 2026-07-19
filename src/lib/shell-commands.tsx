@@ -5,16 +5,20 @@ import type { useRouter } from "next/navigation";
 import { NeofetchPanel } from "@/components/ui/neofetch-panel";
 import { TopMonitor } from "@/components/top-monitor";
 import { SnakeGame } from "@/components/snake-game";
+import { TypingTest } from "@/components/typing-test";
 import { bio, experience, projects, publications, skillGroups } from "@/lib/data";
 import { siteHost } from "@/lib/site";
 import { scrollToElement } from "@/lib/scroll";
-import { PRESETS, DEFAULT_PRIMARY_HEX, hslToHex, normalizeHex } from "@/lib/color";
+import { PRESETS, hslToHex, normalizeHex } from "@/lib/color";
 import {
   OPEN_THEME_PANEL_EVENT,
   applyThemeColor,
+  applyThemeMode,
   getComputedPrimaryHex,
   readStoredThemeColor,
+  resolveThemeMode,
   setThemeColor,
+  setThemeMode,
 } from "@/lib/theme";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
 import { SHORTCUT_GROUPS } from "@/lib/shortcuts";
@@ -116,7 +120,11 @@ const JOKES = [
 const MAN_PAGES: Record<string, string> = {
   cd: "change directory. accepts any route name, with or without a leading slash. bare route names work on their own too, so `about` and `cd about` do the same thing.",
   theme:
-    "set the phosphor accent colour. takes a preset id, a #rrggbb hex, or `reset`; with no argument it opens the display panel. lightness is floored to whatever keeps the text readable on black.",
+    "control the display. `theme retro` is the default ansi-color look, `theme mono` is single-phosphor; a preset id or #rrggbb hex sets the phosphor (and implies mono). `reset` returns to retro. with no argument it opens the display panel.",
+  lolcat:
+    "paint text in a diagonal rainbow, the way the real lolcat does. works best fed by a pipe: `banner | lolcat`, `cowsay moo | lolcat`, `tree | lolcat` if you're feeling brave.",
+  typetest:
+    "a typing speed test. the clock starts on your first keystroke and stops when the sentence is done; gross wpm is characters over five per minute, and accuracy counts every miss even if you backspace it away. your best run is kept on this device.",
   sudo: "attempt to run a command as root. permission will be denied. every time.",
   cat: "print a file. try `tree` to see what exists.",
   stats:
@@ -310,6 +318,35 @@ ${bottom}
             (__)\\       )\\/\\
                 ||----w |
                 ||     ||`;
+}
+
+/* ------------------------------------------------------------------ lolcat */
+
+/**
+ * Per-character rainbow, diagonal across lines like the real thing. Static
+ * color, no animation — it's a paint job, not a strobe — so it needs no
+ * reduced-motion handling. Spaces keep their default color: styling them is
+ * invisible and would triple the span count for nothing.
+ */
+function Lolcat({ text }: { text: string }) {
+  return (
+    <pre className="whitespace-pre-wrap text-xs sm:text-sm">
+      {text.split("\n").map((line, y) => (
+        <span key={y}>
+          {[...line].map((ch, x) =>
+            ch === " " ? (
+              " "
+            ) : (
+              <span key={x} style={{ color: `hsl(${(x * 9 + y * 24) % 360} 95% 62%)` }}>
+                {ch}
+              </span>
+            )
+          )}
+          {"\n"}
+        </span>
+      ))}
+    </pre>
+  );
 }
 
 /** `wc`'s three numbers, shared by its rendered and piped forms. */
@@ -618,6 +655,32 @@ export const COMMANDS: Command[] = [
     run: () => <SnakeGame />,
   },
   {
+    name: "typetest",
+    aliases: ["wpm", "typing"],
+    desc: "how fast can you type?",
+    run: () => <TypingTest />,
+  },
+  {
+    name: "lolcat",
+    usage: "<cmd> | lolcat",
+    desc: "rainbow whatever flows through it",
+    run: ({ arg, stdin }) => {
+      const input = typeof stdin === "string" ? stdin : arg.trim();
+      if (!input) {
+        return (
+          <Err>
+            lolcat: nothing to color. try `banner | lolcat` or `cowsay moo | lolcat`.
+          </Err>
+        );
+      }
+      unlockAchievement("lolcat");
+      return <Lolcat text={input} />;
+    },
+    // Identity as a pipe stage, so `joke | lolcat | cowsay` still flows — the
+    // color is a rendering concern and text has none.
+    text: ({ arg, stdin }) => (typeof stdin === "string" ? stdin : arg.trim()),
+  },
+  {
     name: "theme",
     usage: "theme [preset]",
     desc: "change phosphor color, or open the display panel",
@@ -627,12 +690,26 @@ export const COMMANDS: Command[] = [
         window.dispatchEvent(new Event(OPEN_THEME_PANEL_EVENT));
         return <Dim>opening display settings...</Dim>;
       }
-      if (target === "reset") {
-        setThemeColor(DEFAULT_PRIMARY_HEX, "shell");
-        return <p className="text-primary">[ OK ] phosphor reset to default green.</p>;
+      if (target === "retro" || target === "mono") {
+        setThemeMode(target);
+        unlockAchievement("theme");
+        return (
+          <p className="text-primary">
+            [ OK ] display mode set to {target}
+            {target === "retro" ? " (ansi colors)" : " (single phosphor)"}.
+          </p>
+        );
       }
+      if (target === "reset") {
+        // Site default is retro now, so reset means retro — not green mono.
+        setThemeMode("retro");
+        return <p className="text-primary">[ OK ] display reset to default (retro).</p>;
+      }
+      // A specific color is a mono-mode idea: picking one flips the mode too,
+      // matching what the display panel does.
       const hex = normalizeHex(target);
       if (hex) {
+        setThemeMode("mono");
         setThemeColor(hex, "shell");
         unlockAchievement("theme");
         return <p className="text-primary">[ OK ] phosphor set to {hex}.</p>;
@@ -641,11 +718,12 @@ export const COMMANDS: Command[] = [
       if (!preset) {
         return (
           <Err>
-            bash: theme: {target}: no such preset (try: {PRESETS.map((p) => p.id).join(", ")},
-            reset, or a #hex)
+            bash: theme: {target}: no such preset (try: retro, mono,{" "}
+            {PRESETS.map((p) => p.id).join(", ")}, reset, or a #hex)
           </Err>
         );
       }
+      setThemeMode("mono");
       setThemeColor(preset.hex, "shell");
       unlockAchievement("theme");
       return <p className="text-primary">[ OK ] phosphor set to {preset.label.toLowerCase()}.</p>;
@@ -1060,7 +1138,11 @@ function startParty() {
 
   partyStop = setTimeout(() => {
     clearInterval(partyTimer);
-    if (partyOriginal) setThemeColor(partyOriginal, "shell");
+    // In retro mode the cycle painted inline overrides on top of the stylesheet
+    // palette; restoring means clearing them, not re-committing a hex — that
+    // would silently flip the visitor to mono.
+    if (resolveThemeMode() === "retro") applyThemeMode("retro");
+    else if (partyOriginal) setThemeColor(partyOriginal, "shell");
     partyOriginal = null;
   }, 2500);
 }
@@ -1111,7 +1193,7 @@ export function completionsFor(command: string): string[] {
     case "cat":
       return Object.keys(FILES);
     case "theme":
-      return [...PRESETS.map((p) => p.id), "reset"];
+      return ["retro", "mono", ...PRESETS.map((p) => p.id), "reset"];
     case "unlock":
       return Object.keys(SECTION_IDS);
     case "man":

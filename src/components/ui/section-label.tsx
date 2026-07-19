@@ -1,3 +1,5 @@
+import { retroAccentStyle } from "@/lib/ansi";
+
 export function SectionLabel({
   index,
   label,
@@ -12,6 +14,11 @@ export function SectionLabel({
    */
   id?: string;
 }) {
+  // In retro mode each heading takes the next color in the ANSI cycle, keyed on
+  // the section's own index so it's stable across renders and pages. Offset by
+  // -1 so section 01 starts the cycle on green.
+  const accent = retroAccentStyle(Number.parseInt(index, 10) - 1 || 0);
+
   return (
     <div className="mb-6 flex items-baseline gap-3 border-b border-border pb-2">
       <span aria-hidden="true" className="text-fg/40">
@@ -20,7 +27,8 @@ export function SectionLabel({
       <span className="text-fg/40">{index}</span>
       <h2
         id={id}
-        className="text-lg font-bold tracking-wide text-primary text-glow sm:text-xl"
+        style={accent}
+        className="retro-accent font-display text-2xl tracking-wide text-primary text-glow sm:text-3xl"
       >
         {label.toUpperCase()}
       </h2>

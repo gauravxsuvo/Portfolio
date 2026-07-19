@@ -2,6 +2,7 @@
 
 import { SHELL_PREFILL_EVENT } from "@/lib/shell-events";
 import { scrollToElement } from "@/lib/scroll";
+import { retroAccentStyle } from "@/lib/ansi";
 
 // grep does honest word-matching against real project/skill/publication text —
 // it doesn't invent results. Two of the four bio.focus labels don't appear
@@ -27,14 +28,21 @@ export function FocusTags({ tags }: { tags: string[] }) {
 
   return (
     <div className="mt-4 flex flex-wrap gap-2">
-      {tags.map((tag) => (
+      {tags.map((tag, i) => (
         <button
           key={tag}
           type="button"
           onClick={() => handleClick(tag)}
-          className="border border-border px-2 py-0.5 text-xs text-fg/60 hover:text-primary hover:border-primary transition-colors"
+          style={retroAccentStyle(i)}
+          className="retro-hover border border-border px-2 py-0.5 text-xs text-fg/60 hover:text-primary hover:border-primary transition-colors"
         >
-          #{tag.replace(/\s+/g, "-")}
+          {/* In retro mode the # prefix carries the tag's accent even at rest
+              (custom properties inherit from the button), so the row reads as a
+              colorful ANSI strip without shouting. */}
+          <span aria-hidden="true" className="retro-accent">
+            #
+          </span>
+          {tag.replace(/\s+/g, "-")}
         </button>
       ))}
     </div>

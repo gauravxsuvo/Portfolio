@@ -1,21 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { bio, projects, skillGroups } from "@/lib/data";
 import { siteHost } from "@/lib/site";
-import { OPEN_THEME_PANEL_EVENT } from "@/lib/theme";
+import {
+  DEFAULT_THEME_MODE,
+  OPEN_THEME_PANEL_EVENT,
+  THEME_MODE_CHANGE_EVENT,
+  resolveThemeMode,
+  type ThemeMode,
+} from "@/lib/theme";
 
 const GLYPH = String.raw`┌───────────┐
 │ $ _       │
 │           │
 └───────────┘`;
 
-const SWATCHES = [
+/**
+ * The swatch strip — neofetch's ANSI color bar. In retro mode it shows the
+ * actual ANSI accent set; in mono it collapses to the phosphor tokens, which is
+ * what "everything derives from one color" looks like as a bar. "primary" is
+ * always first: it's the button that opens display settings.
+ */
+const MONO_SWATCHES = [
   { label: "primary", className: "bg-primary" },
   { label: "secondary", className: "bg-secondary" },
   { label: "border", className: "bg-border" },
   { label: "error", className: "bg-error" },
 ];
+
+const RETRO_SWATCHES = [
+  { label: "primary", className: "bg-primary" },
+  { label: "cyan", className: "bg-[var(--color-ansi-cyan)]" },
+  { label: "magenta", className: "bg-[var(--color-ansi-magenta)]" },
+  { label: "amber", className: "bg-[var(--color-ansi-amber)]" },
+  { label: "border", className: "bg-border" },
+  { label: "error", className: "bg-error" },
+];
+
+/**
+ * The display mode as an external store: localStorage is the source of truth
+ * and THEME_MODE_CHANGE_EVENT is its change signal. useSyncExternalStore keeps
+ * the server render on the default (retro) and swaps to the real value on the
+ * client without a setState-in-effect cascade.
+ */
+function subscribeThemeMode(onChange: () => void) {
+  window.addEventListener(THEME_MODE_CHANGE_EVENT, onChange);
+  return () => window.removeEventListener(THEME_MODE_CHANGE_EVENT, onChange);
+}
+const getServerThemeMode = () => DEFAULT_THEME_MODE;
 
 function formatUptime(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -37,6 +70,12 @@ function useSessionUptime() {
 
 export function NeofetchPanel() {
   const uptime = useSessionUptime();
+  const mode: ThemeMode = useSyncExternalStore(
+    subscribeThemeMode,
+    resolveThemeMode,
+    getServerThemeMode
+  );
+
   const topLanguages =
     skillGroups.find((g) => g.category === "Languages")?.items.join(", ") ?? "";
 
@@ -48,7 +87,7 @@ export function NeofetchPanel() {
     ["host", siteHost],
     ["shell", "gsh 1.0 [react]"],
     ["resolution", "1920x1080 @ 60Hz (crt)"],
-    ["theme", "user-selectable [phosphor]"],
+    ["theme", mode === "retro" ? "retro [ansi colors]" : "mono [phosphor]"],
     ["cpu", bio.role],
     ["packages", `${projects.length} (portfolio)`],
     ["locale", bio.location],
@@ -78,7 +117,7 @@ export function NeofetchPanel() {
           ))}
         </dl>
         <div className="mt-3 flex gap-1.5">
-          {SWATCHES.map((s) =>
+          {(mode === "retro" ? RETRO_SWATCHES : MONO_SWATCHES).map((s) =>
             s.label === "primary" ? (
               // p-2 -m-2 grows the actual tap target to ~40x28 (clearing the
               // 24px touch-target minimum) without disturbing the visible

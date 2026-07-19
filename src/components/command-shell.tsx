@@ -376,7 +376,19 @@ export function CommandShell() {
     >
       <div
         className="flex max-h-72 flex-col gap-2 overflow-y-auto overscroll-contain text-xs sm:text-sm"
-        onClick={() => inputRef.current?.focus()}
+        onClick={(e) => {
+          // Clicking dead space hands the keyboard back to the prompt — but a
+          // click on something interactive in the scrollback (the snake board,
+          // the typing test's input, a grep result link) must not have its
+          // focus stolen back in the same tick: snake pauses on blur, so the
+          // old unconditional focus() made click-to-play impossible. Same for
+          // selecting output text — refocusing would collapse the selection.
+          const target = e.target as HTMLElement;
+          if (target.closest("button, a, input, textarea, [tabindex]")) return;
+          const selection = window.getSelection();
+          if (selection && !selection.isCollapsed) return;
+          inputRef.current?.focus();
+        }}
       >
         {entries.map((entry, i) => {
           const isLast = i === entries.length - 1;

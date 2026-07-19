@@ -187,11 +187,12 @@ export const bio = {
   // above stays short on purpose: it's the hero line, the meta description and
   // the shell's `about.txt`, where a paragraph would be too much.
   about: [
-    "I'm an undergraduate at IIT Guwahati studying Data Science and Artificial Intelligence. I like building machine learning systems, and using data, mathematics and software engineering to solve real problems.",
-    "I've always been drawn to how things work under the hood — reading a paper, reimplementing an idea from scratch, or debugging a project for hours until it finally clicks. Most of my free time goes into experimenting with new tools and building things because I'm curious, not because I have to.",
-    "My interests sit where machine learning, scientific computing, AI systems and software engineering meet — especially scientific ML, data-driven modeling, and building reliable systems around models rather than just the models themselves. Longer term, I want to work on research and engineering that pushes scientific computing and education forward with AI.",
-    "I like working with people, too. I've led hackathon teams, run freelance projects, and mentored where I could, and I tend to take on things that push me past my comfort zone — that's where I learn the most. Away from the terminal you'll usually find me gaming, poking at the latest AI tools, or building throwaway side projects for fun.",
-    "Right now I'm looking for opportunities in machine learning engineering, AI research, AI systems and business intelligence — meaningful work where I can keep growing as an engineer and a researcher.",
+    "I'm an undergrad at IIT Guwahati studying Data Science and AI. Most of what I do boils down to this: I like building things with data and code, and I like knowing why they work.",
+    "I got here the usual way, by taking stuff apart. These days that looks like reading a paper and rebuilding it from scratch, or losing an entire evening to a bug that turns out to be one wrong index. Annoying in the moment. Weirdly satisfying after.",
+    "The part that hooks me is the overlap between machine learning and plain old software engineering. Training a model is honestly the easy bit. Getting it to hold up against real data and real users is what I keep coming back to, especially in scientific ML, where the model has to respect actual physics instead of just chasing a metric.",
+    "I'm not a lone-wolf coder either. I led a four-person hackathon team, freelanced for three years before college, and mentored people where I could. I also keep signing up for things slightly out of my depth. Sometimes that goes badly. I learn either way.",
+    "Off the clock I game, mess with whatever new AI tool dropped that week, and start side projects with a survival rate I'd rather not publish.",
+    "Right now I'm looking for work in ML engineering, AI research, AI systems or business intelligence. If you're building something interesting, say hi. My inbox is genuinely open.",
   ],
   focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
 };

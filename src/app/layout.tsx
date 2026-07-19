@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, VT323 } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { CrtOverlay } from "@/components/crt-overlay";
@@ -30,6 +30,14 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400", "500", "700", "800"],
+});
+
+// Display face for big text only (hero, section headings) — see --font-display
+// in globals.css. VT323 ships a single 400 weight.
+const vt323 = VT323({
+  variable: "--font-vt323",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 // The summary alone, not `${bio.role}. ${bio.summary}`: the bio now opens by
@@ -88,7 +96,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${jetbrainsMono.variable} h-full antialiased`}
+      className={`${jetbrainsMono.variable} ${vt323.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-fg font-mono selection:bg-primary selection:text-bg">
         <Script

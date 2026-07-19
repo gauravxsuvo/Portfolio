@@ -62,6 +62,13 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
     retention: "until you clear site data",
   },
   {
+    key: "suvo:theme-mode",
+    kind: "local-storage",
+    purpose: "which display mode you chose: retro (ansi colors) or mono (one phosphor color)",
+    category: "necessary",
+    retention: "until you clear site data",
+  },
+  {
     key: "suvo:crt-enabled",
     kind: "local-storage",
     purpose: "whether the scanline overlay is on",
@@ -101,6 +108,14 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
     kind: "local-storage",
     purpose:
       "your best score in the shell's hidden game, so it survives a reload. A single number — nothing about how or when you played",
+    category: "necessary",
+    retention: "until you clear site data",
+  },
+  {
+    key: "suvo:typetest-best",
+    kind: "local-storage",
+    purpose:
+      "your best speed in the shell's typing test, so it survives a reload. A single number — nothing about what or when you typed",
     category: "necessary",
     retention: "until you clear site data",
   },

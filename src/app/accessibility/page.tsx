@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/accessibility",
 });
 
-const LAST_UPDATED = "2026-07-16";
+const LAST_UPDATED = "2026-07-19";
 
 function H3({ children }: { children: ReactNode }) {
   return (
@@ -56,9 +56,9 @@ const DONE: string[] = [
 /** Written plainly, because an accessibility statement that only lists wins is marketing. */
 const SHORTFALLS: { title: string; detail: string }[] = [
   {
-    title: "The whole thing is monospace, green on black",
+    title: "The whole thing is monospace on black",
     detail:
-      "That's the point of the design, but it's a real tradeoff. Monospace is harder to read at length for some people with dyslexia. The phosphor palette clears WCAG AA contrast for body text, but if a low-contrast theme is picked in display settings, that guarantee is gone — the picker lets you make it unreadable and I haven't clamped it.",
+      "That's the point of the design, but it's a real tradeoff. Monospace is harder to read at length for some people with dyslexia, and the pixel-style heading font trades some legibility for the CRT look (body text stays in a normal monospace). Both built-in palettes — the colorful retro default and the single-phosphor mono mode — clear WCAG AA contrast for body text, but if a low-contrast custom color is picked in display settings, that guarantee is gone — the picker lets you make it unreadable and I haven't clamped it.",
   },
   {
     title: "The shell is not a great screen reader experience",
@@ -134,8 +134,10 @@ export default function AccessibilityPage() {
               The display panel (the{" "}
               <span className="text-secondary">[DISPLAY]</span> control, or{" "}
               <code className="text-fg/50">theme</code>{" "}
-              in the shell) switches off the CRT overlay and changes the colour. Setting &quot;reduce motion&quot; in your
-              operating system does most of it automatically, without touching anything here.
+              in the shell) switches off the CRT overlay, swaps between the colorful retro
+              mode and a single-color mono mode, and lets you pick your own colour. Setting
+              &quot;reduce motion&quot; in your operating system does most of it
+              automatically, without touching anything here.
             </p>
           </Section>
 

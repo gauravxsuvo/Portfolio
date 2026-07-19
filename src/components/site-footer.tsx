@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { unlockAchievement } from "@/lib/achievements";
 import { SecretsCounter } from "@/components/secrets-counter";
+import { TerminalPet } from "@/components/terminal-pet";
+import { retroAccentStyle } from "@/lib/ansi";
 import { bio } from "@/lib/data";
 
 const LEGAL_LINKS = [
@@ -52,13 +54,14 @@ export function SiteFooter() {
           {"//"}
         </span>
         <nav aria-label="Social" className="flex flex-wrap gap-3">
-          {SOCIALS.map((s) => (
+          {SOCIALS.map((s, i) => (
             <a
               key={s.label}
               href={s.href}
               target={s.href.startsWith("http") ? "_blank" : undefined}
               rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="link-wipe transition-colors hover:text-primary"
+              style={retroAccentStyle(i + 1)}
+              className="link-wipe retro-hover transition-colors hover:text-primary"
             >
               ./{s.label}
             </a>
@@ -68,6 +71,10 @@ export function SiteFooter() {
           {"//"}
         </span>
         <SecretsCounter />
+        <span aria-hidden="true" className="hidden sm:inline">
+          {"//"}
+        </span>
+        <TerminalPet />
         <nav aria-label="Legal" className="flex flex-wrap gap-3 sm:ml-auto">
           {LEGAL_LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="link-wipe hover:text-primary">

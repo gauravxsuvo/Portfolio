@@ -11,6 +11,55 @@
      actually follow the theme panel instead of staying stuck on default green. */
   --color-muted: color-mix(in srgb, var(--color-primary) 50%, black);
   --color-border: color-mix(in srgb, var(--color-primary) 50%, black);
+
+  /* The ANSI accent set. Defined in every mode so components can reference
+     them unconditionally; retro mode is where the UI actually cycles through
+     them. All four clear WCAG AA (4.5:1) against #0a0a0a. */
+  --color-ansi-green: #33ff00;
+  --color-ansi-cyan: #2ee6ff;
+  --color-ansi-magenta: #ff5cd0;
+  --color-ansi-amber: #ffb000;
+}
+
+/* ---------------------------------------------------------------------------
+   Retro mode (the default for new visitors — see THEME_INIT_SCRIPT).
+   Body text goes warm paper-white and the ANSI set cycles through headings,
+   tags and nav via the .retro-* utilities below. Mono mode is the absence of
+   this block: one phosphor color written inline on <html> by lib/theme.ts.
+   --color-primary stays green here, so prompts, borders and muted tones keep
+   the terminal's green backbone under the colorful accents.
+   --------------------------------------------------------------------------- */
+html[data-mode="retro"] {
+  --color-fg: #ded8c4;
+  --color-accent: var(--color-ansi-cyan);
+}
+
+/* Per-element accent, fed by an inline `--retro-accent` set in JSX (a cycle
+   through the ANSI set, computed from a stable index). Outside retro mode
+   these classes are inert and the element's own utilities apply. These rules
+   are deliberately unlayered, so they outrank Tailwind's layered utilities. */
+html[data-mode="retro"] .retro-accent {
+  color: var(--retro-accent, var(--color-primary));
+}
+
+html[data-mode="retro"] .retro-accent.text-glow {
+  text-shadow: 0 0 5px
+      color-mix(in srgb, var(--retro-accent, var(--color-primary)) 60%, transparent),
+    0 0 12px color-mix(in srgb, var(--retro-accent, var(--color-primary)) 25%, transparent);
+}
+
+/* Hover/focus accent for bordered chips (nav links, focus tags, socials). */
+html[data-mode="retro"] .retro-hover:hover,
+html[data-mode="retro"] .retro-hover:focus-visible {
+  color: var(--retro-accent, var(--color-primary));
+  border-color: var(--retro-accent, var(--color-primary));
+}
+
+/* Filled state (the active nav tab): the accent becomes the background. */
+html[data-mode="retro"] .retro-fill {
+  background: var(--retro-accent, var(--color-primary));
+  border-color: var(--retro-accent, var(--color-primary));
+  color: var(--color-bg);
 }
 
 @theme inline {
@@ -27,6 +76,11 @@
     ui-monospace, monospace;
   --font-sans: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
     monospace;
+  /* Display face for the hero and section headings only: VT323, the DEC
+     VT220 terminal font. Single weight, runs narrow — use it big, never for
+     body text. Falls back to the mono stack, so nothing breaks unfonted. */
+  --font-display: var(--font-vt323), "VT323", var(--font-jetbrains-mono),
+    ui-monospace, monospace;
 
   --radius-none: 0px;
   --radius-sm: 0px;

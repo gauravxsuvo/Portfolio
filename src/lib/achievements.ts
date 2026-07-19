@@ -35,6 +35,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "train", label: "caught the train", hint: "fat-finger `ls` badly enough" },
   { id: "curious", label: "read the source", hint: "devtools console has something for you" },
   { id: "snake", label: "fed the snake", hint: "the shell hides a game. arrows steer" },
+  { id: "wpm", label: "typed 60+ wpm under pressure", hint: "the shell can time your fingers" },
+  { id: "lolcat", label: "tasted the rainbow", hint: "pipe something colorful" },
+  { id: "pet", label: "befriended the terminal cat", hint: "something small lives in the footer" },
 ];
 
 const ACHIEVEMENTS_KEY = "suvo:achievements";

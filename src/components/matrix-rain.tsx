@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { TerminalWindow } from "@/components/ui/terminal-window";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { THEME_CHANGE_EVENT } from "@/lib/theme";
+import { THEME_CHANGE_EVENT, THEME_MODE_CHANGE_EVENT } from "@/lib/theme";
 
 const GLYPHS = "01アイウエオカキクケコgauravxsuvo</>{}[]#$".split("");
 const FONT_SIZE = 16;
@@ -22,9 +22,13 @@ export function MatrixRain({ onDismiss }: { onDismiss: () => void }) {
     };
     read();
     window.addEventListener(THEME_CHANGE_EVENT, read);
+    // Retro<->mono flips repaint --color-primary without a color-change
+    // broadcast, so listen for the mode event too or the rain keeps the old hue.
+    window.addEventListener(THEME_MODE_CHANGE_EVENT, read);
     window.addEventListener("storage", read);
     return () => {
       window.removeEventListener(THEME_CHANGE_EVENT, read);
+      window.removeEventListener(THEME_MODE_CHANGE_EVENT, read);
       window.removeEventListener("storage", read);
     };
   }, []);
