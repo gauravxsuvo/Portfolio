@@ -64,7 +64,14 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
   {
     key: "suvo:theme-mode",
     kind: "local-storage",
-    purpose: "which display mode you chose: retro (ansi colors) or mono (one phosphor color)",
+    purpose: "which display mode you chose: retro (colorful) or mono (one phosphor color)",
+    category: "necessary",
+    retention: "until you clear site data",
+  },
+  {
+    key: "suvo:retro-template",
+    kind: "local-storage",
+    purpose: "which of the four retro palettes you picked in display settings",
     category: "necessary",
     retention: "until you clear site data",
   },

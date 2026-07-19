@@ -4,7 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { projects, publications, bio } from "@/lib/data";
 import { PRESETS } from "@/lib/color";
-import { OPEN_THEME_PANEL_EVENT, setThemeColor, setThemeMode } from "@/lib/theme";
+import {
+  OPEN_THEME_PANEL_EVENT,
+  setRetroTemplate,
+  setThemeColor,
+  setThemeMode,
+} from "@/lib/theme";
+import { RETRO_TEMPLATES } from "@/lib/retro-templates";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
 import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { unlockAchievement } from "@/lib/achievements";
@@ -105,17 +111,18 @@ export function CommandPalette() {
         run: go("/publications"),
       })),
 
-      {
-        id: "theme-mode-retro",
-        label: "Retro mode",
-        hint: "ansi colors (default)",
-        group: "display",
-        keywords: "theme mode colorful ansi rainbow default",
+      ...RETRO_TEMPLATES.map((t) => ({
+        id: `retro-${t.id}`,
+        label: `${t.label} palette`,
+        hint: t.blurb,
+        group: "retro palettes",
+        keywords: `theme retro colorful palette ${t.id}`,
         run: () => {
-          setThemeMode("retro");
+          setRetroTemplate(t.id);
           unlockAchievement("theme");
         },
-      },
+      })),
+
       {
         id: "theme-mode-mono",
         label: "Mono mode",

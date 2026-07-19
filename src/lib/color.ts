@@ -134,7 +134,10 @@ export const PRESETS: { id: string; label: string; hex: string }[] = [
   { id: "amber", label: "Amber", hex: "#ffc233" },
   { id: "cyan", label: "Cyan", hex: "#33e0ff" },
   { id: "red", label: "Red Alert", hex: "#ff4d4d" },
-  { id: "white", label: "Paper White", hex: "#e8e8e8" },
+  // No white phosphor here on purpose: retro mode's primary is already a
+  // near-white, so a white *mono* preset produced a screen nearly
+  // indistinguishable from retro-with-the-colour-drained — a preset whose whole
+  // effect was "looks broken".
   { id: "purple", label: "Purple Haze", hex: "#c07bff" },
   { id: "magenta", label: "Magenta Burn", hex: "#ff5cc8" },
   { id: "ice", label: "Ice Blue", hex: "#8ab4ff" },

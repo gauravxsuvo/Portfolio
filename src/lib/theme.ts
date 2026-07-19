@@ -1,7 +1,22 @@
 import { DEFAULT_PRIMARY_HEX, normalizeHex } from "./color";
+import {
+  DEFAULT_RETRO_TEMPLATE,
+  RETRO_TEMPLATES,
+  isRetroTemplateId,
+  type RetroTemplateId,
+} from "./retro-templates";
+
+/**
+ * Serialized into THEME_INIT_SCRIPT below, which runs before hydration and so
+ * can't import anything — the list has to be baked into the string. Derived
+ * from the registry rather than hand-written, so a new template can't be
+ * validated everywhere except the one place that runs first.
+ */
+const RETRO_TEMPLATE_IDS: string[] = RETRO_TEMPLATES.map((t) => t.id);
 
 export const THEME_STORAGE_KEY = "suvo:theme-primary";
 export const THEME_MODE_STORAGE_KEY = "suvo:theme-mode";
+export const RETRO_TEMPLATE_STORAGE_KEY = "suvo:retro-template";
 export const CRT_STORAGE_KEY = "suvo:crt-enabled";
 export const THEME_CHANGE_EVENT = "suvo:theme-change";
 export const THEME_MODE_CHANGE_EVENT = "suvo:theme-mode-change";
@@ -26,6 +41,13 @@ const HEX_RE = /^#[0-9a-f]{6}$/i;
 export type ThemeMode = "retro" | "mono";
 
 export const DEFAULT_THEME_MODE: ThemeMode = "retro";
+
+/**
+ * Which retro palette is active. Written to `<html data-retro>` so the
+ * stylesheet can switch the six accent slots; meaningless in mono mode, but
+ * left in place there so flipping back doesn't lose the choice.
+ */
+export type { RetroTemplateId };
 
 /**
  * Who wrote the theme. The display panel broadcasts its own changes so the rest
@@ -160,10 +182,30 @@ export function resolveThemeMode(): ThemeMode {
   return readStoredThemeMode() ?? (readStoredThemeColor() ? "mono" : DEFAULT_THEME_MODE);
 }
 
-export function applyThemeMode(mode: ThemeMode): void {
+export function readStoredRetroTemplate(): RetroTemplateId | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(RETRO_TEMPLATE_STORAGE_KEY);
+    return isRetroTemplateId(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveRetroTemplate(): RetroTemplateId {
+  return readStoredRetroTemplate() ?? DEFAULT_RETRO_TEMPLATE;
+}
+
+export function applyThemeMode(mode: ThemeMode, template?: RetroTemplateId): void {
   if (typeof document === "undefined") return;
-  document.documentElement.dataset.mode = mode;
-  const style = document.documentElement.style;
+  const root = document.documentElement;
+  root.dataset.mode = mode;
+  // Always stamped, even in mono: the attribute is inert there (no stylesheet
+  // rule matches without data-mode="retro"), and keeping it means flipping back
+  // to retro doesn't have to re-read storage to know which palette to restore.
+  root.dataset.retro = template ?? resolveRetroTemplate();
+
+  const style = root.style;
   if (mode === "retro") {
     // The retro palette is stylesheet-driven; inline properties left over from
     // mono (or from `party`) would outrank it, so clear them.
@@ -175,18 +217,44 @@ export function applyThemeMode(mode: ThemeMode): void {
   }
 }
 
+function broadcastMode(mode: ThemeMode, template: RetroTemplateId): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<{ mode: ThemeMode; template: RetroTemplateId }>(
+      THEME_MODE_CHANGE_EVENT,
+      { detail: { mode, template } }
+    )
+  );
+}
+
 /** Commit a mode everywhere: paint it, remember it, tell everyone. */
 export function setThemeMode(mode: ThemeMode): void {
-  applyThemeMode(mode);
+  const template = resolveRetroTemplate();
+  applyThemeMode(mode, template);
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(THEME_MODE_STORAGE_KEY, mode);
   } catch {
     // storage unavailable — the mode just won't persist across reloads
   }
-  window.dispatchEvent(
-    new CustomEvent<{ mode: ThemeMode }>(THEME_MODE_CHANGE_EVENT, { detail: { mode } })
-  );
+  broadcastMode(mode, template);
+}
+
+/**
+ * Pick a retro palette. Implies retro mode — choosing a palette while in mono
+ * and staying in mono would be a control that visibly does nothing, which is
+ * the same reasoning that makes picking a phosphor colour imply mono.
+ */
+export function setRetroTemplate(template: RetroTemplateId): void {
+  applyThemeMode("retro", template);
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RETRO_TEMPLATE_STORAGE_KEY, template);
+    window.localStorage.setItem(THEME_MODE_STORAGE_KEY, "retro");
+  } catch {
+    // storage unavailable — the choice just won't persist across reloads
+  }
+  broadcastMode("retro", template);
 }
 
 export function readCrtEnabled(): boolean {
@@ -218,9 +286,11 @@ export const THEME_INIT_SCRIPT = `(function(){try{
 var d=document.documentElement;
 var m=localStorage.getItem(${JSON.stringify(THEME_MODE_STORAGE_KEY)});
 var v=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
+var t=localStorage.getItem(${JSON.stringify(RETRO_TEMPLATE_STORAGE_KEY)});
 var ok=v&&/^#[0-9a-f]{6}$/i.test(v);
 if(m!=="retro"&&m!=="mono"){m=ok?"mono":"retro";}
 d.dataset.mode=m;
+d.dataset.retro=${JSON.stringify(RETRO_TEMPLATE_IDS)}.indexOf(t)>=0?t:${JSON.stringify(DEFAULT_RETRO_TEMPLATE)};
 if(m==="mono"&&ok){
 var s=d.style;
 s.setProperty("--color-primary",v);

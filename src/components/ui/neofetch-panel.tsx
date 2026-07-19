@@ -7,9 +7,11 @@ import {
   DEFAULT_THEME_MODE,
   OPEN_THEME_PANEL_EVENT,
   THEME_MODE_CHANGE_EVENT,
+  resolveRetroTemplate,
   resolveThemeMode,
   type ThemeMode,
 } from "@/lib/theme";
+import { DEFAULT_RETRO_TEMPLATE } from "@/lib/retro-templates";
 
 const GLYPH = String.raw`┌───────────┐
 │ $ _       │
@@ -31,11 +33,12 @@ const MONO_SWATCHES = [
 
 const RETRO_SWATCHES = [
   { label: "primary", className: "bg-primary" },
-  { label: "cyan", className: "bg-[var(--color-ansi-cyan)]" },
-  { label: "amber", className: "bg-[var(--color-ansi-amber)]" },
-  { label: "lime", className: "bg-[var(--color-ansi-lime)]" },
-  { label: "purple", className: "bg-[var(--color-ansi-purple)]" },
-  { label: "orange", className: "bg-[var(--color-ansi-orange)]" },
+  { label: "accent 1", className: "bg-[var(--color-ansi-1)]" },
+  { label: "accent 2", className: "bg-[var(--color-ansi-2)]" },
+  { label: "accent 3", className: "bg-[var(--color-ansi-3)]" },
+  { label: "accent 4", className: "bg-[var(--color-ansi-4)]" },
+  { label: "accent 5", className: "bg-[var(--color-ansi-5)]" },
+  { label: "accent 6", className: "bg-[var(--color-ansi-6)]" },
 ];
 
 /**
@@ -48,7 +51,18 @@ function subscribeThemeMode(onChange: () => void) {
   window.addEventListener(THEME_MODE_CHANGE_EVENT, onChange);
   return () => window.removeEventListener(THEME_MODE_CHANGE_EVENT, onChange);
 }
-const getServerThemeMode = () => DEFAULT_THEME_MODE;
+
+/**
+ * Snapshots are strings, not objects. useSyncExternalStore compares them by
+ * identity, so returning a fresh `{mode, template}` each call would never
+ * compare equal and would re-render forever.
+ */
+const getThemeMode = (): ThemeMode => resolveThemeMode();
+const getServerThemeMode = (): ThemeMode => DEFAULT_THEME_MODE;
+
+const getThemeLabel = (): string =>
+  resolveThemeMode() === "retro" ? `retro [${resolveRetroTemplate()}]` : "mono [phosphor]";
+const getServerThemeLabel = (): string => `retro [${DEFAULT_RETRO_TEMPLATE}]`;
 
 function formatUptime(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -70,10 +84,11 @@ function useSessionUptime() {
 
 export function NeofetchPanel() {
   const uptime = useSessionUptime();
-  const mode: ThemeMode = useSyncExternalStore(
+  const mode = useSyncExternalStore(subscribeThemeMode, getThemeMode, getServerThemeMode);
+  const themeLabel = useSyncExternalStore(
     subscribeThemeMode,
-    resolveThemeMode,
-    getServerThemeMode
+    getThemeLabel,
+    getServerThemeLabel
   );
 
   const topLanguages =
@@ -87,7 +102,7 @@ export function NeofetchPanel() {
     ["host", siteHost],
     ["shell", "gsh 1.0 [react]"],
     ["resolution", "1920x1080 @ 60Hz (crt)"],
-    ["theme", mode === "retro" ? "retro [ansi colors]" : "mono [phosphor]"],
+    ["theme", themeLabel],
     ["cpu", bio.role],
     ["packages", `${projects.length} (portfolio)`],
     ["locale", bio.location],

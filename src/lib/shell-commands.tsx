@@ -17,9 +17,15 @@ import {
   getComputedPrimaryHex,
   readStoredThemeColor,
   resolveThemeMode,
+  setRetroTemplate,
   setThemeColor,
   setThemeMode,
 } from "@/lib/theme";
+import {
+  DEFAULT_RETRO_TEMPLATE,
+  RETRO_TEMPLATES,
+  isRetroTemplateId,
+} from "@/lib/retro-templates";
 import { TRIGGER_MATRIX_EVENT } from "@/components/konami-listener";
 import { SHORTCUT_GROUPS } from "@/lib/shortcuts";
 import {
@@ -120,7 +126,7 @@ const JOKES = [
 const MAN_PAGES: Record<string, string> = {
   cd: "change directory. accepts any route name, with or without a leading slash. bare route names work on their own too, so `about` and `cd about` do the same thing.",
   theme:
-    "control the display. `theme retro` is the default ansi-color look, `theme mono` is single-phosphor; a preset id or #rrggbb hex sets the phosphor (and implies mono). `reset` returns to retro. with no argument it opens the display panel.",
+    "control the display. there are four retro palettes — ansi, synthwave, arcade, vaporwave — and naming one selects it. `theme mono` switches to the single-phosphor look, where a preset id or #rrggbb hex sets the colour (and implies mono). `reset` returns to the default palette. with no argument it opens the display panel.",
   lolcat:
     "paint text in a diagonal rainbow, the way the real lolcat does. works best fed by a pipe: `banner | lolcat`, `cowsay moo | lolcat`, `tree | lolcat` if you're feeling brave.",
   typetest:
@@ -690,20 +696,38 @@ export const COMMANDS: Command[] = [
         window.dispatchEvent(new Event(OPEN_THEME_PANEL_EVENT));
         return <Dim>opening display settings...</Dim>;
       }
-      if (target === "retro" || target === "mono") {
-        setThemeMode(target);
+      // A palette name picks that palette and implies retro.
+      if (isRetroTemplateId(target)) {
+        setRetroTemplate(target);
+        unlockAchievement("theme");
+        return <p className="text-primary">[ OK ] retro palette set to {target}.</p>;
+      }
+      if (target === "retro") {
+        setThemeMode("retro");
         unlockAchievement("theme");
         return (
           <p className="text-primary">
-            [ OK ] display mode set to {target}
-            {target === "retro" ? " (ansi colors)" : " (single phosphor)"}.
+            [ OK ] retro mode. pick a palette with{" "}
+            <span className="text-secondary">
+              theme {RETRO_TEMPLATES.map((t) => t.id).join("|")}
+            </span>
+            .
           </p>
         );
       }
+      if (target === "mono") {
+        setThemeMode("mono");
+        unlockAchievement("theme");
+        return <p className="text-primary">[ OK ] mono mode (single phosphor).</p>;
+      }
       if (target === "reset") {
-        // Site default is retro now, so reset means retro — not green mono.
-        setThemeMode("retro");
-        return <p className="text-primary">[ OK ] display reset to default (retro).</p>;
+        // Site default is retro on the default palette — not green mono.
+        setRetroTemplate(DEFAULT_RETRO_TEMPLATE);
+        return (
+          <p className="text-primary">
+            [ OK ] display reset to default ({DEFAULT_RETRO_TEMPLATE}).
+          </p>
+        );
       }
       // A specific color is a mono-mode idea: picking one flips the mode too,
       // matching what the display panel does.
@@ -718,8 +742,14 @@ export const COMMANDS: Command[] = [
       if (!preset) {
         return (
           <Err>
-            bash: theme: {target}: no such preset (try: retro, mono,{" "}
-            {PRESETS.map((p) => p.id).join(", ")}, reset, or a #hex)
+            bash: theme: {target}: no such palette or preset
+            <span className="block text-fg/40">
+              retro palettes: {RETRO_TEMPLATES.map((t) => t.id).join(", ")}
+            </span>
+            <span className="block text-fg/40">
+              mono phosphors: {PRESETS.map((p) => p.id).join(", ")}, or a #hex
+            </span>
+            <span className="block text-fg/40">also: retro, mono, reset</span>
           </Err>
         );
       }
@@ -1193,7 +1223,13 @@ export function completionsFor(command: string): string[] {
     case "cat":
       return Object.keys(FILES);
     case "theme":
-      return ["retro", "mono", ...PRESETS.map((p) => p.id), "reset"];
+      return [
+        ...RETRO_TEMPLATES.map((t) => t.id),
+        "retro",
+        "mono",
+        ...PRESETS.map((p) => p.id),
+        "reset",
+      ];
     case "unlock":
       return Object.keys(SECTION_IDS);
     case "man":

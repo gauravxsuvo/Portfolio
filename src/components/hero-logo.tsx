@@ -94,7 +94,10 @@ export function HeroLogo() {
 
   return (
     <div className="mb-6">
-      <p aria-hidden="true" className="mb-2 text-xs tracking-[0.3em] text-secondary">
+      <p aria-hidden="true" className="mb-2 flex items-center gap-2 text-xs tracking-[0.3em] text-secondary">
+        {/* A link light. It ticks whether or not anyone is doing anything,
+            which is the entire point of it being here. */}
+        <span className="led-pulse inline-block h-1.5 w-1.5 bg-secondary" />
         [ SYSTEM ONLINE ]
       </p>
       <button
@@ -108,12 +111,18 @@ export function HeroLogo() {
         <h1 className="glitch-hover warp-text break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
           <span className="sr-only">{bio.name}</span>
           {/* One span per character so retro mode can run the accent cycle
-              through the wordmark. In mono the .retro-accent rule is inert and
-              every span simply inherits the h1's single phosphor colour, so
-              this costs nothing but the extra elements. */}
+              through the wordmark, and keep running it: .retro-cycle rotates
+              each character's colour on a loop, staggered one step per index so
+              the rainbow marches. In mono both rules are inert and every span
+              inherits the h1's single phosphor colour, so this costs nothing
+              but the extra elements. */}
           <span aria-hidden="true">
             {[...shown].map((ch, i) => (
-              <span key={i} className="retro-accent" style={retroAccentStyle(i)}>
+              <span
+                key={i}
+                className="retro-accent retro-cycle"
+                style={retroAccentStyle(i)}
+              >
                 {ch}
               </span>
             ))}

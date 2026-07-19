@@ -19,17 +19,20 @@ import {
   OPEN_THEME_PANEL_EVENT,
   THEME_CHANGE_EVENT,
   THEME_MODE_CHANGE_EVENT,
-  getComputedPrimaryHex,
   previewThemeColor,
   readCrtEnabled,
   readStoredThemeColor,
+  resolveRetroTemplate,
   resolveThemeMode,
   setCrtEnabled,
+  setRetroTemplate,
   setThemeColor,
   setThemeMode,
+  type RetroTemplateId,
   type ThemeChangeDetail,
   type ThemeMode,
 } from "@/lib/theme";
+import { DEFAULT_RETRO_TEMPLATE, RETRO_TEMPLATES } from "@/lib/retro-templates";
 import { unlockAchievement } from "@/lib/achievements";
 import { useMounted } from "@/hooks/use-mounted";
 
@@ -50,14 +53,20 @@ function ThemePanelInner() {
   // The user's raw intent. This — not the contrast-guarded result — is what the
   // sliders render, so a drag tracks the finger 1:1 instead of being yanked
   // back by the readability floor mid-gesture.
+  // Seeded from the stored *mono* colour, falling back to the default phosphor —
+  // not from the computed primary. These controls belong to mono mode, and in
+  // retro the computed primary is a near-white, so reading it parked the
+  // sliders on "white at 98% lightness": a starting point that describes the
+  // palette they don't control and that nobody would choose to drag from.
   const [hsl, setHsl] = useState<HSL>(() =>
-    hexToHsl(readStoredThemeColor() ?? getComputedPrimaryHex())
+    hexToHsl(readStoredThemeColor() ?? DEFAULT_PRIMARY_HEX)
   );
   const [hexDraft, setHexDraft] = useState(
-    () => readStoredThemeColor() ?? getComputedPrimaryHex() ?? DEFAULT_PRIMARY_HEX
+    () => readStoredThemeColor() ?? DEFAULT_PRIMARY_HEX
   );
   const [crtOn, setCrtOn] = useState(() => readCrtEnabled());
   const [mode, setMode] = useState<ThemeMode>(() => resolveThemeMode());
+  const [template, setTemplate] = useState<RetroTemplateId>(() => resolveRetroTemplate());
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -81,8 +90,10 @@ function ThemePanelInner() {
     // The shell can flip modes too (`theme retro`), so track it like any other
     // external change rather than assuming this panel is the only writer.
     const onModeChange = (e: Event) => {
-      const detail = (e as CustomEvent<{ mode: ThemeMode }>).detail;
+      const detail = (e as CustomEvent<{ mode: ThemeMode; template: RetroTemplateId }>)
+        .detail;
       if (detail?.mode) setMode(detail.mode);
+      if (detail?.template) setTemplate(detail.template);
     };
     window.addEventListener(THEME_CHANGE_EVENT, onExternalChange);
     window.addEventListener(THEME_MODE_CHANGE_EVENT, onModeChange);
@@ -153,11 +164,12 @@ function ThemePanelInner() {
     [ensureMono]
   );
 
-  /** Mode buttons: an explicit choice, persisted as such. */
-  function chooseMode(next: ThemeMode) {
-    if (next === mode) return;
-    setMode(next);
-    setThemeMode(next);
+  /** Picking a palette implies retro — see setRetroTemplate for why. */
+  function chooseTemplate(next: RetroTemplateId) {
+    if (next === template && mode === "retro") return;
+    setTemplate(next);
+    setMode("retro");
+    setRetroTemplate(next);
     unlockAchievement("theme");
   }
 
@@ -232,45 +244,55 @@ function ThemePanelInner() {
       >
         <TerminalWindow title="display settings" meta="live" bodyClassName="flex flex-col gap-4">
           <div>
-            <p className="mb-2 text-[11px] uppercase tracking-[0.15em] text-fg/50">mode</p>
-            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Color mode">
-              {(
-                [
-                  { id: "retro", label: "RETRO", blurb: "ansi colors" },
-                  { id: "mono", label: "MONO", blurb: "one phosphor" },
-                ] as const
-              ).map((m) => {
-                const active = mode === m.id;
+            <p className="mb-2 text-[11px] uppercase tracking-[0.15em] text-fg/50">
+              retro palettes
+            </p>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Retro palette">
+              {RETRO_TEMPLATES.map((t) => {
+                const active = mode === "retro" && template === t.id;
                 return (
                   <button
-                    key={m.id}
+                    key={t.id}
                     type="button"
-                    onClick={() => chooseMode(m.id)}
+                    onClick={() => chooseTemplate(t.id)}
                     aria-pressed={active}
-                    className={`flex flex-col items-center gap-0.5 border px-2 py-1.5 text-xs transition-colors ${
+                    className={`flex flex-col gap-1 border px-2 py-1.5 text-left text-[11px] transition-colors ${
                       active
-                        ? "border-primary bg-primary text-bg"
+                        ? "border-primary text-primary"
                         : "border-border text-fg/60 hover:border-primary hover:text-primary"
                     }`}
                   >
-                    <span>{m.label}</span>
-                    <span className={active ? "text-bg/70" : "text-fg/40"}>{m.blurb}</span>
+                    <span className="flex items-center gap-1">
+                      {active && <span aria-hidden="true">&gt;</span>}
+                      {t.label}
+                    </span>
+                    <span className="text-fg/40">{t.blurb}</span>
+                    {/* The palette itself is the real label — names like
+                        "vaporwave" mean nothing until you see the colours. */}
+                    <span aria-hidden="true" className="mt-0.5 flex h-2">
+                      {t.swatch.map((hex) => (
+                        <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
+                      ))}
+                    </span>
                   </button>
                 );
               })}
             </div>
-            {mode === "retro" && (
-              <p className="mt-2 text-[11px] text-fg/40">
-                picking any color below switches to mono.
-              </p>
-            )}
           </div>
 
           <div>
-            <p className="mb-2 text-[11px] uppercase tracking-[0.15em] text-fg/50">presets</p>
+            <p className="mb-2 text-[11px] uppercase tracking-[0.15em] text-fg/50">
+              mono phosphor{" "}
+              <span className="normal-case tracking-normal text-fg/30">
+                {mode === "mono" ? "(active)" : "(switches mode)"}
+              </span>
+            </p>
             <div className="grid grid-cols-5 gap-2">
               {PRESETS.map((preset) => {
-                const active = appliedHex === preset.hex;
+                // Guarded on the mode: in retro the sliders still hold whatever
+                // colour was last picked, so an unguarded hex comparison lit up
+                // a phosphor swatch that wasn't driving anything on screen.
+                const active = mode === "mono" && appliedHex === preset.hex;
                 return (
                   <button
                     key={preset.id}
@@ -374,12 +396,12 @@ function ThemePanelInner() {
               type="button"
               variant="ghost"
               onClick={() => {
-                // Back to the site default: retro mode, sliders parked on green.
-                // Not commit() — that would flip to mono, which is the opposite
-                // of what "reset" means now.
+                // Back to the site default: retro mode on the default palette,
+                // sliders parked on green. Not commit() — that would flip to
+                // mono, which is the opposite of what "reset" means now.
                 setHsl(hexToHsl(DEFAULT_PRIMARY_HEX));
                 setHexDraft(DEFAULT_PRIMARY_HEX);
-                chooseMode("retro");
+                chooseTemplate(DEFAULT_RETRO_TEMPLATE);
               }}
               className="flex-1 justify-center text-xs"
             >

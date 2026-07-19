@@ -23,7 +23,7 @@ export function SectionLabel({
   return (
     <div
       style={accent}
-      className="mb-6 flex items-baseline gap-3 border-b border-border pb-2"
+      className="divider-scan mb-6 flex items-baseline gap-3 border-b border-border pb-2"
     >
       <span aria-hidden="true" className="text-fg/40">
         {"//"}
