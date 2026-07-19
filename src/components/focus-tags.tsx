@@ -1,6 +1,7 @@
 "use client";
 
 import { SHELL_PREFILL_EVENT } from "@/lib/shell-events";
+import { scrollToElement } from "@/lib/scroll";
 
 // grep does honest word-matching against real project/skill/publication text —
 // it doesn't invent results. Two of the four bio.focus labels don't appear
@@ -17,7 +18,7 @@ const SEARCH_TERM: Record<string, string> = {
 export function FocusTags({ tags }: { tags: string[] }) {
   function handleClick(tag: string) {
     const el = document.getElementById("section-shell");
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToElement(el, { block: "start" });
     const query = SEARCH_TERM[tag] ?? tag;
     window.dispatchEvent(
       new CustomEvent(SHELL_PREFILL_EVENT, { detail: `grep ${query}` })

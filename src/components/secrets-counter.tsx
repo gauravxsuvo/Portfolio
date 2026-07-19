@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { SHELL_PREFILL_EVENT } from "@/lib/shell-events";
 import { useAchievementCount } from "@/hooks/use-achievement-count";
+import { scrollToElement } from "@/lib/scroll";
 
 /**
  * Gives the achievement system somewhere to live. Without a persistent counter
@@ -25,7 +26,7 @@ export function SecretsCounter() {
       window.dispatchEvent(
         new CustomEvent(SHELL_PREFILL_EVENT, { detail: "achievements" })
       );
-      document.getElementById("section-shell")?.scrollIntoView({ behavior: "smooth" });
+      scrollToElement(document.getElementById("section-shell"));
     }, 120);
   }
 

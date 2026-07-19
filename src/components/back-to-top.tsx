@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { scrollWindowTo } from "@/lib/scroll";
 
 /**
  * Appears once you're a screen down. Sits bottom-left so it never collides with
@@ -29,7 +30,7 @@ export function BackToTop() {
   return (
     <button
       type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => scrollWindowTo(0)}
       aria-label="Scroll back to top"
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}

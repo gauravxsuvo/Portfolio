@@ -3,6 +3,7 @@
 import { useSections } from "@/hooks/use-sections";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { SHORTCUT_GROUPS } from "@/lib/shortcuts";
+import { scrollToElement } from "@/lib/scroll";
 
 /**
  * A short legend, not the full cheatsheet: the rail is a narrow column and the
@@ -31,7 +32,7 @@ export function SectionRail() {
   const { sections, activeId } = useSections(shown);
 
   function go(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToElement(document.getElementById(id), { block: "start" });
   }
 
   if (!shown) return null;

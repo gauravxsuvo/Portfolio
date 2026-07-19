@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SHELL_PREFILL_EVENT } from "@/lib/shell-events";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { scrollToElement } from "@/lib/scroll";
 
 type Pos = { x: number; y: number; text: string };
 
@@ -74,7 +75,7 @@ export function SelectionSearch() {
     router.push("/");
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent(SHELL_PREFILL_EVENT, { detail: `grep ${term}` }));
-      document.getElementById("section-shell")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollToElement(document.getElementById("section-shell"), { block: "center" });
     }, 120);
   }
 
