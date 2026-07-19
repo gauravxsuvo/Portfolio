@@ -70,21 +70,24 @@ function loadClass(pct: number): string {
 export function TopMonitor() {
   const reducedMotion = useReducedMotion();
   const [rows, setRows] = useState<Sample[]>(() => sample(true));
-  const [live, setLive] = useState(!reducedMotion);
+  /** Set once the run is over. "Live" is derived from it rather than stored, so
+   *  the two can't disagree. */
+  const [frozen, setFrozen] = useState(false);
   const ticks = useRef(0);
+  const live = !reducedMotion && !frozen;
 
   useEffect(() => {
-    if (reducedMotion) {
-      setLive(false);
-      return;
-    }
-    setRows(sample());
+    if (reducedMotion) return;
+    // No synchronous setState here: `live` is derived above rather than pushed
+    // into state, and the first sample is already in the useState initializer,
+    // so the effect's only job is owning the interval. Seeding a second sample
+    // on mount was a cascading render for one frame nobody sees.
     const id = setInterval(() => {
       ticks.current += 1;
       setRows(sample());
       if (ticks.current >= MAX_TICKS) {
         clearInterval(id);
-        setLive(false);
+        setFrozen(true);
       }
     }, TICK_MS);
     return () => clearInterval(id);
