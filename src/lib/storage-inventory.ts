@@ -96,6 +96,14 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
     category: "necessary",
     retention: "until you clear site data, or `history -c`",
   },
+  {
+    key: "suvo:snake-best",
+    kind: "local-storage",
+    purpose:
+      "your best score in the shell's hidden game, so it survives a reload. A single number — nothing about how or when you played",
+    category: "necessary",
+    retention: "until you clear site data",
+  },
   // No cookie entry, and that is not an omission: this site sets no cookies at
   // all, for anyone. The admin login used to set one; it now holds its token in
   // memory only (see analytics/auth.ts), so it dies with the tab and never

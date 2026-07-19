@@ -17,7 +17,9 @@ import { SHELL_PREFILL_EVENT, SHELL_RUN_EVENT, type ShellRunDetail } from "@/lib
 import {
   COMPLETIONS,
   completionsFor,
+  hasPipe,
   resolveCommand,
+  runPipeline,
   runShellCommand,
 } from "@/lib/shell-commands";
 import { unlockAchievement } from "@/lib/achievements";
@@ -298,6 +300,11 @@ export function CommandShell() {
     setHistory(next);
     writeHistory(next);
 
+    const piped = hasPipe(raw);
+    // For a pipeline these describe the *first* stage only — which is what the
+    // analytics event below wants, and what the two special-cases after it must
+    // therefore be guarded against: `clear | wc` names a pipeline whose output
+    // is a character count, not a request to wipe the screen.
     const [cmd, ...rest] = raw.split(/\s+/);
     const name = cmd.toLowerCase();
     const arg = rest.join(" ");
@@ -316,18 +323,20 @@ export function CommandShell() {
       })
     );
 
-    if (resolved?.name === "clear") {
+    if (!piped && resolved?.name === "clear") {
       setEntries([]);
       return;
     }
-    if (resolved?.name === "history" && arg.trim().toLowerCase() === "-c") {
+    if (!piped && resolved?.name === "history" && arg.trim().toLowerCase() === "-c") {
       clearHistory();
       setHistory([]);
       push({ command: raw, output: <p className="text-fg/50">history cleared.</p> });
       return;
     }
 
-    const result = runShellCommand({ name, arg, raw, history: past, router });
+    const result = piped
+      ? runPipeline({ line: raw, arg, raw, history: past, router })
+      : runShellCommand({ name, arg, raw, history: past, router });
 
     if (result instanceof Promise) {
       const id = push({ command: raw, output: null, pending: true });
