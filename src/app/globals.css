@@ -146,41 +146,23 @@ html[data-mode="retro"] .retro-fill {
    an explicit resting state are named there.
    --------------------------------------------------------------------------- */
 
-/* 1. Palette cycling on the hero wordmark.
-      The DOS/Amiga trick: don't move the pixels, rotate the palette under
-      them. Each character holds a colour for one step then jumps to the next,
-      and the negative per-character delay (--retro-i, set alongside
-      --retro-accent in lib/ansi.ts) offsets each one by exactly one step, so
-      the rainbow marches along the word rather than flashing it all at once.
-      step-end, not linear: interpolating between two accents passes through a
-      muddy midpoint, and discrete jumps are what palette cycling actually
-      looked like. */
-html[data-mode="retro"] .retro-cycle {
-  animation: ansi-cycle 4.8s step-end infinite;
-  animation-delay: calc(var(--retro-i, 0) * -0.8s);
+/* 1. The hero's bloom breathing, the way a phosphor tube never holds a
+      perfectly constant brightness. This replaced a per-character palette
+      cycle: colour-cycling the wordmark made it the loudest thing on a page
+      whose accents were already doing that job, so the name is one colour now
+      and only its glow moves. Animating text-shadow is a repaint, which is
+      affordable here and nowhere else — it's a single element. */
+.hero-bloom {
+  animation: hero-bloom 6.5s ease-in-out infinite;
 }
 
-@keyframes ansi-cycle {
-  0% {
-    color: var(--color-ansi-1);
-  }
-  16.667% {
-    color: var(--color-ansi-2);
-  }
-  33.333% {
-    color: var(--color-ansi-3);
+@keyframes hero-bloom {
+  0%,
+  100% {
+    opacity: 0.92;
   }
   50% {
-    color: var(--color-ansi-4);
-  }
-  66.667% {
-    color: var(--color-ansi-5);
-  }
-  83.333% {
-    color: var(--color-ansi-6);
-  }
-  100% {
-    color: var(--color-ansi-1);
+    opacity: 1;
   }
 }
 
@@ -432,18 +414,19 @@ html[data-mode="retro"][data-retro="vaporwave"] {
   animation-delay: -1.6s;
 }
 
-/* The hero wordmark runs the whole cycle, one colour per character. The glow
-   below has to resolve per-character too, which is why retro's .warp-text
-   switches to currentColor: text-shadow inherits, and currentColor resolves
-   against each span's own colour rather than the h1's. */
+/* The hero wordmark: near-white letters, and the *palette* in the bloom around
+   them. Tinting the glow with --mist-1 is what ties it to the theme without
+   colouring the letters themselves — and it's the same hue as the background
+   haze, so the name reads as the brightest part of one continuous light rather
+   than as an object with its own colour scheme. */
 html[data-mode="retro"] .warp-text {
   text-shadow:
     calc(var(--scroll-warp) * var(--scroll-dir) * 2px) 0 0
       color-mix(in srgb, var(--color-error) 60%, transparent),
     calc(var(--scroll-warp) * var(--scroll-dir) * -2px) 0 0
-      color-mix(in srgb, var(--color-ansi-cyan) 60%, transparent),
-    0 0 6px color-mix(in srgb, currentColor 55%, transparent),
-    0 0 16px color-mix(in srgb, currentColor 25%, transparent);
+      color-mix(in srgb, var(--color-ansi-2) 60%, transparent),
+    0 0 10px color-mix(in srgb, var(--mist-1) 65%, transparent),
+    0 0 28px color-mix(in srgb, var(--mist-1) 32%, transparent);
 }
 
 @theme inline {
@@ -1122,14 +1105,8 @@ html[data-cursor-down="true"] .cursor-ring {
      which for most of these lands them on their final keyframe — wrong for two
      of them, so they're named explicitly rather than left to chance.
 
-     .retro-cycle would freeze every character on slot 1 (a solid-colour
-     wordmark); animation:none instead lets the static per-character
-     --retro-accent show through, so the rainbow is still there, just still.
      The two travelling bands would freeze mid-screen as a visible smear, so
      they're removed outright. */
-  html[data-mode="retro"] .retro-cycle {
-    animation: none;
-  }
   html[data-mode="retro"] .divider-scan::after,
   .crt-refresh {
     display: none;
@@ -1145,7 +1122,8 @@ html[data-cursor-down="true"] .cursor-ring {
   .led-pulse,
   .blink-hard,
   .blink-soft,
-  .animate-blink {
+  .animate-blink,
+  .hero-bloom {
     animation: none;
   }
   /* Two-class selector to match the specificity of the :nth-child rules that

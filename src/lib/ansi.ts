@@ -33,17 +33,7 @@ export function ansiAccent(index: number): string {
   return `var(${ANSI_ACCENT_VARS[((index % n) + n) % n]})`;
 }
 
-/**
- * Inline style carrying the accent, typed so JSX accepts the custom property.
- *
- * `--retro-i` rides along so CSS can stagger a looping animation off the same
- * index — that's what makes the hero's palette cycle march along the word
- * instead of flashing every character at once.
- */
+/** Inline style carrying the accent, typed so JSX accepts the custom property. */
 export function retroAccentStyle(index: number): React.CSSProperties {
-  const n = ANSI_ACCENT_COUNT;
-  return {
-    "--retro-accent": ansiAccent(index),
-    "--retro-i": ((index % n) + n) % n,
-  } as React.CSSProperties;
+  return { "--retro-accent": ansiAccent(index) } as React.CSSProperties;
 }

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { unlockAchievement } from "@/lib/achievements";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { retroAccentStyle } from "@/lib/ansi";
 import { bio } from "@/lib/data";
 
 // ASCII only: the hero renders in VT323 now, which has no CJK glyphs — a
@@ -108,24 +107,16 @@ export function HeroLogo() {
       >
         {/* VT323 runs narrow and has no bold, so it gets a size bump instead of
             a weight — the CRT lettering is the emphasis. */}
-        <h1 className="glitch-hover warp-text break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
+        <h1 className="glitch-hover warp-text hero-bloom break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
           <span className="sr-only">{bio.name}</span>
-          {/* One span per character so retro mode can run the accent cycle
-              through the wordmark, and keep running it: .retro-cycle rotates
-              each character's colour on a loop, staggered one step per index so
-              the rainbow marches. In mono both rules are inert and every span
-              inherits the h1's single phosphor colour, so this costs nothing
-              but the extra elements. */}
+          {/* One colour — `primary`, same as every other piece of chrome. The
+              palette shows up in the bloom around the letters (see retro's
+              .warp-text), not in the letters themselves: a per-character
+              rainbow here competed with the accents on the headings and tags
+              instead of belonging to them, and left the one element that
+              should anchor the page as the least coherent thing on it. */}
           <span aria-hidden="true">
-            {[...shown].map((ch, i) => (
-              <span
-                key={i}
-                className="retro-accent retro-cycle"
-                style={retroAccentStyle(i)}
-              >
-                {ch}
-              </span>
-            ))}
+            {shown}
             <span className={done ? "animate-blink" : ""}>_</span>
           </span>
         </h1>
