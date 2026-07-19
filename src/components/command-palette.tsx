@@ -204,8 +204,19 @@ export function CommandPalette() {
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        // Closing goes through close() rather than setOpen(false), because the
+        // toggle used to skip everything close() does: the query and the
+        // highlighted index survived, so the next ctrl+k reopened onto the
+        // previous search with a stale `active` row — and it captured the
+        // palette's own input as the element to restore focus to, which is
+        // unmounted a frame later, so focus fell to <body> instead of returning
+        // to wherever the user opened it from.
+        if (open) {
+          close();
+          return;
+        }
         restoreFocusRef.current = document.activeElement as HTMLElement;
-        setOpen((v) => !v);
+        setOpen(true);
         return;
       }
       // "/" is the classic focus-search key, but only when the user isn't
@@ -226,7 +237,7 @@ export function CommandPalette() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener(OPEN_PALETTE_EVENT, onOpenRequest);
     };
-  }, [open]);
+  }, [open, close]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
