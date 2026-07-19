@@ -117,8 +117,15 @@ export function SystemRail() {
   return (
     <aside aria-hidden="true" className="sticky top-24 h-fit w-52 shrink-0">
       <div className="border border-border">
-        <p className="border-b border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-fg/40">
-          +-- system --+
+        <p className="flex items-center gap-1.5 border-b border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-fg/40">
+          {/* Three staggered activity LEDs. The rail reports live numbers, so a
+              row of markers that ripples is the honest ornament for it. */}
+          <span className="flex gap-0.5">
+            <span className="blink-soft inline-block h-1 w-1 bg-primary" />
+            <span className="blink-soft blink-soft-1 inline-block h-1 w-1 bg-secondary" />
+            <span className="blink-soft blink-soft-2 inline-block h-1 w-1 bg-primary" />
+          </span>
+          system
         </p>
         <div className="flex flex-col gap-1 p-3 text-[11px]">
           {rows.map(([label, value]) => (

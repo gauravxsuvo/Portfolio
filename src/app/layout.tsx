@@ -17,6 +17,7 @@ import { ShortcutsOverlay } from "@/components/shortcuts-overlay";
 import { RouteTransition } from "@/components/route-transition";
 import { SiteFrame } from "@/components/site-frame";
 import { AmbientGrid } from "@/components/ambient-grid";
+import { PhosphorMist } from "@/components/phosphor-mist";
 import { SelectionSearch } from "@/components/selection-search";
 import { ScrollFx } from "@/components/scroll-fx";
 import { SkipLink } from "@/components/skip-link";
@@ -110,6 +111,9 @@ export default function RootLayout({
         {/* First focusable element in the document, on purpose — a skip link
             that isn't first is one you have to tab past the nav to reach. */}
         <SkipLink />
+        {/* Behind the ambient canvas: the mist is atmosphere, the drifting
+            glyphs are the thing you're meant to notice on top of it. */}
+        <PhosphorMist />
         <AmbientGrid />
         <CrtOverlay />
         <CursorLayer />

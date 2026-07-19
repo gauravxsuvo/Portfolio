@@ -105,6 +105,21 @@ function ThemePanelInner() {
     };
   }, []);
 
+  /**
+   * Publish the open state so the floating controls can step aside on mobile
+   * (see .floating-bottom in globals.css). An attribute on <html> rather than
+   * prop-drilling, because back-to-top is a sibling in the layout that has no
+   * relationship to this component and shouldn't grow one.
+   */
+  useEffect(() => {
+    const root = document.documentElement;
+    if (open) root.dataset.panel = "open";
+    else delete root.dataset.panel;
+    return () => {
+      delete root.dataset.panel;
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     function onKeyDown(e: globalThis.KeyboardEvent) {
@@ -214,13 +229,10 @@ function ThemePanelInner() {
         aria-expanded={open}
         aria-controls="theme-panel"
         aria-label="Terminal display settings"
-        // On mobile the panel is a bottom sheet that fills the lower half of the
-        // screen, so the floating trigger would sit on top of its own controls.
-        // Hide it there while open; on desktop the panel floats above it and
-        // there's no collision.
-        className={`floating-bottom fixed right-4 z-[56] bg-bg/90 text-xs backdrop-blur-sm ${
-          open ? "max-sm:hidden" : ""
-        }`}
+        // Hiding this on mobile while the sheet is up is handled by the
+        // data-panel rule in globals.css, which covers every .floating-bottom
+        // control rather than just this one.
+        className="floating-bottom fixed right-4 z-[56] bg-bg/90 text-xs backdrop-blur-sm"
       >
         DISPLAY
       </BracketButton>
@@ -233,9 +245,11 @@ function ThemePanelInner() {
         // Without inert, every control in here stays keyboard-reachable while the
         // panel is invisible — opacity-0 does not remove anything from the tab order.
         inert={!open || undefined}
-        className={`fixed z-[55] transition-all duration-200 ease-out
+        // floating-panel supplies the desktop bottom offset and max-height off
+        // the same --floating-base the trigger uses, so the two can't collide.
+        className={`floating-panel fixed z-[55] transition-all duration-200 ease-out
           inset-x-0 bottom-0 max-h-[85svh] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]
-          sm:inset-x-auto sm:bottom-32 sm:right-4 sm:max-h-[calc(100vh-9rem)] sm:w-80 sm:origin-bottom-right sm:pb-0
+          sm:inset-x-auto sm:right-4 sm:w-[min(20rem,calc(100vw-2rem))] sm:origin-bottom-right sm:pb-0
           ${
             open
               ? "pointer-events-auto translate-y-0 opacity-100 sm:scale-100"

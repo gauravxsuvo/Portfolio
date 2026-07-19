@@ -34,6 +34,11 @@ export function SectionLabel({
         className="retro-accent font-display text-2xl tracking-wide text-primary text-glow sm:text-3xl"
       >
         {label.toUpperCase()}
+        {/* A cursor parked after the heading, as if the line were just typed.
+            aria-hidden so it isn't read as part of the accessible name. */}
+        <span aria-hidden="true" className="blink-hard ml-1 opacity-70">
+          _
+        </span>
       </h2>
     </div>
   );

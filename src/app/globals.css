@@ -253,7 +253,96 @@ html[data-mode="retro"] .divider-scan::after {
   }
 }
 
-/* 4. Status LED — a slow double-blink, the way a link light ticks. */
+/* 4. Phosphor mist — the haze in front of a tube in a dark room.
+      Three blurred blobs on long, mutually-prime durations so the composite
+      never visibly repeats. filter:blur on a large element is the one
+      expensive thing in this file, which is why there are three of them and
+      not ten, and why they animate transform/opacity only (no repaint).
+      Fixed and behind everything: content is lifted above by `relative z-[1]`
+      on the frame wrappers, same as the ambient canvas. */
+.phosphor-mist {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.phosphor-mist-blob {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.14;
+  will-change: transform;
+}
+
+/* The global `* { border-radius: 0 }` rule would square these off into
+   hard-edged boxes, which no amount of blur hides. Radius is the shape here,
+   not decoration, so it's re-asserted at higher specificity. */
+.phosphor-mist .phosphor-mist-blob {
+  border-radius: 50% !important;
+}
+
+.phosphor-mist-blob:nth-child(1) {
+  top: -12vmax;
+  left: -8vmax;
+  background: radial-gradient(circle, var(--color-ansi-1) 0%, transparent 68%);
+  animation: mist-drift-a 47s ease-in-out infinite;
+}
+
+.phosphor-mist-blob:nth-child(2) {
+  top: 18vmax;
+  right: -14vmax;
+  background: radial-gradient(circle, var(--color-ansi-2) 0%, transparent 68%);
+  animation: mist-drift-b 61s ease-in-out infinite;
+}
+
+.phosphor-mist-blob:nth-child(3) {
+  bottom: -18vmax;
+  left: 28vw;
+  background: radial-gradient(circle, var(--color-ansi-4) 0%, transparent 68%);
+  animation: mist-drift-c 53s ease-in-out infinite;
+}
+
+/* Mono has no accent slots driving it — one phosphor, so one colour of haze. */
+html[data-mode="mono"] .phosphor-mist-blob {
+  background: radial-gradient(circle, var(--color-primary) 0%, transparent 68%);
+  opacity: 0.1;
+}
+
+@keyframes mist-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(14vw, 8vh, 0) scale(1.18);
+  }
+}
+
+@keyframes mist-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-16vw, 12vh, 0) scale(0.9);
+  }
+}
+
+@keyframes mist-drift-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(-10vw, -10vh, 0) scale(1.2);
+  }
+}
+
+/* 5. Status LED — a slow double-blink, the way a link light ticks. */
 .led-pulse {
   animation: led-pulse 3.2s ease-in-out infinite;
 }
@@ -272,6 +361,56 @@ html[data-mode="retro"] .divider-scan::after {
   60% {
     opacity: 0.55;
   }
+}
+
+/* 6. The ANSI blink attribute, which every terminal had and every style guide
+      begged people not to use.
+
+      Used here only on small decorative glyphs — cursors, carets, LEDs, chevrons
+      — never on words. Blinking *text* is a genuine accessibility problem (you
+      can't read a word that keeps leaving), and anything wearing these classes
+      is aria-hidden or has a text equivalent beside it.
+      1.06s: slow enough to read as a terminal cursor rather than a strobe, and
+      nowhere near the 3-per-second flash threshold. */
+.blink-hard {
+  animation: blink-hard 1.06s steps(1) infinite;
+}
+
+@keyframes blink-hard {
+  0%,
+  54% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The softer sibling: fades rather than snapping, for glyphs that sit next to
+   text where a hard blink would pull the eye off the sentence. */
+.blink-soft {
+  animation: blink-soft 2.4s ease-in-out infinite;
+}
+
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.28;
+  }
+}
+
+/* Staggered variants, so a row of markers ripples instead of pulsing in
+   lockstep — lockstep reads as one broken element, a ripple reads as a system
+   doing something. */
+.blink-soft-1 {
+  animation-delay: -0.8s;
+}
+.blink-soft-2 {
+  animation-delay: -1.6s;
 }
 
 /* The hero wordmark runs the whole cycle, one colour per character. The glow
@@ -976,7 +1115,24 @@ html[data-cursor-down="true"] .cursor-ring {
   .crt-refresh {
     display: none;
   }
-  .led-pulse {
+  /* These all end their keyframes at opacity 0 or mid-drift, so the blanket
+     rule would leave a cursor invisible and the mist bunched in one corner.
+     animation:none returns each to its authored resting state — the glyphs
+     stay lit, the haze stays where it was placed.
+
+     `.animate-blink` is in here for a bug that predates the ambient loops: its
+     final keyframe is opacity 0, so reduced motion didn't calm the caret down,
+     it deleted it. Every prompt on the site lost its cursor. */
+  .led-pulse,
+  .blink-hard,
+  .blink-soft,
+  .animate-blink {
+    animation: none;
+  }
+  /* Two-class selector to match the specificity of the :nth-child rules that
+     assign each blob its drift; a bare .phosphor-mist-blob loses to them and
+     the override silently does nothing. */
+  .phosphor-mist .phosphor-mist-blob {
     animation: none;
   }
   @media (hover: hover) and (pointer: fine) {
@@ -1011,13 +1167,57 @@ html[data-cursor-down="true"] .cursor-ring {
  * env(safe-area-inset-bottom) keeps them clear of the iOS home indicator; the
  * max() is what stops a device with no inset losing the 5rem baseline.
  */
+:root {
+  /* One definition, two consumers. The floating triggers sit here and the
+     display panel stacks directly above them — see .floating-panel. Keeping it
+     a variable is what stops the two from drifting apart, which is exactly how
+     they collided before: the buttons rode up by --consent-height while the
+     panel stayed pinned at a hardcoded 8rem, so raising the consent bar pushed
+     the trigger through the panel it opens. */
+  --floating-base: calc(
+    max(5rem, env(safe-area-inset-bottom) + 5rem) + var(--consent-height, 0px)
+  );
+}
+
 .floating-bottom {
-  bottom: calc(max(5rem, env(safe-area-inset-bottom) + 5rem) + var(--consent-height, 0px));
+  bottom: var(--floating-base);
   transition: bottom 150ms ease;
 }
 
+/*
+ * On a phone the display panel is a bottom sheet filling the lower half of the
+ * screen, so every floating control belongs *under* it, not on top of it. The
+ * panel publishes data-panel="open" on <html> while it's up.
+ *
+ * One rule for all of them rather than a per-component class: the trigger used
+ * to hide itself with its own `max-sm:hidden`, which meant back-to-top — a
+ * component that has no idea the panel exists — kept floating over the sheet.
+ * Anything that opts into .floating-bottom now gets out of the way for free.
+ */
+@media (max-width: 39.9375rem) {
+  html[data-panel="open"] .floating-bottom {
+    display: none;
+  }
+}
+
+/*
+ * The display panel's desktop position. Sits one trigger-height plus a gap
+ * above --floating-base, and takes its max-height from the same number so a
+ * short laptop viewport scrolls the panel instead of running it off the top of
+ * the screen. Phone layout is a bottom sheet and is handled in JSX; this only
+ * applies from `sm` up.
+ */
+@media (min-width: 40rem) {
+  .floating-panel {
+    bottom: calc(var(--floating-base) + 3rem);
+    max-height: calc(100svh - var(--floating-base) - 5rem);
+    transition: bottom 150ms ease;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .floating-bottom {
+  .floating-bottom,
+  .floating-panel {
     transition: none;
   }
 }

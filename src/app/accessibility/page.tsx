@@ -73,7 +73,7 @@ const SHORTFALLS: { title: string; detail: string }[] = [
   {
     title: "Things move on their own",
     detail:
-      "Several effects loop continuously with no input from you: the name at the top cycles colours, a light sweeps each section divider, and a faint band drifts down the screen like a CRT refresh. They're deliberately slow and low-contrast, but motion that never stops can still be distracting or worse if you're sensitive to it. Every one of them stops completely if your system asks for reduced motion, which is tested rather than assumed.",
+      "Several effects loop continuously with no input from you: the name at the top cycles colours, a light sweeps each section divider, a faint band drifts down the screen like a CRT refresh, a coloured haze drifts behind everything, and small cursors blink. They're deliberately slow and low-contrast, and nothing blinks fast enough to be a seizure risk, but motion that never stops can still be distracting or worse if you're sensitive to it. Every one of them stops completely if your system asks for reduced motion — tested rather than assumed, and the blinking glyphs stay visible rather than freezing invisible.",
   },
   {
     title: "It hasn't been audited",

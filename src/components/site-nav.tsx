@@ -54,6 +54,9 @@ export function SiteNav() {
               className="cursor-pointer select-none text-fg/50"
             >
               :~$
+              <span aria-hidden="true" className="blink-hard ml-0.5 text-primary">
+                _
+              </span>
             </span>
           </span>
           {showSudo && (
