@@ -7,11 +7,39 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "Project · Gaurav Raj Singh's portfolio";
 
+/**
+ * A metadata image route inside a dynamic segment does *not* inherit the
+ * `generateStaticParams` on its sibling page.tsx — it needs its own, and without
+ * one this route was the only part of /projects/[slug] left rendering on demand
+ * (the build printed it as `ƒ /projects/-/opengraph-image` while the page itself
+ * was `●` prerendered). Every social crawler that unfurled a project link paid
+ * for a cold Satori render plus a font load, on the request that decides whether
+ * a link preview appears at all.
+ */
+export function generateStaticParams() {
+  return projects.map((p) => ({ slug: p.slug }));
+}
+
+/**
+ * Unknown slugs 404 instead of rendering.
+ *
+ * The handler used to fall back to `project?.name ?? slug`, which meant
+ * /projects/<anything>/opengraph-image returned a 1200x630 PNG with that
+ * arbitrary text set in the site's own frame, colours and wordmark — a
+ * convincing branded image, on this domain, saying whatever the URL said. The
+ * page route already 404s for slugs that aren't real; its image had no reason
+ * to be more generous. `false` also matches page.tsx, so the two routes now
+ * agree on which slugs exist.
+ */
+export const dynamicParams = false;
+
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   const fonts = await loadJetBrainsMono();
 
+  // dynamicParams=false means only the slugs above reach this, so `project` is
+  // always found; the fallbacks are belt-and-braces rather than a live path.
   const name = project?.name ?? slug;
   const tagline = project?.tagline ?? "";
   const stack = project?.stack ?? [];
