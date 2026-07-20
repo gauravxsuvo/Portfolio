@@ -7,11 +7,9 @@ import { bio } from "@/lib/data";
 import { pageMetadata, siteHost } from "@/lib/site";
 import { SECURITY_POLICY_UPDATED } from "@/lib/security-policy";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat security.txt",
-  description: "How to report a security vulnerability in this site, and what's in scope.",
-  path: "/security",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/security" });
 
 function H3({ children }: { children: ReactNode }) {
   return (

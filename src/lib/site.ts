@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getPageCard } from "./page-cards";
 
 /**
  * The canonical origin, hardcoded on purpose.
@@ -61,25 +62,50 @@ export const siteName = "gaurav@portfolio:~$";
 // any image inherited from an ancestor's opengraph-image file convention is
 // silently dropped unless re-specified here — so every call sites the image
 // explicitly rather than relying on cross-segment inheritance.
+//
+// That replacement is also why `image` resolves off PAGE_CARDS rather than
+// defaulting to the site-wide card. Dropping an `opengraph-image.tsx` into a
+// route folder generates the image route but changes nothing about what the
+// page advertises: this function's `images` array wins, so every page kept
+// unfurling with the homepage card no matter how many card files existed.
+// Deriving it here is what connects the two.
+//
+// Title and description come from the same registry when the caller doesn't
+// pass them, so a page's metadata and its card are one string, not two.
 export function pageMetadata({
   title,
   description,
   path = "",
-  image = "/opengraph-image",
+  image,
 }: {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   path?: string;
   image?: string;
 }): Metadata {
-  const fullTitle = `${title} · ${siteName}`;
+  const card = path ? getPageCard(path) : undefined;
+
+  const resolvedTitle = title ?? card?.command ?? siteName;
+  const resolvedDescription = description ?? card?.blurb ?? "";
+  // Registry membership is the switch: a page gets its own card only if it has
+  // an entry, which is the same thing that guarantees the route file exists.
+  const resolvedImage = image ?? (card ? `${path}/opengraph-image` : "/opengraph-image");
+
+  const fullTitle = `${resolvedTitle} · ${siteName}`;
   const url = `${siteUrl}${path}`;
-  const images = [{ url: `${siteUrl}${image}`, width: 1200, height: 630, alt: fullTitle }];
+  const images = [
+    { url: `${siteUrl}${resolvedImage}`, width: 1200, height: 630, alt: fullTitle },
+  ];
   return {
-    title,
-    description,
+    title: resolvedTitle,
+    description: resolvedDescription,
     alternates: { canonical: url },
-    openGraph: { title: fullTitle, description, url, images },
-    twitter: { card: "summary_large_image", title: fullTitle, description, images },
+    openGraph: { title: fullTitle, description: resolvedDescription, url, images },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description: resolvedDescription,
+      images,
+    },
   };
 }

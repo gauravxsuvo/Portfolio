@@ -129,6 +129,33 @@
     <img class="shot" src="share-project-bharatsim.png" alt="BharatSim share card">
   </div>
 
+  <h2>Share cards — site pages</h2>
+  <p class="note">
+    One per page, each with its own accent from the ANSI set. Copy comes from
+    <code>src/lib/page-cards.ts</code>, which is also where the page's
+    <code>&lt;title&gt;</code> and meta description come from — so a card can't
+    describe a page differently from the page itself.
+  </p>
+  <div class="card"><h3>/about</h3><img class="shot" src="share-page-about.png" alt="About share card"></div>
+  <div class="card"><h3>/projects</h3><img class="shot" src="share-page-projects.png" alt="Projects share card"></div>
+  <div class="card"><h3>/experience</h3><img class="shot" src="share-page-experience.png" alt="Experience share card"></div>
+  <div class="card"><h3>/publications</h3><img class="shot" src="share-page-publications.png" alt="Publications share card"></div>
+  <div class="card"><h3>/contact</h3><img class="shot" src="share-page-contact.png" alt="Contact share card"></div>
+
+  <h2>Share cards — policies</h2>
+  <p class="note">
+    Same layout with a <strong>POLICY</strong> marker, so a legal document and a
+    projects index don't arrive in a chat window looking identical. The blurbs
+    are the ones already vetted on each page — no claim is restated here in
+    shorter or broader words, which matters most for <code>/privacy</code>,
+    whose IP claim is deliberately scoped.
+  </p>
+  <div class="card"><h3>/privacy</h3><img class="shot" src="share-page-privacy.png" alt="Privacy share card"></div>
+  <div class="card"><h3>/cookies</h3><img class="shot" src="share-page-cookies.png" alt="Cookies share card"></div>
+  <div class="card"><h3>/terms</h3><img class="shot" src="share-page-terms.png" alt="Terms share card"></div>
+  <div class="card"><h3>/security</h3><img class="shot" src="share-page-security.png" alt="Security share card"></div>
+  <div class="card"><h3>/accessibility</h3><img class="shot" src="share-page-accessibility.png" alt="Accessibility share card"></div>
+
   <h2>Where these come from</h2>
   <p class="note">
     Nothing here is a checked-in asset — every PNG is generated from code at
@@ -137,8 +164,17 @@
     <code>src/lib/og-mark.tsx</code> — the chevron + cursor mark<br>
     <code>src/lib/og-crt.tsx</code> — scanlines, glow, corner falloff<br>
     <code>src/lib/og-banner.tsx</code> — the home card<br>
+    <code>src/lib/og-page.tsx</code> — the shared interior-page card<br>
+    <code>src/lib/page-cards.ts</code> — per-page copy, accent and title/description<br>
     <code>src/app/icon.tsx</code>, <code>src/app/apple-icon.tsx</code> — icons<br>
     <code>src/app/projects/[slug]/opengraph-image.tsx</code> — project cards
+  </p>
+  <p class="note">
+    To give a new page a card: add an entry to <code>page-cards.ts</code> and an
+    <code>opengraph-image.tsx</code> to its route folder, in the same commit.
+    The registry entry is what points the page's metadata at its own image —
+    without it the page silently keeps unfurling with the homepage card, and
+    without the route file it advertises an image that 404s.
   </p>
 
 </div>

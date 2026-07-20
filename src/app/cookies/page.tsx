@@ -13,12 +13,9 @@ import {
   type StorageEntry,
 } from "@/lib/storage-inventory";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat cookies.txt",
-  description:
-    "Every cookie and storage key this site writes, what it's for, and how long it lasts.",
-  path: "/cookies",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/cookies" });
 
 const LAST_UPDATED = "2026-07-16";
 

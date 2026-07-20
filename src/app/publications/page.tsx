@@ -4,11 +4,9 @@ import { PublicationsExplorer } from "@/components/publications-explorer";
 import { publications } from "@/lib/data";
 import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat publications.bib",
-  description: "Research publications and preprints.",
-  path: "/publications",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/publications" });
 
 export default function PublicationsPage() {
   return (

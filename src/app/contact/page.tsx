@@ -6,11 +6,9 @@ import { CopyButton } from "@/components/copy-button";
 import { pageMetadata } from "@/lib/site";
 import { bio } from "@/lib/data";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat contact.txt",
-  description: "Email, GitHub, LinkedIn.",
-  path: "/contact",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/contact" });
 
 const EMAIL = bio.email;
 

@@ -6,12 +6,9 @@ import { TerminalWindow } from "@/components/ui/terminal-window";
 import { bio } from "@/lib/data";
 import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat accessibility.txt",
-  description:
-    "How accessible this site is, what's been done, and where it honestly falls short.",
-  path: "/accessibility",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/accessibility" });
 
 const LAST_UPDATED = "2026-07-19";
 

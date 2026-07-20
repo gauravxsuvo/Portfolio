@@ -19,6 +19,20 @@ const PORT = process.argv[2] ?? "3111";
 const BASE = `http://localhost:${PORT}`;
 const OUT = dirname(fileURLToPath(import.meta.url));
 
+/** Pages with their own card — mirrors PAGE_CARDS in src/lib/page-cards.ts. */
+const PAGES = [
+  "about",
+  "projects",
+  "experience",
+  "publications",
+  "contact",
+  "privacy",
+  "cookies",
+  "terms",
+  "security",
+  "accessibility",
+];
+
 /** route -> filename. Keep in step with the sections in index.html. */
 const IMAGES = {
   "icon/16": "favicon-16",
@@ -30,6 +44,9 @@ const IMAGES = {
   "projects/deepdarcy/opengraph-image": "share-project-deepdarcy",
   "projects/notschool/opengraph-image": "share-project-notschool",
   "projects/bharatsim/opengraph-image": "share-project-bharatsim",
+  ...Object.fromEntries(
+    PAGES.map((p) => [`${p}/opengraph-image`, `share-page-${p}`])
+  ),
 };
 
 let failed = 0;

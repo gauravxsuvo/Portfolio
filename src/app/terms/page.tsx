@@ -6,12 +6,9 @@ import { TerminalWindow } from "@/components/ui/terminal-window";
 import { bio } from "@/lib/data";
 import { pageMetadata, siteUrl } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat terms.txt",
-  description:
-    "The terms for using this site: what you may reuse, what you may not, and the limits of what's promised.",
-  path: "/terms",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/terms" });
 
 const LAST_UPDATED = "2026-07-16";
 const host = siteUrl.replace(/^https?:\/\//, "");

@@ -4,11 +4,9 @@ import { ExperienceCard } from "@/components/experience-card";
 import { experience } from "@/lib/data";
 import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "git log --experience",
-  description: "Work history and freelance background.",
-  path: "/experience",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/experience" });
 
 export default function ExperiencePage() {
   return (

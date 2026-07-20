@@ -12,11 +12,9 @@ import { pageMetadata } from "@/lib/site";
 // is a false statement in a legal document.
 import { localStorageEntries } from "@/lib/storage-inventory";
 
-export const metadata: Metadata = pageMetadata({
-  title: "cat privacy.txt",
-  description: "What this site collects, why, how long it's kept, and how to turn it off.",
-  path: "/privacy",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/privacy" });
 
 const LAST_UPDATED = "2026-07-16";
 

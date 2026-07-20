@@ -5,13 +5,9 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { bio, education, skillGroups } from "@/lib/data";
 import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "whoami",
-  // The whole thing, not a slice: the bio is 181 characters now, and cutting it
-  // at 150 truncated mid-word ("...learning Korean and Ja…").
-  description: bio.summary,
-  path: "/about",
-});
+// Title, description and share card all come from this path's entry in
+// lib/page-cards.ts, so they cannot drift apart.
+export const metadata: Metadata = pageMetadata({ path: "/about" });
 
 export default function AboutPage() {
   return (
