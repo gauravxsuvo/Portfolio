@@ -21,6 +21,8 @@ import { PhosphorMist } from "@/components/phosphor-mist";
 import { SelectionSearch } from "@/components/selection-search";
 import { ScrollFx } from "@/components/scroll-fx";
 import { PerfGuard } from "@/components/perf-guard";
+import { IdleScreensaver } from "@/components/idle-screensaver";
+import { DegaussFlash } from "@/components/degauss-flash";
 import { SkipLink } from "@/components/skip-link";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { ConsentBanner } from "@/components/analytics/consent-banner";
@@ -120,6 +122,13 @@ export default function RootLayout({
         <CursorLayer />
         <ScrollFx />
         <PerfGuard />
+        {/* Blanks the screen after a long idle on a desktop, the way the
+            machine this site is pretending to be would have. Renders nothing
+            at all until it fires — see the component for the gating. */}
+        <IdleScreensaver />
+        {/* The tube re-converging when the palette changes. Renders only for
+            the ~620ms the animation runs. */}
+        <DegaussFlash />
         <RouteTransition />
         <AchievementToast />
         <CommandPalette />

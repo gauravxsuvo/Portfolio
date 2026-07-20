@@ -31,7 +31,9 @@ export function Typewriter({
   const done = reducedMotion || count >= text.length;
 
   return (
-    <Tag className={className}>
+    // data-anim: on paper the print stylesheet shows the sr-only string and
+    // drops the animated copy, which would otherwise print frozen mid-type.
+    <Tag className={className} data-anim="">
       <span className="sr-only">{text}</span>
       <span aria-hidden="true">
         {shown}

@@ -38,6 +38,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "wpm", label: "typed 60+ wpm under pressure", hint: "the shell can time your fingers" },
   { id: "lolcat", label: "tasted the rainbow", hint: "pipe something colorful" },
   { id: "pet", label: "befriended the terminal cat", hint: "something small lives in the footer" },
+  {
+    id: "cornerhit",
+    label: "hit the corner",
+    hint: "walk away for a while, then get very lucky",
+  },
 ];
 
 const ACHIEVEMENTS_KEY = "suvo:achievements";

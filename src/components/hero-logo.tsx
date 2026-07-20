@@ -45,6 +45,7 @@ export function HeroLogo() {
   const [frame, setFrame] = useState(0);
   const [message, setMessage] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const messageTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // requestAnimationFrame instead of setInterval: syncs to the display's real
   // refresh rate, costs nothing once the tab is backgrounded (browsers pause
@@ -85,8 +86,14 @@ export function HeroLogo() {
       setFrame(0);
       startAnimation();
     }
-    setTimeout(() => setMessage(false), 2800);
+    // Cleared and restarted rather than stacked: clicking twice used to leave
+    // the first click's timer running, so the message vanished 2.8s after the
+    // *first* press while the second press was still meant to be showing it.
+    clearTimeout(messageTimer.current);
+    messageTimer.current = setTimeout(() => setMessage(false), 2800);
   }
+
+  useEffect(() => () => clearTimeout(messageTimer.current), []);
 
   const shown = reducedMotion ? text : scrambledFrame(text, frame);
   const done = reducedMotion || frame >= totalFrames;
@@ -107,7 +114,13 @@ export function HeroLogo() {
       >
         {/* VT323 runs narrow and has no bold, so it gets a size bump instead of
             a weight — the CRT lettering is the emphasis. */}
-        <h1 className="glitch-hover warp-text hero-bloom break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl">
+        {/* data-anim: printing snapshots whatever scramble frame the scan is
+            on, so on paper the print stylesheet swaps in the sr-only name and
+            drops the animated copy. */}
+        <h1
+          data-anim=""
+          className="glitch-hover warp-text hero-bloom break-words font-display text-4xl tracking-wide text-primary sm:text-6xl lg:text-7xl xl:text-8xl"
+        >
           <span className="sr-only">{bio.name}</span>
           {/* One colour — `primary`, same as every other piece of chrome. The
               palette shows up in the bloom around the letters (see retro's

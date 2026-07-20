@@ -1,4 +1,5 @@
 import { retroAccentStyle } from "@/lib/ansi";
+import { DecodeText } from "@/components/ui/decode-text";
 
 export function SectionLabel({
   index,
@@ -33,13 +34,26 @@ export function SectionLabel({
         id={id}
         className="retro-accent font-display text-2xl tracking-wide text-primary text-glow sm:text-3xl"
       >
-        {label.toUpperCase()}
+        {/* Decodes out of noise the first time it scrolls into view — the same
+            signal-locking-on idea as the hero's identity scan, and the reason
+            the divider's scanning beam has something to be scanning *for*.
+            Keeps the real string in an sr-only span, so this heading's
+            accessible name (and every aria-labelledby pointing at it) is
+            unaffected. */}
+        <DecodeText text={label.toUpperCase()} />
         {/* A cursor parked after the heading, as if the line were just typed.
             aria-hidden so it isn't read as part of the accessible name. */}
         <span aria-hidden="true" className="blink-hard ml-1 opacity-70">
           _
         </span>
       </h2>
+      {/* The scanning beam. A real element rather than a `::after` so the
+          travelling band can be a clipped child and therefore a pure transform
+          — see "divider beam" in globals.css for the measurement that motivated
+          it. The clip is on this 1px strip, so the heading's glow is untouched. */}
+      <span aria-hidden="true" className="divider-beam">
+        <i />
+      </span>
     </div>
   );
 }

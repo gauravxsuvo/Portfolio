@@ -87,7 +87,13 @@ export function SiteNav() {
           )}
         </div>
 
-        <div className="flex min-w-0 items-center gap-2 sm:ml-auto">
+        {/* items-start, not items-center: between ~640px and ~900px the six
+            routes wrap onto two rows, and centring left the ctrl+K button
+            floating in the gap between them — attached to nothing, aligned with
+            nothing. Aligning to the top puts it level with the first row of
+            tabs at every width, including the single-row case where the two
+            are the same height anyway. */}
+        <div className="flex min-w-0 items-start gap-2 sm:ml-auto">
           {/* Phone: one bleed-to-edge scrollable row (-mx-4 px-4), because six
               routes stacked into two lines eats a third of a small screen.
               Tablet and up: allowed to wrap instead.

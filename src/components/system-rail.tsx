@@ -41,16 +41,38 @@ export function SystemRail() {
     let raf = 0;
     let frames = 0;
     let lastSample = performance.now();
+    let restTimer: ReturnType<typeof setTimeout>;
 
+    /**
+     * Frame counting, in bursts rather than continuously.
+     *
+     * Measuring frame rate needs consecutive frames, so this loop cannot park
+     * the way the cursor and scroll loops do — but it does not need to run
+     * every frame of the session either, and it used to. A permanently
+     * registered rAF keeps the browser running its rendering pipeline forever;
+     * together with the ambient canvas's loop that was ~120 wakeups a second on
+     * an idle page, which is the difference between a laptop idling and a
+     * laptop with its fan on.
+     *
+     * It now measures for ~500ms, publishes, then sleeps for 2s. Duty cycle
+     * drops to about a fifth, and a readout that refreshes every 2.5s is if
+     * anything more in keeping with the thing it is imitating — real monitors
+     * sample on an interval too.
+     */
     function tick(now: number) {
       frames += 1;
-      // Sample twice a second: often enough to feel live, rare enough that the
-      // DOM writes are free.
       if (now - lastSample >= 500) {
         const fps = Math.round((frames * 1000) / (now - lastSample));
         if (fpsRef.current) fpsRef.current.textContent = String(Math.min(fps, 240));
         frames = 0;
-        lastSample = now;
+        raf = 0;
+        // Rest, then start a fresh burst. lastSample is reset when the burst
+        // resumes, not here, so the sleep is never counted as frame time.
+        restTimer = setTimeout(() => {
+          lastSample = performance.now();
+          raf = requestAnimationFrame(tick);
+        }, 2000);
+        return;
       }
       raf = requestAnimationFrame(tick);
     }
@@ -98,6 +120,7 @@ export function SystemRail() {
     return () => {
       cancelAnimationFrame(raf);
       cancelAnimationFrame(scrollRaf);
+      clearTimeout(restTimer);
       clearInterval(clockId);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", readViewport);

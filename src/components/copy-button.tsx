@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { copyText } from "@/lib/clipboard";
 
 export function CopyButton({
   text,
@@ -16,13 +17,11 @@ export function CopyButton({
   const [copied, setCopied] = useState(false);
 
   async function handleClick() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // clipboard unavailable — silently no-op, button just stays as-is
-    }
+    // copyText resolves false rather than throwing, and falls back to the
+    // legacy path in a non-secure context — see lib/clipboard.ts.
+    if (!(await copyText(text))) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   }
 
   return (

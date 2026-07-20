@@ -16,6 +16,7 @@ import { OPEN_PALETTE_EVENT } from "@/lib/shell-events";
 import { unlockAchievement } from "@/lib/achievements";
 import { isModalCapturingKeys, isTypingTarget } from "@/lib/keyboard";
 import { OPEN_SHORTCUTS_EVENT } from "@/lib/shortcuts";
+import { copyText } from "@/lib/clipboard";
 
 type Item = {
   id: string;
@@ -23,7 +24,9 @@ type Item = {
   hint: string;
   group: string;
   keywords?: string;
-  run: () => void;
+  /** Leave the palette open and show `run`'s message instead of closing. */
+  keepOpen?: boolean;
+  run: () => void | Promise<string | void>;
 };
 
 /**
@@ -52,11 +55,34 @@ function fuzzyScore(haystack: string, needle: string): number {
   return score;
 }
 
+/**
+ * Score one field, lifted clear of every lower-priority field.
+ *
+ * Which field matched has to outrank *how well* it matched, and a flat -1/-2
+ * penalty did not achieve that: a direct hit scores `1000 - position`, so a
+ * keyword matching at index 0 (1000, less the penalty) beat a label matching at
+ * index 2 (998). Typing "contact" therefore ranked the "Copy email address"
+ * action — whose keywords begin with "contact" — above the `~/contact` route
+ * itself, and Enter copied an address instead of navigating.
+ *
+ * The gap is 2000 because no single fuzzyScore can reach it, so a label match
+ * always wins over a keyword match regardless of where either landed. -1 stays
+ * a "no match" sentinel and is never lifted.
+ */
+const TIER_GAP = 2000;
+
+function tieredScore(haystack: string, needle: string, tier: number): number {
+  const score = fuzzyScore(haystack, needle);
+  return score < 0 ? -1 : score + tier * TIER_GAP;
+}
+
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  /** Result line from a keepOpen action, shown in the footer bar. */
+  const [notice, setNotice] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -66,8 +92,28 @@ export function CommandPalette() {
     setOpen(false);
     setQuery("");
     setActive(0);
+    setNotice("");
     restoreFocusRef.current?.focus?.();
   }, []);
+
+  /**
+   * Run an item. Most close the palette first, so the page underneath is what
+   * you see the result on; a `keepOpen` item stays and reports back instead.
+   * Awaited rather than fire-and-forget — that is what stops a rejected
+   * clipboard write escaping as an unhandled rejection.
+   */
+  const runItem = useCallback(
+    async (item: Item) => {
+      if (!item.keepOpen) {
+        close();
+        await item.run();
+        return;
+      }
+      const message = await item.run();
+      if (typeof message === "string") setNotice(message);
+    },
+    [close]
+  );
 
   const items = useMemo<Item[]>(() => {
     const go = (path: string) => () => router.push(path);
@@ -187,7 +233,15 @@ export function CommandPalette() {
         hint: bio.email,
         group: "actions",
         keywords: "contact mail hire",
-        run: () => navigator.clipboard?.writeText(bio.email),
+        // Stays open to report the outcome. Closing on a copy meant the palette
+        // vanished and nothing anywhere said whether it had worked — and when
+        // the clipboard was blocked (any non-secure context), the floating
+        // promise rejected into the console instead of telling anyone.
+        keepOpen: true,
+        run: async () =>
+          (await copyText(bio.email))
+            ? `copied ${bio.email}`
+            : "clipboard blocked — select the address on ~/contact instead",
       },
       {
         id: "action-github",
@@ -208,9 +262,9 @@ export function CommandPalette() {
           .map((item) => ({
             item,
             score: Math.max(
-              fuzzyScore(item.label, query),
-              fuzzyScore(item.keywords ?? "", query) - 1,
-              fuzzyScore(item.group, query) - 2
+              tieredScore(item.label, query, 2),
+              tieredScore(item.keywords ?? "", query, 1),
+              tieredScore(item.group, query, 0)
             ),
           }))
           .filter((r) => r.score >= 0)
@@ -328,8 +382,7 @@ export function CommandPalette() {
       e.preventDefault();
       const hit = results[active];
       if (!hit) return;
-      close();
-      hit.item.run();
+      void runItem(hit.item);
     }
   }
 
@@ -360,6 +413,9 @@ export function CommandPalette() {
             onChange={(e) => {
               setQuery(e.target.value);
               setActive(0);
+              // Drop a stale result line as soon as the search moves on, so
+              // "copied …" can't sit under a list it no longer describes.
+              setNotice("");
             }}
             onKeyDown={onInputKeyDown}
             placeholder="jump to anything…"
@@ -389,10 +445,7 @@ export function CommandPalette() {
                 <button
                   type="button"
                   onPointerEnter={() => setActive(i)}
-                  onClick={() => {
-                    close();
-                    item.run();
-                  }}
+                  onClick={() => void runItem(item)}
                   className={`flex w-full items-baseline gap-3 px-3 py-1.5 text-left text-sm transition-colors ${
                     isActive ? "bg-primary text-bg" : "text-fg/80 hover:text-primary"
                   }`}
@@ -412,9 +465,20 @@ export function CommandPalette() {
         </ul>
 
         <div className="flex items-center gap-3 border-t border-border px-3 py-1.5 text-[10px] text-fg/35">
-          <span>↑↓ move</span>
-          <span>⏎ select</span>
-          <span className="ml-auto">{results.length} results</span>
+          {notice ? (
+            // aria-live so the outcome of a copy is announced, not just painted
+            // — the whole reason this row exists is that the action used to
+            // report nothing to anyone.
+            <span role="status" className="min-w-0 flex-1 truncate text-secondary">
+              {notice}
+            </span>
+          ) : (
+            <>
+              <span>↑↓ move</span>
+              <span>⏎ select</span>
+            </>
+          )}
+          <span className="ml-auto shrink-0">{results.length} results</span>
         </div>
       </div>
     </div>

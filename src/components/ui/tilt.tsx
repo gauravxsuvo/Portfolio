@@ -54,32 +54,59 @@ export function Tilt({
       raf = requestAnimationFrame(loop);
     }
 
+    /**
+     * Measured on entry, not per move. getBoundingClientRect() inside a
+     * pointermove handler forces a synchronous layout on every event — with a
+     * card grid that meant a forced layout for each move across any card, which
+     * is exactly the interaction where the cursor is expected to feel weightless.
+     */
+    let rect: DOMRect | null = null;
+
+    function invalidate() {
+      rect = null;
+    }
+
     function onMove(e: PointerEvent) {
-      const rect = el!.getBoundingClientRect();
+      if (!rect) rect = el!.getBoundingClientRect();
       const px = (e.clientX - rect.left) / rect.width - 0.5;
       const py = (e.clientY - rect.top) / rect.height - 0.5;
       targetY = px * max * 2;
       targetX = -py * max * 2;
       start();
     }
+    function onEnter() {
+      rect = el!.getBoundingClientRect();
+      // Scrolling while hovering moves the card under the pointer; only then
+      // does the cached rect go stale.
+      window.addEventListener("scroll", invalidate, { passive: true });
+    }
     function onLeave() {
+      window.removeEventListener("scroll", invalidate);
+      rect = null;
       targetX = 0;
       targetY = 0;
       start();
     }
 
+    el.addEventListener("pointerenter", onEnter);
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerleave", onLeave);
     return () => {
       cancelAnimationFrame(raf);
+      el.removeEventListener("pointerenter", onEnter);
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", invalidate);
       el.style.transform = "";
     };
   }, [enabled, max]);
 
+  // will-change only where the tilt actually runs. Applied unconditionally it
+  // promoted every card to its own composited layer on devices that never tilt
+  // anything — a phone loading /projects paid for eight permanent layers to
+  // support a pointer it does not have.
   return (
-    <div ref={ref} className={`h-full will-change-transform ${className}`}>
+    <div ref={ref} className={`h-full ${enabled ? "will-change-transform" : ""} ${className}`}>
       {children}
     </div>
   );

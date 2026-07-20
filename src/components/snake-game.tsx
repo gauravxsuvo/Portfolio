@@ -150,6 +150,12 @@ export function SnakeGame() {
    */
   function start() {
     setBest((prev) => Math.max(prev, state.score));
+    // Persist here too, not only on death. Blurring the board pauses the run
+    // (phase goes back to "idle"), and the death effect below is what writes to
+    // storage — so a paused high score was folded into `best` in memory and then
+    // thrown away by this reset, silently, without ever reaching localStorage.
+    // Play to 300, click away, come back, press an arrow, reload: 300 was gone.
+    if (state.score > readSnakeBest()) writeSnakeBest(state.score);
     pending.current = [];
     setState(freshState("playing"));
   }

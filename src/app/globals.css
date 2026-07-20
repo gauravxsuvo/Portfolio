@@ -167,40 +167,69 @@ html[data-mode="retro"] .retro-fill {
 }
 
 /* 2. A scanning beam that runs the section divider, in that section's accent.
-      Animating background-position rather than translating a child: the strip
-      is 1px tall, so the repaint is trivial, and a translating child would
-      need overflow:hidden on the wrapper — which would clip the heading's
-      text-shadow glow. */
+ *
+ * This used to animate `background-position` on a `::after`, with a note
+ * claiming the repaint was trivial because the strip is only 1px tall. The
+ * repaint area is indeed tiny; the problem is that background-position is not a
+ * compositable property, so every frame went through style recalc and paint on
+ * the main thread — for six dividers, forever, on a page nobody is touching.
+ * Measured over 4s of idle on the homepage, it was the joint-largest ambient
+ * cost on the site:
+ *
+ *     everything on ............ 6.8% CPU
+ *     divider beam disabled .... 4.8% CPU
+ *
+ * It is a transform now, which the compositor can run without waking the main
+ * thread at all. That needs a real element rather than a pseudo, because the
+ * travelling band has to be clipped and a pseudo-element cannot contain one —
+ * hence the `<span class="divider-beam"><i/></span>` in SectionLabel.
+ *
+ * The clip lives on the 1px track, NOT on the heading wrapper. That was the
+ * original objection to translating a child and it was a fair one: overflow on
+ * `.divider-scan` would cut off the heading's text-shadow glow. Clipping a
+ * 1px-tall absolutely-positioned strip clips nothing else.
+ */
 .divider-scan {
   position: relative;
 }
 
-html[data-mode="retro"] .divider-scan::after {
-  content: "";
+.divider-beam {
   position: absolute;
   right: 0;
   bottom: -1px;
   left: 0;
   height: 1px;
+  overflow: hidden;
   pointer-events: none;
+}
+
+html[data-mode="retro"] .divider-beam > i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* The lit band is the middle ~20% of a full-width transparent element, so the
+     sweep reads as a beam rather than as a wash moving across. */
   background: linear-gradient(
     90deg,
     transparent 0%,
-    transparent 28%,
-    var(--retro-accent, var(--color-primary)) 38%,
-    transparent 48%,
+    transparent 40%,
+    var(--retro-accent, var(--color-primary)) 50%,
+    transparent 60%,
     transparent 100%
   );
-  background-size: 260% 100%;
-  animation: divider-scan 7s linear infinite;
+  transform: translate3d(-100%, 0, 0);
+  animation: divider-beam 7s linear infinite;
+  will-change: transform;
 }
 
-@keyframes divider-scan {
+@keyframes divider-beam {
   from {
-    background-position: 170% 0;
+    transform: translate3d(-100%, 0, 0);
   }
   to {
-    background-position: -70% 0;
+    transform: translate3d(100%, 0, 0);
   }
 }
 
@@ -301,9 +330,34 @@ html[data-mode="retro"] .divider-scan::after {
  *    "laggy" once the device is slow enough to push it under 20fps.
  *
  *    The stops below are a gaussian-ish falloff written by hand, so the edge
- *    never resolves in the first place. A small blur stays only to dither the
- *    banding that 11 stops can still show on an 8-bit panel — 24px is far
- *    under the cliff and costs nothing measurable.
+ *    never resolves in the first place.
+ *
+ *    THERE IS NO `filter: blur()` HERE AT ALL, AND THAT IS THE POINT.
+ *
+ *    A 24px blur was kept for a while to dither banding, described in this very
+ *    comment as "far under the cliff, costs nothing measurable". That was
+ *    asserted, never measured, and it was wrong. Measured on an unthrottled
+ *    desktop by removing one layer at a time and sampling frame pacing while
+ *    scrolling the homepage:
+ *
+ *        everything on ................ 33.3ms median, 33.4ms p95, 86/111 janky
+ *        mist blur(24px) removed ...... 16.7ms median, 16.7ms p95,   0/201 janky
+ *
+ *    Nothing else came close: removing the CRT overlay, the ambient canvas or
+ *    every text-shadow each improved the median but left a 33.4ms p95 and a
+ *    third of frames long. Only this one change produced a clean 60fps.
+ *
+ *    The reason it was so costly despite being "small" is that the radius is
+ *    not what matters — the *area* is. These blobs are 74vmax, about 1066px
+ *    square on a 1440px viewport, and there are two of them. Convolving two
+ *    ~1.1-megapixel layers every time they are recomposited is expensive at any
+ *    radius, and they are recomposited constantly because they drift.
+ *
+ *    Banding is handled by stops instead, which are free, and in practice the
+ *    scanline overlay dithers what little remains. **Do not reintroduce a blur
+ *    here.** If the edge ever reappears, add stops or lengthen the tail; both
+ *    cost nothing. Measure before and after — that is the only step that was
+ *    skipped last time.
  *
  *    If you change these stops, keep the tail long and shallow (the last ~30%
  *    should be under 10% alpha). Shortening the tail brings the edge back, and
@@ -322,17 +376,23 @@ html[data-mode="retro"] .divider-scan::after {
   width: 62vmax;
   height: 62vmax;
   border-radius: 50%;
-  filter: blur(24px);
   will-change: transform;
   /* Overridden per blob below. Defaulted here so the gradient can never end up
      referencing an unset property, which would drop the whole declaration. */
   --mist-hue: var(--mist-1);
+  /* 14 stops, not 11. The extra stops in the 0-40% range are what replaced the
+     last of the blur — see the note above about banding. They are free: a
+     gradient is rasterized once per size change, however many stops it has. */
   background: radial-gradient(
     circle closest-side,
     color-mix(in srgb, var(--mist-hue) 85%, transparent) 0%,
+    color-mix(in srgb, var(--mist-hue) 81%, transparent) 8%,
     color-mix(in srgb, var(--mist-hue) 78%, transparent) 12%,
+    color-mix(in srgb, var(--mist-hue) 71%, transparent) 18%,
     color-mix(in srgb, var(--mist-hue) 64%, transparent) 24%,
+    color-mix(in srgb, var(--mist-hue) 56%, transparent) 30%,
     color-mix(in srgb, var(--mist-hue) 48%, transparent) 36%,
+    color-mix(in srgb, var(--mist-hue) 40%, transparent) 42%,
     color-mix(in srgb, var(--mist-hue) 33%, transparent) 48%,
     color-mix(in srgb, var(--mist-hue) 21%, transparent) 60%,
     color-mix(in srgb, var(--mist-hue) 13%, transparent) 70%,
@@ -1017,6 +1077,11 @@ html[data-cursor-down="true"] .cursor-ring {
   opacity: 0.6;
 }
 
+/* The fade itself is driven by the Web Animations API in cursor-layer.tsx, not
+   from here. These glyphs are a fixed pool that gets recycled as the pointer
+   moves, and restarting a CSS animation on a reused node requires a forced
+   synchronous reflow per spawn; element.animate() does not. Only the static
+   appearance lives in CSS. */
 .cursor-trail-glyph {
   position: fixed;
   top: 0;
@@ -1026,19 +1091,7 @@ html[data-cursor-down="true"] .cursor-ring {
   line-height: 1;
   color: var(--color-primary);
   pointer-events: none;
-  animation: trail-fade 600ms ease-out forwards;
   will-change: transform, opacity;
-}
-
-@keyframes trail-fade {
-  0% {
-    opacity: 0.7;
-    transform: translate(var(--tx), var(--ty)) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--tx), calc(var(--ty) + 14px)) scale(0.7);
-  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1099,6 +1152,91 @@ html[data-cursor-down="true"] .cursor-ring {
   to {
     transform: translateY(100%);
     opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Idle screensaver.
+
+   The overlay sits above the CRT overlay (z-58 vs z-50), because it also has to
+   cover the floating controls at z-56 — so it does not inherit the tube and
+   would otherwise be the one screen on the site with no scanlines on it, which
+   is precisely backwards for a screensaver. It carries its own copy instead:
+   the same 3px raster and corner falloff, cheap because this element only
+   exists while the visitor is away and nothing else is animating.
+
+   Skipped when the visitor has turned the tube off, so the setting means the
+   same thing here as everywhere else.
+   --------------------------------------------------------------------------- */
+html:not([data-crt="off"]) .idle-screensaver::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  box-shadow: inset 0 0 12vw rgba(0, 0, 0, 0.55);
+}
+
+/* ---------------------------------------------------------------------------
+   Degauss — the thump a CRT gives when it demagnetises its shadow mask.
+
+   Fired when the palette changes, which is the one moment the site genuinely
+   *is* re-converging its colours. It rewards the interaction the display panel
+   most wants people to try, and it costs nothing at rest: the element only
+   exists for the ~620ms the animation runs, then unmounts.
+
+   Two layers, both on one element:
+     - a tint in --mist-1, the palette being switched *to*, so the flash is the
+       new colour arriving rather than a generic white blink;
+     - a scaleY wobble, because a real degauss makes the raster breathe
+       vertically before it settles. Transform and opacity only — the whole
+       thing is compositor work and never touches layout.
+
+   Deliberately asymmetric: a hard rise and a long settle, the shape of a coil
+   losing energy. A symmetric fade reads as a page transition instead.
+   --------------------------------------------------------------------------- */
+.degauss {
+  position: fixed;
+  inset: 0;
+  z-index: 57;
+  pointer-events: none;
+  transform-origin: center;
+  background: radial-gradient(
+    ellipse 120% 90% at 50% 50%,
+    color-mix(in srgb, var(--mist-1) 22%, transparent) 0%,
+    color-mix(in srgb, var(--mist-2) 14%, transparent) 45%,
+    transparent 78%
+  );
+  animation: degauss 620ms cubic-bezier(0.2, 0.8, 0.3, 1) 1 forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes degauss {
+  0% {
+    opacity: 0;
+    transform: scaleY(1.025) scaleX(1.004);
+  }
+  9% {
+    opacity: 1;
+    transform: scaleY(0.988) scaleX(1.002);
+  }
+  30% {
+    opacity: 0.55;
+    transform: scaleY(1.012);
+  }
+  55% {
+    opacity: 0.28;
+    transform: scaleY(0.996);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1) scaleX(1);
   }
 }
 
@@ -1227,10 +1365,21 @@ html[data-cursor-down="true"] .cursor-ring {
 
 /* ---------------------------------------------------------------------------
    Scroll-velocity CRT warp
-   --scroll-warp is written by <ScrollFx/> once per frame. Everything below is
-   pure CSS off that one variable, so scrolling never triggers layout work.
-   The intensity is deliberately tiny: enough to feel the tube struggling,
-   not enough to make text unreadable while you're reading it.
+
+   --scroll-warp is written once per frame by <ScrollFx/>, and it is written to
+   `.crt-overlay` and `.warp-text` — the only two elements below that read it —
+   never to :root. Custom properties inherit, so setting one on the root
+   invalidates computed style for the whole document; doing that every frame of
+   every scroll was measured at 50ms/frame on a 4x-throttled CPU against
+   16.7ms/frame without it. See the block comment in scroll-fx.tsx.
+
+   The values here are the static defaults, so anything reading the variable
+   before the first scroll resolves to a resting state. They never change, so
+   inheriting them costs nothing.
+
+   Everything below is pure CSS off that one variable, so scrolling never
+   triggers layout work. The intensity is deliberately tiny: enough to feel the
+   tube struggling, not enough to make text unreadable while you're reading it.
    --------------------------------------------------------------------------- */
 :root {
   --scroll-warp: 0;
@@ -1299,8 +1448,9 @@ html[data-perf="low"] *::after {
 
 html[data-perf="low"] .crt-refresh,
 html[data-perf="low"] .crt-overlay::before,
-html[data-perf="low"] .divider-scan::after,
-html[data-mode="retro"][data-perf="low"] .divider-scan::after {
+html[data-perf="low"] .degauss,
+html[data-perf="low"] .divider-beam,
+html[data-mode="retro"][data-perf="low"] .divider-beam > i {
   display: none;
 }
 
@@ -1360,6 +1510,7 @@ html[data-perf="low"] .crt-overlay {
     animation: none;
   }
   .route-sweep,
+  .degauss,
   .cursor-trail-glyph {
     display: none;
   }
@@ -1371,7 +1522,7 @@ html[data-perf="low"] .crt-overlay {
 
      The two travelling bands would freeze mid-screen as a visible smear, so
      they're removed outright. */
-  html[data-mode="retro"] .divider-scan::after,
+  .divider-beam,
   .crt-refresh {
     display: none;
   }
@@ -1427,6 +1578,27 @@ html[data-perf="low"] .crt-overlay {
       transparent 100%
     );
     mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2.25rem), transparent 100%);
+    /*
+     * The mask and scrollIntoView have to agree about where the usable edge is,
+     * and they didn't: `inline: "nearest"` scrolls an off-screen tab just far
+     * enough to touch the scrollport's right edge — which is the middle of the
+     * fade. Landing on /contact or /publications from a link therefore left the
+     * *active* tab as the one dimmed toward transparent, which is precisely
+     * backwards.
+     *
+     * scroll-padding shrinks the region scrollIntoView aligns against, so the
+     * tab now comes to rest clear of the gradient. Slightly wider than the
+     * 2.25rem fade so it settles just past it rather than exactly on the seam.
+     *
+     * The matching padding-inline-end is what makes it work for the *last*
+     * route. scroll-padding only helps if there is somewhere left to scroll to,
+     * and ~/contact is the final tab — at maximum scroll it still sat 20px
+     * inside the fade with nowhere further to go. The trailing padding adds
+     * that scroll distance, and overrides the `px-4` the element carries for
+     * its bleed-to-edge layout.
+     */
+    scroll-padding-inline-end: 2.75rem;
+    padding-inline-end: 2.75rem;
   }
 }
 
@@ -1533,5 +1705,182 @@ html[data-perf="low"] .crt-overlay {
   .floating-bottom,
   .floating-panel {
     transition: none;
+  }
+}
+
+/*
+ * Print.
+ *
+ * A portfolio gets saved to PDF — by a recruiter, by the owner attaching it to
+ * an application — and this one printed as a near-empty document. Three separate
+ * causes, all of which had to be fixed together:
+ *
+ *   1. <Reveal/> starts its children at `opacity: 0` and only clears it when an
+ *      IntersectionObserver fires. Printing does not scroll, so every section
+ *      the visitor had not already scrolled past printed blank. On a fresh load
+ *      that was 7 of the homepage's 12 blocks — the entire page below the fold,
+ *      headings present and content missing. The <noscript> block in the layout
+ *      already handled the JS-disabled case; nothing handled this one.
+ *   2. The CRT overlay, the phosphor mist and the ambient canvas are all
+ *      position:fixed, which in print means they repeat on *every* page.
+ *      Scanlines over all of it.
+ *   3. The palette is near-white ink (#c9c4d6 body, #f5f3ff headings) designed
+ *      for a black screen. Browsers drop background graphics by default, so it
+ *      printed as pale grey on white — technically present, practically
+ *      invisible.
+ *
+ * The result is deliberately a *document*, not a screenshot of the site: black
+ * ink, no chrome, no controls, and every URL spelled out since a printed link
+ * you cannot follow is just underlined text.
+ */
+@media print {
+  /* 1. Undo the reveal animation's resting state. Attribute selector rather
+        than a blanket `* { opacity: 1 }`, which would also un-dim every
+        intentionally faded label on the page. */
+  [data-reveal-item] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* 2. Screen-only furniture: the tube, the ambient layers, the floating
+        controls, and navigation aids for a document you can already see all of.
+        Listed by target rather than by element — a blanket `nav` rule also took
+        out the footer's github/linkedin/email row, which is the single most
+        useful thing on a printed portfolio. */
+  .crt-overlay,
+  .phosphor-mist,
+  .floating-bottom,
+  .floating-panel,
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-trail-glyph,
+  .route-sweep,
+  .scroll-progress,
+  .idle-screensaver,
+  header,
+  aside,
+  canvas,
+  nav[aria-label="Previous and next page"],
+  [data-boot-gate] {
+    display: none !important;
+  }
+
+  /*
+   * 2b. Animated text prints as whatever frame it was on.
+   *
+   * Typewriter, DecodeText and the hero wordmark all follow the same pattern:
+   * the real string lives in an `sr-only` span (which is what the accessible
+   * name resolves to) and a decorative `aria-hidden` copy is what animates.
+   * Printing takes a snapshot, so the copy prints mid-flight — the homepage
+   * printed its tagline as "> data scien_" and a section heading as
+   * "@]}/ 0$^[/!", because those elements genuinely were part-way through a
+   * typewriter and a decode at that instant.
+   *
+   * On paper the roles swap: show the real string, drop the animated copy.
+   * Scoped to `[data-anim]` rather than to `.sr-only` generally, so this can
+   * only ever affect the three components that opt in — several other places
+   * pair an sr-only summary with an aria-hidden visual (the snake board, the
+   * process monitor) where hiding the visual would be wrong.
+   */
+  [data-anim] > .sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    white-space: normal !important;
+  }
+  [data-anim] > [aria-hidden="true"] {
+    display: none !important;
+  }
+
+  /* 3. Ink on paper. `print-color-adjust: exact` is deliberately NOT used — the
+        point is to stop fighting the printer, not to force a black page. */
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    text-shadow: none !important;
+  }
+
+  /* The palette reaches text through a dozen token classes and inline
+     --retro-accent properties, so the tokens themselves are redefined rather
+     than every consumer being listed. Everything downstream follows for free. */
+  :root,
+  html[data-mode="retro"],
+  html[data-mode="retro"][data-retro="ansi"],
+  html[data-mode="retro"][data-retro="synthwave"],
+  html[data-mode="retro"][data-retro="arcade"],
+  html[data-mode="retro"][data-retro="vaporwave"] {
+    --color-bg: #ffffff;
+    --color-fg: #000000;
+    --color-primary: #000000;
+    --color-secondary: #444444;
+    --color-muted: #999999;
+    --color-border: #999999;
+    --color-error: #000000;
+    --color-ansi-1: #000000;
+    --color-ansi-2: #000000;
+    --color-ansi-3: #000000;
+    --color-ansi-4: #000000;
+    --color-ansi-5: #000000;
+    --color-ansi-6: #000000;
+    --mist-1: transparent;
+    --mist-2: transparent;
+  }
+
+  /* Glows are a phosphor artefact; on paper they are just blur. */
+  .text-glow,
+  .text-glow-amber,
+  .warp-text,
+  html[data-mode="retro"] .warp-text,
+  html[data-mode="retro"] .retro-accent.text-glow {
+    text-shadow: none !important;
+  }
+
+  /* The site's text is set at 11-13px for a screen; that is genuinely hard to
+     read at 100% on paper. */
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  /* Keep a heading with the section it introduces, and never split a card
+     across a page break. */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid-page;
+  }
+  article,
+  li,
+  .trace-box {
+    break-inside: avoid-page;
+  }
+
+  /* An underlined word is useless on paper — print where it actually goes.
+     External links and mailto only: in-page and same-site hrefs would print as
+     unresolvable relative paths ("/about"), which is noise rather than
+     information. The footer's `./github` and `./email` are exactly the links
+     this matters for. */
+  a[href^="http"]::after {
+    content: " <" attr(href) ">";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+  a[href^="mailto:"]::after {
+    content: " <" attr(href) ">";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  /* The prose column is sized for a wide screen; paper is narrower than both. */
+  main,
+  .prose-measure {
+    max-width: none !important;
+    padding: 0 !important;
   }
 }
