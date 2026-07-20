@@ -16,7 +16,14 @@ export function PromptInput({
   ref?: Ref<HTMLInputElement>;
 } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className={`flex items-center gap-2 border-b border-border pb-2 ${className}`}>
+    // tap-row, not tap-target, on the row rather than on the input: the ghost
+    // suggestion is positioned `inset-0` against the input's wrapper, so
+    // growing the input alone would slide the caret away from the text it is
+    // meant to sit behind. Growing the label works because the label *is* the
+    // input's hit area — a tap anywhere along the row focuses it.
+    <label
+      className={`tap-row flex items-center gap-2 border-b border-border pb-2 ${className}`}
+    >
       <span className="whitespace-nowrap text-sm text-primary">
         {promptLabel}
         <span className="text-fg/50">:{path}</span>

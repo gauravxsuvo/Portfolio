@@ -29,7 +29,7 @@ export function CopyButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`border border-border px-2 py-0.5 text-[11px] tracking-wide text-fg/60 hover:text-primary hover:border-primary transition-colors ${className}`}
+      className={`tap-target border border-border px-2 py-0.5 text-[11px] tracking-wide text-fg/60 hover:text-primary hover:border-primary transition-colors ${className}`}
     >
       [{copied ? copiedLabel : label}]
       <span role="status" aria-live="polite" className="sr-only">

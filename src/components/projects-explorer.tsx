@@ -58,7 +58,7 @@ export function ProjectsExplorer({ projects }: { projects: Project[] }) {
               key={option}
               type="button"
               onClick={() => setSort(option)}
-              className={`border px-2 py-1 uppercase transition-colors ${
+              className={`tap-target border px-2 py-1 uppercase transition-colors ${
                 sort === option
                   ? "border-primary text-primary"
                   : "border-border text-fg/50 hover:text-primary hover:border-primary"

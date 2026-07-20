@@ -34,7 +34,7 @@ export function FocusTags({ tags }: { tags: string[] }) {
           type="button"
           onClick={() => handleClick(tag)}
           style={retroAccentStyle(i)}
-          className="retro-hover border border-border px-2 py-0.5 text-xs text-fg/60 hover:text-primary hover:border-primary transition-colors"
+          className="tap-target retro-hover border border-border px-2 py-0.5 text-xs text-fg/60 hover:text-primary hover:border-primary transition-colors"
         >
           {/* In retro mode the # prefix carries the tag's accent even at rest
               (custom properties inherit from the button), so the row reads as a

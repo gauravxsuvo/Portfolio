@@ -89,7 +89,7 @@ export function TerminalPet() {
         onClick={handlePet}
         aria-label="Pet the terminal cat"
         title="pet the cat"
-        className="select-none text-secondary transition-colors hover:text-primary"
+        className="tap-target-sm select-none text-secondary transition-colors hover:text-primary"
       >
         {face}
       </button>

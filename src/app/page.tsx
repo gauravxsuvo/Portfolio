@@ -77,7 +77,7 @@ export default function Home() {
           <SkillGroups groups={topSkillGroups} />
         </Reveal>
         <div className="mt-4">
-          <Link href="/about" className="link-wipe text-sm text-fg/50 hover:text-primary">
+          <Link href="/about" className="tap-target-sm link-wipe text-sm text-fg/50 hover:text-primary">
             cat about.txt --full-skill-list -&gt;
           </Link>
         </div>
@@ -98,7 +98,7 @@ export default function Home() {
           ))}
         </Reveal>
         <div className="mt-4">
-          <Link href="/projects" className="link-wipe text-sm text-fg/50 hover:text-primary">
+          <Link href="/projects" className="tap-target-sm link-wipe text-sm text-fg/50 hover:text-primary">
             ls -la ~/projects -&gt;
           </Link>
         </div>
@@ -134,7 +134,7 @@ export default function Home() {
           ))}
         </Reveal>
         <div className="mt-4">
-          <Link href="/publications" className="link-wipe text-sm text-fg/50 hover:text-primary">
+          <Link href="/publications" className="tap-target-sm link-wipe text-sm text-fg/50 hover:text-primary">
             cat publications.bib -&gt;
           </Link>
         </div>

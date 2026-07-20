@@ -27,7 +27,7 @@ export function ProjectCard({
               key={tech}
               type="button"
               onClick={() => onTagClick(tech)}
-              className="text-xs text-secondary underline-offset-2 hover:text-primary hover:underline"
+              className="tap-target-sm text-xs text-secondary underline-offset-2 hover:text-primary hover:underline"
             >
               [{tech}]
             </button>
@@ -40,7 +40,7 @@ export function ProjectCard({
       </div>
       <Link
         href={`/projects/${project.slug}`}
-        className="link-wipe mt-4 inline-flex items-center gap-1 text-sm text-primary hover:text-glow"
+        className="tap-target link-wipe mt-4 inline-flex items-center gap-1 text-sm text-primary hover:text-glow"
       >
         read more
         <span

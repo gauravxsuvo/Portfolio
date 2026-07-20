@@ -8,7 +8,8 @@ import { writeConsent } from "@/lib/analytics/consent";
 import { discardQueue } from "@/lib/analytics/client";
 import { useBooted, useConsent } from "@/hooks/use-consent";
 
-const LINK = "text-primary underline underline-offset-2 decoration-border hover:text-glow";
+const LINK =
+  "tap-target-sm text-primary underline underline-offset-2 decoration-border hover:text-glow";
 
 /**
  * The consent prompt: one line, two buttons, links to the detail.
@@ -88,6 +89,15 @@ export function ConsentBanner() {
     };
     apply();
 
+    // Also flagged as an attribute, because raising the floating buttons by the
+    // bar's height is the right answer on a desktop (where the bar is one line)
+    // and the wrong one on a phone (where it is four, and lifting the trigger
+    // ~175px parks it in the middle of the article, on top of whatever content
+    // happens to be there). The phone rule in globals.css hides them instead —
+    // it needs to know the bar is up, and a custom property can't be matched on
+    // in a selector.
+    document.documentElement.dataset.consent = "open";
+
     const observer = new ResizeObserver(apply);
     observer.observe(el);
     return () => {
@@ -97,6 +107,7 @@ export function ConsentBanner() {
       // floating buttons for the rest of the session.
       document.body.style.paddingBottom = "";
       document.documentElement.style.removeProperty("--consent-height");
+      delete document.documentElement.dataset.consent;
     };
   }, [visible]);
 

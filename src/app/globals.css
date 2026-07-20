@@ -235,6 +235,33 @@ html[data-mode="retro"] .divider-scan::after {
   }
 }
 
+/* 7. Tube flicker — the mains-frequency brightness wobble of a real CRT.
+      Assigned on `.crt-overlay` itself rather than here, because that rule
+      already sets `animation` for the scanline scroll and the later
+      declaration would win; the two are composed into one shorthand there.
+      Only the keyframes live with the other loops.
+
+      Almost all of the cycle sits at full opacity — the dips are single-digit
+      percentages of the timeline, so this reads as an occasional settle rather
+      than a pulse, and it stays nowhere near the 3-flashes-per-second
+      photosensitivity threshold. The overlay is a *darkening* layer, so
+      dropping its opacity brightens the page fractionally. */
+@keyframes crt-tube-flicker {
+  0%,
+  38%,
+  42%,
+  76%,
+  100% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.93;
+  }
+  78% {
+    opacity: 0.96;
+  }
+}
+
 /* 4. Phosphor mist — the glow of a tube lighting the dark around it.
  *
  * Two rules make this read as light rather than as decoration, and the first
@@ -252,8 +279,35 @@ html[data-mode="retro"] .divider-scan::after {
  *    a light source above and its bounce below) rather than scattered, and a
  *    drift range small enough that you can't track one across the screen.
  *
- * Two blobs, not three: filter:blur on a huge element is the one genuinely
- * expensive thing in this file, and the third was adding cost, not depth.
+ * Two blobs, not three: a blurred huge element is the one genuinely expensive
+ * thing in this file, and the third was adding cost, not depth.
+ *
+ * 3. THE SOFTNESS COMES FROM THE GRADIENT, NOT FROM filter: blur().
+ *    This used to be `filter: blur(130px)` over a plain
+ *    `color 0% -> transparent 100%` radial gradient. That gradient has a
+ *    *linear* alpha ramp, which leaves a visible circular edge — and the
+ *    130px blur existed purely to hide it. It was the most expensive
+ *    declaration on the site by a wide margin: a ~530px blob expands its
+ *    composited layer by roughly 3x the blur radius on every side, and past
+ *    ~90px that layer crosses a raster-tile threshold and falls off a cliff.
+ *    Measured on a throttled phone, scrolling the homepage:
+ *
+ *        blur(130px)  15fps      blur(90px)  20fps
+ *        blur(64px)   20fps      blur(0)     20fps
+ *
+ *    and on an unthrottled desktop it capped the *whole site* at 30fps.
+ *    The cost was invisible to anyone on fast hardware, which is exactly why
+ *    it survived: it degrades the frame rate everywhere and only reads as
+ *    "laggy" once the device is slow enough to push it under 20fps.
+ *
+ *    The stops below are a gaussian-ish falloff written by hand, so the edge
+ *    never resolves in the first place. A small blur stays only to dither the
+ *    banding that 11 stops can still show on an 8-bit panel — 24px is far
+ *    under the cliff and costs nothing measurable.
+ *
+ *    If you change these stops, keep the tail long and shallow (the last ~30%
+ *    should be under 10% alpha). Shortening the tail brings the edge back, and
+ *    the temptation then is to reach for a big blur again.
  */
 .phosphor-mist {
   position: fixed;
@@ -268,8 +322,25 @@ html[data-mode="retro"] .divider-scan::after {
   width: 62vmax;
   height: 62vmax;
   border-radius: 50%;
-  filter: blur(130px);
+  filter: blur(24px);
   will-change: transform;
+  /* Overridden per blob below. Defaulted here so the gradient can never end up
+     referencing an unset property, which would drop the whole declaration. */
+  --mist-hue: var(--mist-1);
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--mist-hue) 85%, transparent) 0%,
+    color-mix(in srgb, var(--mist-hue) 78%, transparent) 12%,
+    color-mix(in srgb, var(--mist-hue) 64%, transparent) 24%,
+    color-mix(in srgb, var(--mist-hue) 48%, transparent) 36%,
+    color-mix(in srgb, var(--mist-hue) 33%, transparent) 48%,
+    color-mix(in srgb, var(--mist-hue) 21%, transparent) 60%,
+    color-mix(in srgb, var(--mist-hue) 13%, transparent) 70%,
+    color-mix(in srgb, var(--mist-hue) 7%, transparent) 80%,
+    color-mix(in srgb, var(--mist-hue) 3.3%, transparent) 88%,
+    color-mix(in srgb, var(--mist-hue) 1.3%, transparent) 94%,
+    transparent 100%
+  );
 }
 
 /* The global `* { border-radius: 0 }` rule would square these off into
@@ -279,19 +350,28 @@ html[data-mode="retro"] .divider-scan::after {
   border-radius: 50% !important;
 }
 
+/* Size and opacity both compensate for the blur that used to be here: a 130px
+   blur threw light ~390px past the element's own box, so dropping it costs
+   reach as well as softness. A larger blob restores the spread — and a larger
+   *unblurred* blob is still far cheaper than a smaller blurred one, because
+   nothing expands the composited layer or convolves it. */
 .phosphor-mist-blob:nth-child(1) {
-  top: -26vmax;
-  left: -18vmax;
-  opacity: 0.1;
-  background: radial-gradient(circle closest-side, var(--mist-1) 0%, transparent 100%);
+  top: -30vmax;
+  left: -22vmax;
+  width: 74vmax;
+  height: 74vmax;
+  opacity: 0.12;
+  --mist-hue: var(--mist-1);
   animation: mist-drift-a 53s ease-in-out infinite;
 }
 
 .phosphor-mist-blob:nth-child(2) {
-  right: -22vmax;
-  bottom: -28vmax;
-  opacity: 0.075;
-  background: radial-gradient(circle closest-side, var(--mist-2) 0%, transparent 100%);
+  right: -26vmax;
+  bottom: -32vmax;
+  width: 74vmax;
+  height: 74vmax;
+  opacity: 0.09;
+  --mist-hue: var(--mist-2);
   animation: mist-drift-b 71s ease-in-out infinite;
 }
 
@@ -519,7 +599,11 @@ body {
 
 /* Faint CRT scanline + vignette overlay, sits above content but ignores pointer events.
    Positioned 3px above the viewport (matching the translateY loop below) so the
-   transform-driven scan never reveals a gap at the top edge. */
+   transform-driven scan never reveals a gap at the top edge.
+
+   The horizontal scanlines (3px pitch) are the raster itself and are always
+   on. The vertical aperture grille — the phosphor stripes a Trinitron actually
+   had — is added from `md` up only, see below. */
 .crt-overlay {
   position: fixed;
   top: -3px;
@@ -537,15 +621,80 @@ body {
     transparent 3px
   );
   background-size: 100% 3px;
-  animation: var(--animate-scan);
+  /* Ambient loop 3 (scanline scroll) and ambient loop 7 (tube flicker), which
+     have to share one shorthand — see the crt-tube-flicker keyframes. The
+     reduced-motion block sets `animation: none` here, which correctly parks
+     both: the scanlines stop and opacity returns to its authored 1. */
+  animation: var(--animate-scan), crt-tube-flicker 11s ease-in-out infinite;
   will-change: transform;
 }
 
+/*
+ * The aperture grille: vertical R/G/B phosphor stripes, written as a triad
+ * rather than plain darkening so near-white text picks up a faint colour
+ * shimmer instead of just getting dimmer. ~2% alpha — a grille you can
+ * actually *see* on a paragraph is one that makes it harder to read, and it
+ * crosshatches against the scanlines into visible moire.
+ *
+ * From `md` up only, for two reasons that happen to agree. Visually, a 3px
+ * stripe on a phone at DPR 2.75 is roughly one device pixel per gun and reads
+ * as noise rather than as structure. Cheaply, it's a second full-screen
+ * background layer to raster on every frame, and it measured at ~3ms/frame on
+ * a 4x-throttled phone — which is most of the frame budget it has to spare.
+ * Big screens get the detail; small screens keep the frame rate. The low tier
+ * strips it again for anything that still struggles.
+ *
+ * Vertical stripes are unaffected by the vertical scan translation, so both
+ * layers share the one animation without the grille appearing to crawl.
+ */
+@media (min-width: 48rem) {
+  .crt-overlay {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      repeating-linear-gradient(
+        to right,
+        rgba(255, 80, 80, 0.022) 0px,
+        rgba(255, 80, 80, 0.022) 1px,
+        rgba(80, 255, 120, 0.022) 1px,
+        rgba(80, 255, 120, 0.022) 2px,
+        rgba(90, 140, 255, 0.022) 2px,
+        rgba(90, 140, 255, 0.022) 3px
+      );
+    background-size: 100% 3px, 3px 100%;
+  }
+}
+
+/* Tube geometry: the corners of a curved glass screen fall away from the gun,
+   so they sit darker and slightly cooler than the centre. The inset shadow
+   alone gave an even border; the radial layer is what bends it into a corner
+   falloff and reads as curvature rather than as a frame.
+
+   The two thin edge gradients are convergence error — the outermost columns of
+   a real tube land their red and blue guns fractionally apart. Confined to the
+   last few percent of each side, where there is no body text to fringe. */
 .crt-overlay::after {
   content: "";
   position: absolute;
   inset: 0;
   box-shadow: inset 0 0 12vw rgba(0, 0, 0, 0.55);
+  background-image: radial-gradient(
+      ellipse 118% 118% at 50% 50%,
+      transparent 55%,
+      rgba(0, 0, 0, 0.22) 82%,
+      rgba(0, 0, 0, 0.5) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(255, 60, 60, 0.05) 0%,
+      transparent 3.5%,
+      transparent 96.5%,
+      rgba(70, 130, 255, 0.05) 100%
+    );
 }
 
 html[data-crt="off"] .crt-overlay {
@@ -666,6 +815,55 @@ html[data-crt="off"] .crt-overlay {
   .color-slider::-moz-range-thumb {
     width: 16px;
     height: 26px;
+  }
+}
+
+/*
+ * Touch hit areas.
+ *
+ * A terminal UI draws its controls as text — `[COPY]`, `./github`, `[Python]`
+ * — and text set at 11-12px produces a 16px-tall tap target. On a phone that
+ * is genuinely hard to hit: measured across the site, most interactive
+ * elements came in between 16px and 23px, against the 24px floor WCAG 2.2 SC
+ * 2.5.8 sets at Level AA and the 44px both Apple and Android recommend.
+ *
+ * These grow the *hit box* on touch devices only. Nothing about the painted
+ * control changes — same border, same padding, same type — so the terminal
+ * density survives on a desktop where a mouse can hit 16px fine.
+ *
+ * Two sizes, because one number is wrong at both ends:
+ *
+ *   .tap-target     44px. Anything a visitor is meant to act on: buttons,
+ *                   filter chips, copy buttons, disclosure toggles, card CTAs.
+ *   .tap-target-sm  32px. Dense rows of secondary text links — the footer's
+ *                   legal nav is five of them plus a copyright line, and at
+ *                   44px each that row alone becomes a third of the footer.
+ *                   Still comfortably over the 24px AA floor.
+ *
+ * Growing the element's own box (rather than overlaying an expanded
+ * ::after) is deliberate: an expanded overlay reaches over its neighbours, and
+ * in a wrapped chip list that means a near-miss silently activates the wrong
+ * filter. A real box keeps every `gap` between controls honest.
+ */
+@media (pointer: coarse) {
+  .tap-target,
+  .tap-target-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tap-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+  .tap-target-sm {
+    min-height: 2rem;
+  }
+  /* For controls whose hit area is a row that already lays itself out — a
+     <label> wrapping an input, say. Height only, no display change, because
+     forcing inline-flex onto an existing flex row collapses it. */
+  .tap-row {
+    min-height: 2.75rem;
   }
 }
 
@@ -1070,6 +1268,65 @@ html[data-cursor-down="true"] .cursor-ring {
    `aside { position: relative }` here, because an unlayered rule like that
    outranks Tailwind's `.sticky` utility and silently unpins the sticky rails. */
 
+/* ---------------------------------------------------------------------------
+   Low graphics tier — html[data-perf="low"], set by <PerfGuard/>.
+
+   A safety net, not the plan. The site's effects are cheap enough now that
+   this should rarely fire; if it starts firing often, make the effect cheaper
+   for everyone rather than widening this block. See lib/perf-tier.ts.
+
+   What it drops, in order of what actually costs a slow device:
+     1. every backdrop-filter — a blur that resamples what's behind it, on
+        elements that are sticky or fixed and so re-resolve on each scroll
+        frame. This is the single most expensive thing left.
+     2. the two full-viewport travelling bands, which dirty a full-screen
+        composited layer for their whole traversal.
+     3. the mist's remaining blur and its drift, leaving the light itself in
+        place — the page keeps its atmosphere and stops paying for motion.
+     4. the aperture grille, a second full-screen background layer to raster.
+
+   Deliberately NOT dropped: the scanlines, the vignette, the colour palette.
+   Those are the identity of the thing. A "fast mode" that throws away the CRT
+   is just a different, worse site — the point is to keep it recognisable on a
+   phone that cost 80 dollars.
+   --------------------------------------------------------------------------- */
+html[data-perf="low"] *,
+html[data-perf="low"] *::before,
+html[data-perf="low"] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-perf="low"] .crt-refresh,
+html[data-perf="low"] .crt-overlay::before,
+html[data-perf="low"] .divider-scan::after,
+html[data-mode="retro"][data-perf="low"] .divider-scan::after {
+  display: none;
+}
+
+/* Matches the specificity of the :nth-child rules that assign the drift, or the
+   override silently does nothing — the same trap the reduced-motion block
+   documents below. */
+html[data-perf="low"] .phosphor-mist .phosphor-mist-blob {
+  filter: none;
+  animation: none;
+  will-change: auto;
+}
+
+/* Scanlines only. Re-declaring background-image drops the grille layer, so
+   background-size has to come back to a single pair with it. */
+html[data-perf="low"] .crt-overlay {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  background-size: 100% 3px;
+  animation: var(--animate-scan);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .crt-overlay::before {
     display: none;
@@ -1092,7 +1349,14 @@ html[data-cursor-down="true"] .cursor-ring {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .crt-overlay {
+  .crt-overlay,
+  /* The low-tier block above re-declares this animation at a higher
+     specificity (an attribute selector plus a class), so the bare
+     `.crt-overlay` here loses to it and reduced motion silently keeps
+     scanning for exactly the visitors least able to absorb it. Matched
+     explicitly rather than fixed with !important, so the next person editing
+     either block can see why the selector is shaped like this. */
+  html[data-perf="low"] .crt-overlay {
     animation: none;
   }
   .route-sweep,
@@ -1137,6 +1401,43 @@ html[data-cursor-down="true"] .cursor-ring {
       transform: none;
     }
   }
+}
+
+/*
+ * The primary nav's phone scroller.
+ *
+ * Six routes don't fit on a 393px screen, so the row scrolls — but it used to
+ * end flush at the viewport edge, which reads as "that's all of them". Two
+ * routes (~/publications, ~/contact) were effectively undiscoverable.
+ *
+ * A mask rather than an overlaid gradient: an overlay has to fade *to* an
+ * opaque colour, and this header is translucent with the phosphor mist drifting
+ * behind it, so any colour picked would be wrong half the time. The mask fades
+ * the tabs themselves and lets the background through untouched.
+ *
+ * Phone only. From `sm` up the row wraps instead of scrolling, and a mask on a
+ * wrapped row would dim whichever tab happened to land on the right edge.
+ */
+@media (max-width: 39.9375rem) {
+  .nav-scroller {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 0,
+      #000 calc(100% - 2.25rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2.25rem), transparent 100%);
+  }
+}
+
+/* The row is scrolled programmatically on navigation and by touch; the bar
+   itself is noise on a 1px-tall strip under the tabs. */
+.nav-scroller {
+  scrollbar-width: none;
+}
+
+.nav-scroller::-webkit-scrollbar {
+  display: none;
 }
 
 /* scrollbar: keep it in-theme rather than default chrome */
@@ -1193,6 +1494,22 @@ html[data-cursor-down="true"] .cursor-ring {
  */
 @media (max-width: 39.9375rem) {
   html[data-panel="open"] .floating-bottom {
+    display: none;
+  }
+
+  /*
+   * Same idea for the consent bar. On a phone it is four lines tall, so adding
+   * --consent-height to the offset lifts these buttons ~175px off the bottom —
+   * out from under the bar, and straight into the middle of the page, floating
+   * over body copy and sometimes over other tap targets. There is no offset
+   * that avoids both: the bar owns the bottom of a small screen.
+   *
+   * So they stand down while it is up. Nothing is lost — the bar is a one-time
+   * prompt, and answering it either way brings them straight back. Deliberately
+   * not applied above `sm`, where the bar is a single line and the existing
+   * offset clears it with room to spare.
+   */
+  html[data-consent="open"] .floating-bottom {
     display: none;
   }
 }

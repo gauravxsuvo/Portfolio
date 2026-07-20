@@ -18,7 +18,7 @@ export function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="mt-3 text-sm text-primary hover:text-glow"
+        className="tap-target mt-3 text-sm text-primary hover:text-glow"
       >
         {expanded ? "hide highlights [-]" : "show highlights [+]"}
       </button>

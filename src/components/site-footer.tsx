@@ -45,7 +45,7 @@ export function SiteFooter() {
           type="button"
           onClick={handleClick}
           aria-label="Cycle system status"
-          className={`animate-flicker ${state.className}`}
+          className={`tap-target-sm animate-flicker ${state.className}`}
         >
           [{state.code}]
         </button>
@@ -61,7 +61,7 @@ export function SiteFooter() {
               target={s.href.startsWith("http") ? "_blank" : undefined}
               rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
               style={retroAccentStyle(i + 1)}
-              className="link-wipe retro-hover transition-colors hover:text-primary"
+              className="tap-target-sm link-wipe retro-hover transition-colors hover:text-primary"
             >
               ./{s.label}
             </a>
@@ -77,7 +77,7 @@ export function SiteFooter() {
         <TerminalPet />
         <nav aria-label="Legal" className="flex flex-wrap gap-3 sm:ml-auto">
           {LEGAL_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="link-wipe hover:text-primary">
+            <Link key={l.href} href={l.href} className="tap-target-sm link-wipe hover:text-primary">
               {l.label}
             </Link>
           ))}

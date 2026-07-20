@@ -35,7 +35,7 @@ export function SecretsCounter() {
       type="button"
       onClick={reveal}
       title="show the secrets board"
-      className={`transition-colors hover:text-primary ${
+      className={`tap-target-sm transition-colors hover:text-primary ${
         complete ? "text-secondary text-glow-amber" : "text-fg/50"
       }`}
     >

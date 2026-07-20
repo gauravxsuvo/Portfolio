@@ -51,7 +51,7 @@ export function PublicationCard({
                 key={tag}
                 type="button"
                 onClick={() => onTagClick(tag)}
-                className="text-xs text-secondary hover:text-primary hover:underline underline-offset-2"
+                className="tap-target-sm text-xs text-secondary hover:text-primary hover:underline underline-offset-2"
               >
                 [{tag}]
               </button>
@@ -68,7 +68,7 @@ export function PublicationCard({
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="mt-3 text-sm text-primary hover:text-glow"
+        className="tap-target mt-3 text-sm text-primary hover:text-glow"
       >
         {expanded ? "hide abstract [-]" : "show abstract [+]"}
       </button>
@@ -84,7 +84,7 @@ export function PublicationCard({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="border border-border px-2 py-0.5 text-[11px] uppercase tracking-wide text-fg/60 hover:text-primary hover:border-primary transition-colors"
+            className="tap-target border border-border px-2 py-0.5 text-[11px] uppercase tracking-wide text-fg/60 hover:text-primary hover:border-primary transition-colors"
           >
             [{kind}]
           </a>

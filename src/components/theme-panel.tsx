@@ -33,6 +33,7 @@ import {
   type ThemeMode,
 } from "@/lib/theme";
 import { DEFAULT_RETRO_TEMPLATE, RETRO_TEMPLATES } from "@/lib/retro-templates";
+import { readStoredQuality, setQuality, type Quality } from "@/lib/perf-tier";
 import { unlockAchievement } from "@/lib/achievements";
 import { useMounted } from "@/hooks/use-mounted";
 
@@ -65,6 +66,7 @@ function ThemePanelInner() {
     () => readStoredThemeColor() ?? DEFAULT_PRIMARY_HEX
   );
   const [crtOn, setCrtOn] = useState(() => readCrtEnabled());
+  const [quality, setQualityState] = useState<Quality>(() => readStoredQuality());
   const [mode, setMode] = useState<ThemeMode>(() => resolveThemeMode());
   const [template, setTemplate] = useState<RetroTemplateId>(() => resolveRetroTemplate());
   const panelRef = useRef<HTMLDivElement>(null);
@@ -203,6 +205,11 @@ function ThemePanelInner() {
     const next = !crtOn;
     setCrtOn(next);
     setCrtEnabled(next);
+  }
+
+  function chooseQuality(next: Quality) {
+    setQualityState(next);
+    setQuality(next);
   }
 
   const hueTrack = `linear-gradient(to right, hsl(0 ${hsl.s}% ${hsl.l}%), hsl(60 ${hsl.s}% ${hsl.l}%), hsl(120 ${hsl.s}% ${hsl.l}%), hsl(180 ${hsl.s}% ${hsl.l}%), hsl(240 ${hsl.s}% ${hsl.l}%), hsl(300 ${hsl.s}% ${hsl.l}%), hsl(360 ${hsl.s}% ${hsl.l}%))`;
@@ -396,6 +403,44 @@ function ThemePanelInner() {
               [{crtOn ? "ON" : "OFF"}]
             </span>
           </button>
+
+          {/* AUTO measures how smoothly the page is actually scrolling and
+              turns the heaviest layers down only if this device is struggling
+              — see lib/perf-tier.ts. FULL and LITE are explicit overrides that
+              switch detection off entirely, so a visitor who wants the full
+              tube on a slow phone keeps it. */}
+          <fieldset className="flex flex-col gap-2 border-t border-border pt-3">
+            <legend className="sr-only">Graphics quality</legend>
+            <div className="flex items-center justify-between text-xs text-fg/60">
+              <span aria-hidden="true">graphics</span>
+              <span className="text-fg/40">
+                {quality === "auto" ? "adapts to your device" : "locked"}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {(
+                [
+                  ["auto", "AUTO"],
+                  ["high", "FULL"],
+                  ["low", "LITE"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => chooseQuality(value)}
+                  aria-pressed={quality === value}
+                  className={`tap-target flex-1 border px-2 py-1 text-xs transition-colors ${
+                    quality === value
+                      ? "border-primary text-primary"
+                      : "border-border text-fg/50 hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
           <div className="flex gap-2">
             <BracketButton

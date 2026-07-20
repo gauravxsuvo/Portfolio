@@ -1,4 +1,8 @@
 import { DEFAULT_PRIMARY_HEX, normalizeHex } from "./color";
+// Key only, for the pre-hydration script below. The tier's own logic lives in
+// lib/perf-tier.ts; replaying a stored "low" here is what stops an explicit
+// choice from flashing the expensive frame before hydration can apply it.
+import { QUALITY_STORAGE_KEY } from "./perf-tier";
 import {
   DEFAULT_RETRO_TEMPLATE,
   RETRO_TEMPLATES,
@@ -299,5 +303,8 @@ s.setProperty("--color-accent",v);
 }
 if(localStorage.getItem(${JSON.stringify(CRT_STORAGE_KEY)})==="0"){
 d.dataset.crt="off";
+}
+if(localStorage.getItem(${JSON.stringify(QUALITY_STORAGE_KEY)})==="low"){
+d.dataset.perf="low";
 }
 }catch(e){}})();`;

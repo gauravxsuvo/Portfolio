@@ -83,6 +83,14 @@ export const STORAGE_INVENTORY: StorageEntry[] = [
     retention: "until you clear site data",
   },
   {
+    key: "suvo:quality",
+    kind: "local-storage",
+    purpose:
+      "your graphics quality choice: full, reduced, or automatic. On automatic the site measures how smoothly it is scrolling and quietly turns down the heaviest effects if your device is struggling — that measurement happens on your device and is never sent anywhere",
+    category: "necessary",
+    retention: "until you clear site data",
+  },
+  {
     key: "suvo:booted",
     kind: "local-storage",
     purpose: "whether you've seen the boot sequence, so it doesn't replay every visit",

@@ -20,6 +20,7 @@ import { AmbientGrid } from "@/components/ambient-grid";
 import { PhosphorMist } from "@/components/phosphor-mist";
 import { SelectionSearch } from "@/components/selection-search";
 import { ScrollFx } from "@/components/scroll-fx";
+import { PerfGuard } from "@/components/perf-guard";
 import { SkipLink } from "@/components/skip-link";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { ConsentBanner } from "@/components/analytics/consent-banner";
@@ -118,6 +119,7 @@ export default function RootLayout({
         <CrtOverlay />
         <CursorLayer />
         <ScrollFx />
+        <PerfGuard />
         <RouteTransition />
         <AchievementToast />
         <CommandPalette />

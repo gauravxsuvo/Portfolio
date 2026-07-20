@@ -48,7 +48,7 @@ export default function AboutPage() {
                   href={`https://orcid.org/${bio.orcid}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary underline underline-offset-4 decoration-border hover:text-glow"
+                  className="tap-target-sm text-primary underline underline-offset-4 decoration-border hover:text-glow"
                 >
                   {bio.orcid}
                 </a>

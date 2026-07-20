@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { unlockAchievement } from "@/lib/achievements";
@@ -16,6 +16,27 @@ export function SiteNav() {
   const clickTimesRef = useRef<number[]>([]);
   const [showSudo, setShowSudo] = useState(false);
   const mounted = useMounted();
+  const navRef = useRef<HTMLElement>(null);
+
+  /**
+   * Bring the active route into view in the phone scroller.
+   *
+   * Six routes do not fit on a phone, so ~/publications and ~/contact start
+   * off-screen — which meant landing on /contact from a link showed a nav with
+   * no visible current tab, and the two right-most routes were invisible with
+   * no hint they existed. The fade mask below advertises that there is more;
+   * this makes sure the tab you are actually on is one of the ones you can see.
+   *
+   * `inline: "nearest"` so a route already fully visible doesn't get yanked,
+   * and `block: "nearest"` so scrolling the tab strip can never scroll the page
+   * itself — the default ("start") pulls the whole sticky header into view and
+   * jumps you down the document on every navigation.
+   */
+  useEffect(() => {
+    const active = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!active) return;
+    active.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }, [pathname]);
 
   // Derived, not stored: the server has no idea what OS the visitor is on, so it
   // renders the neutral label and the client swaps it after hydration.
@@ -37,7 +58,7 @@ export function SiteNav() {
       <div className="relative mx-auto flex max-w-[100rem] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           <span className="flex items-baseline gap-x-2 whitespace-nowrap">
-            <Link href="/" className="glitch-hover text-primary text-glow">
+            <Link href="/" className="tap-target-sm glitch-hover text-primary text-glow">
               guest@gaurav
             </Link>
             <span
@@ -51,7 +72,7 @@ export function SiteNav() {
                 }
               }}
               aria-label="hidden prompt, try clicking it a few times"
-              className="cursor-pointer select-none text-fg/50"
+              className="tap-target-sm cursor-pointer select-none text-fg/50"
             >
               :~$
               <span aria-hidden="true" className="blink-hard ml-0.5 text-primary">
@@ -75,9 +96,15 @@ export function SiteNav() {
               sizes the row to max-content, which means flex-wrap can never
               actually wrap, and at ~768px the nav simply ran 145px off the side
               of the page. */}
+          {/* nav-scroller fades the right edge on phones so the routes that
+              start off-screen are visibly cut off rather than looking like the
+              end of the list. It's a mask, not an overlay: an overlaid
+              gradient would need a background colour to fade *to*, and the
+              header is translucent over the mist. */}
           <nav
+            ref={navRef}
             aria-label="Primary"
-            className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
+            className="nav-scroller -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0 sm:pb-0"
           >
             {SITE_ROUTES.map((link, i) => {
               const active =
@@ -88,7 +115,7 @@ export function SiteNav() {
                   href={link.href}
                   aria-current={active ? "page" : undefined}
                   style={retroAccentStyle(i)}
-                  className={`glitch-hover shrink-0 border px-2.5 py-1 text-xs transition-colors duration-100 sm:text-sm ${
+                  className={`tap-target glitch-hover shrink-0 border px-2.5 py-1 text-xs transition-colors duration-100 sm:text-sm ${
                     active
                       ? "retro-fill border-primary bg-primary text-bg"
                       : "retro-hover border-border text-fg/70 hover:border-primary hover:text-primary"

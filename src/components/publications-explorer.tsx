@@ -44,7 +44,7 @@ export function PublicationsExplorer({ publications }: { publications: Publicati
         <button
           type="button"
           onClick={() => setTypeFilter(null)}
-          className={`border px-2 py-1 transition-colors ${
+          className={`tap-target border px-2 py-1 transition-colors ${
             typeFilter === null
               ? "border-primary text-primary"
               : "border-border text-fg/50 hover:text-primary hover:border-primary"
@@ -57,7 +57,7 @@ export function PublicationsExplorer({ publications }: { publications: Publicati
             key={type}
             type="button"
             onClick={() => setTypeFilter((t) => (t === type ? null : type))}
-            className={`border px-2 py-1 uppercase transition-colors ${
+            className={`tap-target border px-2 py-1 uppercase transition-colors ${
               typeFilter === type
                 ? "border-primary text-primary"
                 : "border-border text-fg/50 hover:text-primary hover:border-primary"
