@@ -46,3 +46,10 @@ next-env.d.ts
 
 # source resume docs (contain phone number) — not served anywhere on the site
 /info_resources
+
+# brand-preview holds a rendered snapshot of every icon and share card, for
+# eyeballing them all in one place. The PNGs are build output — the app
+# generates them from src/lib/og-*, so committing them would just be a second
+# copy that silently goes stale. The viewer and its render script are source
+# and stay tracked; regenerate the images with `node brand-preview/render.mjs`.
+/brand-preview/*.png

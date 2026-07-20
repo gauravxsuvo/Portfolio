@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brand preview — favicons & share cards</title>
+<style>
+  :root {
+    --bg: #0d0f12; --panel: #14171b; --line: #262b31;
+    --fg: #e6e8ea; --dim: #8b949e; --accent: #ff5f56;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 28px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 14px/1.6 ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.3px; }
+  .sub { color: var(--dim); margin: 0 0 36px; }
+  h2 {
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin: 44px 0 4px; font-weight: 500;
+  }
+  .note { color: var(--dim); margin: 0 0 18px; font-size: 13px; max-width: 74ch; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    padding: 18px; margin-bottom: 16px;
+  }
+  .card h3 { font-size: 13px; margin: 0 0 12px; font-weight: 500; color: var(--fg); }
+  .card h3 span { color: var(--dim); font-weight: 400; }
+  img { display: block; max-width: 100%; }
+  .shot { border: 1px solid var(--line); background: #0a0a0a; }
+  .row { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-end; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .cap { color: var(--dim); font-size: 12px; }
+  .pixel { image-rendering: pixelated; }
+
+  /* Fake browser tab strip, so the favicon is judged where it actually lives. */
+  .tabs { display: flex; flex-direction: column; gap: 10px; }
+  .tab {
+    display: flex; align-items: center; gap: 9px;
+    width: 250px; padding: 9px 13px; font-size: 12.5px;
+  }
+  .tab.dark  { background: #202124; color: #e8eaed; }
+  .tab.dark2 { background: #35363a; color: #e8eaed; }
+  .tab.light { background: #f1f3f4; color: #202124; }
+  .tab img { width: 16px; height: 16px; }
+
+  /* Feed-size card previews. */
+  .feed { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+  .feed .col img { border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Brand preview</h1>
+  <p class="sub">
+    Every icon and share image the site generates, rendered from the live build.
+    Regenerate any time with <code>node render.mjs</code> in this folder.
+  </p>
+
+  <h2>Favicons — true size</h2>
+  <p class="note">
+    This is the size that matters. A favicon is judged in a tab strip at 16px,
+    against the browser's own chrome — not blown up on a design board.
+  </p>
+  <div class="card">
+    <h3>In a tab strip <span>· 16px, actual size</span></h3>
+    <div class="tabs">
+      <div class="tab dark"><img src="favicon-16.png" alt=""><span>mysuvo.com</span></div>
+      <div class="tab dark2"><img src="favicon-16.png" alt=""><span>mysuvo.com</span></div>
+      <div class="tab light"><img src="favicon-16.png" alt=""><span>mysuvo.com</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>All sizes <span>· actual size, then magnified 8&times;</span></h3>
+    <div class="row">
+      <div class="col"><img class="shot" src="favicon-16.png" alt="16px favicon"><span class="cap">16</span></div>
+      <div class="col"><img class="shot" src="favicon-32.png" alt="32px favicon"><span class="cap">32</span></div>
+      <div class="col"><img class="shot" src="favicon-48.png" alt="48px favicon"><span class="cap">48</span></div>
+      <div class="col"><img class="shot" src="apple-touch-icon-180.png" alt="180px apple touch icon"><span class="cap">180 · apple touch</span></div>
+    </div>
+    <div class="row" style="margin-top:26px">
+      <div class="col"><img class="shot pixel" src="favicon-16.png" width="128" alt=""><span class="cap">16 &rarr; 8&times;</span></div>
+      <div class="col"><img class="shot pixel" src="favicon-32.png" width="160" alt=""><span class="cap">32 &rarr; 5&times;</span></div>
+      <div class="col"><img class="shot pixel" src="favicon-48.png" width="192" alt=""><span class="cap">48 &rarr; 4&times;</span></div>
+    </div>
+  </div>
+
+  <h2>Share card — home page</h2>
+  <p class="note">
+    Used by every link to the site root: iMessage, WhatsApp, Slack, Discord,
+    LinkedIn, X, Facebook. Open Graph and Twitter serve the same image.
+  </p>
+  <div class="card">
+    <h3>Full size <span>· 1200 &times; 630</span></h3>
+    <img class="shot" src="share-home-og.png" alt="Home share card">
+  </div>
+  <div class="card">
+    <h3>At the sizes people really see it</h3>
+    <p class="note" style="margin-bottom:14px">
+      A timeline renders a card around 500px wide, and a compact preview around
+      320px. If the headline stops reading here, the card has failed.
+    </p>
+    <div class="feed">
+      <div class="col"><img src="share-home-og.png" width="504" alt=""><span class="cap">504px · typical feed card</span></div>
+      <div class="col"><img src="share-home-og.png" width="320" alt=""><span class="cap">320px · compact preview</span></div>
+    </div>
+  </div>
+
+  <h2>Share cards — project pages</h2>
+  <p class="note">
+    One per project, generated at build time. Status badge colour comes from the
+    project's own status; the stack chips run through the ANSI accent cycle.
+  </p>
+  <div class="card">
+    <h3>/projects/deepdarcy</h3>
+    <img class="shot" src="share-project-deepdarcy.png" alt="DeepDarcy share card">
+  </div>
+  <div class="card">
+    <h3>/projects/notschool</h3>
+    <img class="shot" src="share-project-notschool.png" alt="notschool share card">
+  </div>
+  <div class="card">
+    <h3>/projects/bharatsim</h3>
+    <img class="shot" src="share-project-bharatsim.png" alt="BharatSim share card">
+  </div>
+
+  <h2>Where these come from</h2>
+  <p class="note">
+    Nothing here is a checked-in asset — every PNG is generated from code at
+    build time, so the images can never drift from the site's palette:<br><br>
+    <code>src/lib/og-theme.ts</code> — colours, tracks the default retro palette<br>
+    <code>src/lib/og-mark.tsx</code> — the chevron + cursor mark<br>
+    <code>src/lib/og-crt.tsx</code> — scanlines, glow, corner falloff<br>
+    <code>src/lib/og-banner.tsx</code> — the home card<br>
+    <code>src/app/icon.tsx</code>, <code>src/app/apple-icon.tsx</code> — icons<br>
+    <code>src/app/projects/[slug]/opengraph-image.tsx</code> — project cards
+  </p>
+
+</div>
+</body>
+</html>
