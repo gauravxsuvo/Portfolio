@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { OG_BG, OG_MAGENTA } from "@/lib/og-theme";
+import { MarkTile, SiteMark } from "@/lib/og-mark";
 
 const SIZES = [16, 32, 48] as const;
 
@@ -16,27 +16,11 @@ export default async function Icon({ id }: { id: Promise<string | number> }) {
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: OG_BG,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            color: OG_MAGENTA,
-            fontWeight: 700,
-            fontSize: Math.round(px * 0.58),
-          }}
-        >
-          {">_"}
-        </div>
-      </div>
+      // No scanlines at favicon sizes: a 3px pitch in a 16px box is noise that
+      // eats the chevron's edges rather than texture anyone can resolve.
+      <MarkTile px={px}>
+        <SiteMark px={px} />
+      </MarkTile>
     ),
     { width: px, height: px }
   );

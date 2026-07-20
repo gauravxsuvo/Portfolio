@@ -1,18 +1,17 @@
 import { ImageResponse } from "next/og";
 import { loadJetBrainsMono } from "@/lib/og-fonts";
+import { CrtGlow, CrtOverlay, OG_FRAME_STYLE } from "@/lib/og-crt";
 import {
+  OG_ACCENTS,
+  OG_ACCENT_5,
   OG_BG,
   OG_BORDER,
-  OG_CYAN,
-  OG_LIME,
-  OG_MAGENTA,
-  OG_PURPLE,
+  OG_FG,
+  OG_MIST,
+  OG_PRIMARY,
   STATUS_STYLE,
 } from "@/lib/og-theme";
 import { projects } from "@/lib/data";
-
-/** Matches the site's accent cycle, so the stack chips read the same way. */
-const STACK_COLORS = [OG_MAGENTA, OG_CYAN, OG_LIME, OG_PURPLE];
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -66,85 +65,103 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           display: "flex",
           flexDirection: "column",
           backgroundColor: OG_BG,
-          padding: 40,
+          padding: 34,
           fontFamily: "JetBrains Mono",
         }}
       >
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            border: `2px solid ${OG_BORDER}`,
-            padding: "44px 56px",
-            boxShadow: `inset 0 0 160px rgba(255,79,216,0.08)`,
-          }}
-        >
-          <div style={{ display: "flex", fontSize: 18, color: OG_PURPLE, opacity: 0.7, letterSpacing: 2 }}>
-            {`+--- PROJECT / ${slug} ---+`}
-          </div>
+        <div style={OG_FRAME_STYLE}>
+          <CrtGlow />
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 30 }}>
-            {`guest@gauravxsuvo:~$ cat projects/${slug}/README.md`}
-          </div>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", fontSize: 21, color: OG_ACCENT_5, letterSpacing: 4 }}>
+                {`~/projects/${slug}`}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 20,
+                  color: status.color,
+                  border: `1px solid ${status.color}`,
+                  padding: "5px 14px",
+                  letterSpacing: 2,
+                }}
+              >
+                {`[${status.label}]`}
+              </div>
+            </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 26 }}>
-            <div style={{ display: "flex", fontSize: 58, fontWeight: 700, color: OG_MAGENTA }}>{name}</div>
+            {/* Same rule as the wordmark on the home card: one colour, and the
+                palette arrives through the bloom rather than through the type. */}
             <div
               style={{
                 display: "flex",
-                fontSize: 20,
-                color: status.color,
-                border: `1px solid ${status.color}`,
-                padding: "4px 12px",
-                letterSpacing: 2,
+                fontSize: 80,
+                fontWeight: 700,
+                color: OG_PRIMARY,
+                letterSpacing: -1,
+                marginTop: 30,
+                textShadow: `0 0 26px ${OG_MIST}a6, 0 0 62px ${OG_MIST}59`,
               }}
             >
-              {`[${status.label}]`}
+              {name}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 29,
+                color: OG_FG,
+                marginTop: 22,
+                maxWidth: 940,
+                lineHeight: 1.4,
+              }}
+            >
+              {tagline}
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 32 }}>
+              {stack.map((tech, i) => (
+                <div
+                  key={tech}
+                  style={{
+                    display: "flex",
+                    fontSize: 21,
+                    color: OG_FG,
+                    border: `1px solid ${OG_BORDER}`,
+                    padding: "7px 14px",
+                  }}
+                >
+                  <span style={{ color: OG_ACCENTS[i % OG_ACCENTS.length] }}>#</span>
+                  {tech}
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: "auto",
+              }}
+            >
+              <div style={{ display: "flex", fontSize: 22, color: OG_PRIMARY, opacity: 0.75 }}>
+                {`gauravxsuvo/${slug}`}
+                <span style={{ color: OG_MIST, marginLeft: 10 }}>_</span>
+              </div>
+              <div style={{ display: "flex", fontSize: 22, color: OG_BORDER }}>{year}</div>
             </div>
           </div>
 
-          <div style={{ display: "flex", fontSize: 26, color: "#e6e0f0", opacity: 0.85, marginTop: 14 }}>
-            {tagline}
-          </div>
-
-          <div style={{ display: "flex", fontSize: 20, color: OG_CYAN, opacity: 0.6, marginTop: 36 }}>
-            stack:
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-            {stack.map((tech, i) => (
-              <div
-                key={tech}
-                style={{
-                  display: "flex",
-                  fontSize: 18,
-                  color: STACK_COLORS[i % STACK_COLORS.length],
-                  border: `1px solid ${OG_BORDER}`,
-                  padding: "5px 12px",
-                }}
-              >
-                {tech}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", fontSize: 20, color: OG_MAGENTA, opacity: 0.8, marginTop: "auto" }}>
-            guest@gauravxsuvo:~$ _
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 16,
-            color: OG_PURPLE,
-            opacity: 0.6,
-            marginTop: 14,
-          }}
-        >
-          <div style={{ display: "flex" }}>{`gauravxsuvo/${slug}`}</div>
-          <div style={{ display: "flex" }}>{year}</div>
+          <CrtOverlay />
         </div>
       </div>
     ),

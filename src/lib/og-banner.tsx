@@ -1,15 +1,35 @@
 import { ImageResponse } from "next/og";
 import { loadJetBrainsMono } from "./og-fonts";
 import { bio } from "./data";
-import { OG_AMBER, OG_BG, OG_BORDER, OG_CYAN, OG_LIME, OG_MAGENTA, OG_PURPLE } from "./og-theme";
-
-/** Same idea as the site's accent cycle: the focus tags run through it. */
-const TAG_COLORS = [OG_MAGENTA, OG_CYAN, OG_AMBER, OG_LIME];
+import { CrtGlow, CrtOverlay, OG_FRAME_STYLE } from "./og-crt";
+import {
+  OG_ACCENTS,
+  OG_ACCENT_3,
+  OG_BG,
+  OG_BORDER,
+  OG_FG,
+  OG_MIST,
+  OG_PRIMARY,
+} from "./og-theme";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = `${bio.name}, ${bio.role}`;
 
+/**
+ * The site's front page, compressed to a card.
+ *
+ * It mirrors the real hero — status badge, wordmark, summary, focus tags,
+ * prompt — rather than inventing a layout, so the preview and the page read as
+ * the same object.
+ *
+ * Two things drive the type sizes. A social card is almost never seen at
+ * 1200x630: in a feed it lands around 500px wide, so everything here is sized
+ * to survive being scaled to ~40%. And the wordmark is the only element
+ * allowed to be loud — the previous version set the name in magenta and
+ * repeated `guest@gauravxsuvo:~$` three times, which at feed size collapsed
+ * into an illegible smear of prompts with one bright pink line through it.
+ */
 export default async function renderBanner() {
   const fonts = await loadJetBrainsMono();
 
@@ -22,80 +42,97 @@ export default async function renderBanner() {
           display: "flex",
           flexDirection: "column",
           backgroundColor: OG_BG,
-          padding: 40,
+          padding: 34,
           fontFamily: "JetBrains Mono",
         }}
       >
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            border: `2px solid ${OG_BORDER}`,
-            padding: "40px 56px",
-            boxShadow: `inset 0 0 160px rgba(255,79,216,0.08)`,
-          }}
-        >
-          <div style={{ display: "flex", fontSize: 18, color: OG_PURPLE, opacity: 0.7, letterSpacing: 2 }}>
-            +--- GAURAV@PORTFOLIO:~$ ---+
-          </div>
+        <div style={OG_FRAME_STYLE}>
+          <CrtGlow />
 
-          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 24 }}>
-            guest@gauravxsuvo:~$ whoami
-          </div>
-          <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: OG_MAGENTA, marginTop: 6 }}>
-            {bio.name}
-          </div>
-
-          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 28 }}>
-            guest@gauravxsuvo:~$ cat role.txt
-          </div>
-          <div style={{ display: "flex", fontSize: 24, color: OG_AMBER, marginTop: 4 }}>
-            {"> "}
-            {bio.role}
-          </div>
-          <div style={{ display: "flex", fontSize: 20, color: OG_LIME, opacity: 0.8, marginTop: 2 }}>
-            {"> "}
-            {bio.location}
-          </div>
-
-          <div style={{ display: "flex", fontSize: 22, color: OG_CYAN, opacity: 0.7, marginTop: 28 }}>
-            guest@gauravxsuvo:~$ ls focus/
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-            {bio.focus.map((tag, i) => (
-              <div
-                key={tag}
-                style={{
-                  display: "flex",
-                  fontSize: 18,
-                  color: TAG_COLORS[i % TAG_COLORS.length],
-                  border: `1px solid ${OG_BORDER}`,
-                  padding: "5px 12px",
-                }}
-              >
-                {tag}
+          {/* Everything below sits above the glow and under the scanlines. */}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", width: 12, height: 12, backgroundColor: OG_ACCENT_3 }} />
+                <div style={{ display: "flex", fontSize: 22, color: OG_ACCENT_3, letterSpacing: 6 }}>
+                  [ SYSTEM ONLINE ]
+                </div>
               </div>
-            ))}
+              <div style={{ display: "flex", fontSize: 20, color: OG_BORDER }}>~/portfolio</div>
+            </div>
+
+            {/* The wordmark: one colour, palette carried by the bloom — the
+                same rule the hero follows on the site. */}
+            <div
+              style={{
+                display: "flex",
+                fontSize: 84,
+                fontWeight: 700,
+                color: OG_PRIMARY,
+                letterSpacing: -1,
+                marginTop: 26,
+                textShadow: `0 0 26px ${OG_MIST}a6, 0 0 62px ${OG_MIST}59`,
+              }}
+            >
+              {bio.name}
+              <span style={{ color: OG_MIST }}>_</span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 25,
+                color: OG_FG,
+                marginTop: 20,
+                maxWidth: 880,
+                lineHeight: 1.45,
+              }}
+            >
+              {bio.summary}
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 26 }}>
+              {bio.focus.map((tag, i) => (
+                <div
+                  key={tag}
+                  style={{
+                    display: "flex",
+                    fontSize: 20,
+                    color: OG_FG,
+                    border: `1px solid ${OG_BORDER}`,
+                    padding: "7px 14px",
+                  }}
+                >
+                  <span style={{ color: OG_ACCENTS[i % OG_ACCENTS.length] }}>#</span>
+                  {tag.replace(/\s+/g, "-")}
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: "auto",
+              }}
+            >
+              <div style={{ display: "flex", fontSize: 22, color: OG_PRIMARY, opacity: 0.75 }}>
+                guest@{bio.handle}:~$
+                <span style={{ color: OG_MIST, marginLeft: 10 }}>_</span>
+              </div>
+              <div style={{ display: "flex", fontSize: 22, color: OG_BORDER }}>mysuvo.com</div>
+            </div>
           </div>
 
-          <div style={{ display: "flex", fontSize: 20, color: OG_MAGENTA, opacity: 0.8, marginTop: "auto" }}>
-            guest@gauravxsuvo:~$ _
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 16,
-            color: OG_PURPLE,
-            opacity: 0.6,
-            marginTop: 14,
-          }}
-        >
-          <div style={{ display: "flex" }}>~/portfolio</div>
-          <div style={{ display: "flex" }}>{bio.handle}</div>
+          <CrtOverlay />
         </div>
       </div>
     ),
