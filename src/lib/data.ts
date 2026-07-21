@@ -102,7 +102,19 @@ export type ExperienceEntry = {
 
 export const experience: ExperienceEntry[] = [
   {
-    role: "Freelance Video Editor & Graphic Designer",
+    role: "Business Intern",
+    org: "Internship",
+    period: "2026-Present",
+    location: "India",
+    summary:
+      "Business Intern at TrueVows App, a faith-based dating platform. I work on automating workflows, managing customer databases, and supporting the team with day-to-day technical operations.",
+    highlights: [
+      "Automated internal workflows using no-code/low-code tools to improve operational efficiency and reduce manual tasks.",
+      "Supported CRM management, including customer segmentation, data cleanup, and reporting.",
+    ],
+  },
+  {
+    role: "Freelance Graphic Designer",
     org: "Self-employed",
     period: "2021-2024",
     location: "India",
@@ -176,8 +188,8 @@ export const bio = {
   // redirects here, so this is the address that doesn't cost a hop.
   website: "https://www.mysuvo.com",
   orcid: "0009-0009-0810-5513",
-  role: "Data Science & AI student",
-  location: "India",
+  role: "Data Science & Artificial Intelligence Undergraduate Student",
+  location: "My Computer Desk, India",
   // Kept short and about the person, not the work. The projects, publications
   // and skills sections already say what he builds, at length; repeating it here
   // in the first person is what made this read like a cover letter.
@@ -187,12 +199,8 @@ export const bio = {
   // above stays short on purpose: it's the hero line, the meta description and
   // the shell's `about.txt`, where a paragraph would be too much.
   about: [
-    "I'm an undergrad at IIT Guwahati studying Data Science and AI. Most of what I do boils down to this: I like building things with data and code, and I like knowing why they work.",
-    "I got here the usual way, by taking stuff apart. These days that looks like reading a paper and rebuilding it from scratch, or losing an entire evening to a bug that turns out to be one wrong index. Annoying in the moment. Weirdly satisfying after.",
-    "The part that hooks me is the overlap between machine learning and plain old software engineering. Training a model is honestly the easy bit. Getting it to hold up against real data and real users is what I keep coming back to, especially in scientific ML, where the model has to respect actual physics instead of just chasing a metric.",
-    "I'm not a lone-wolf coder either. I led a four-person hackathon team, freelanced for three years before college, and mentored people where I could. I also keep signing up for things slightly out of my depth. Sometimes that goes badly. I learn either way.",
-    "Off the clock I game, mess with whatever new AI tool dropped that week, and start side projects with a survival rate I'd rather not publish.",
-    "Right now I'm looking for work in ML engineering, AI research, AI systems or business intelligence. If you're building something interesting, say hi. My inbox is genuinely open.",
+    "I'm an undergraduate student at Indian Institute of Technology Guwahati studying Data Science and Artificial Intelligence with a passion for machine learning, software engineering and solving problems through data.",
+    "I enjoy building ml systems, exploring new technologies, and turning ideas into projects, whether it's implementing research, experimenting with ai models or simply building something out of curiosity.",
   ],
-  focus: ["machine learning", "multi-agent systems", "geospatial systems", "full-stack development"],
+  focus: ["machine learning", "neural networks", "data science", "artificial intelligence"],
 };
