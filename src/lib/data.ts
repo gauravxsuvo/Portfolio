@@ -103,7 +103,7 @@ export type ExperienceEntry = {
 export const experience: ExperienceEntry[] = [
   {
     role: "Business Intern",
-    org: "Internship",
+    org: "TrueVows App",
     period: "2026-Present",
     location: "India",
     summary:
@@ -189,7 +189,7 @@ export const bio = {
   website: "https://www.mysuvo.com",
   orcid: "0009-0009-0810-5513",
   role: "Data Science & Artificial Intelligence Undergraduate Student",
-  location: "My Computer Desk, India",
+  location: "India",
   // Kept short and about the person, not the work. The projects, publications
   // and skills sections already say what he builds, at length; repeating it here
   // in the first person is what made this read like a cover letter.
@@ -200,7 +200,7 @@ export const bio = {
   // the shell's `about.txt`, where a paragraph would be too much.
   about: [
     "I'm an undergraduate student at Indian Institute of Technology Guwahati studying Data Science and Artificial Intelligence with a passion for machine learning, software engineering and solving problems through data.",
-    "I enjoy building ml systems, exploring new technologies, and turning ideas into projects, whether it's implementing research, experimenting with ai models or simply building something out of curiosity.",
+    "I enjoy building ML systems, exploring new technologies, and turning ideas into projects, whether it's implementing research, experimenting with AI models or simply building something out of curiosity.",
   ],
   focus: ["machine learning", "neural networks", "data science", "artificial intelligence"],
 };
