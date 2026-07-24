@@ -105,7 +105,7 @@ export const experience: ExperienceEntry[] = [
     role: "Business Intern",
     org: "TrueVows App",
     period: "2026-Present",
-    location: "Remote",
+    location: "Dublin, Ireland (Remote)",
     summary:
       "Business Intern at TrueVows App, a faith-based dating platform. I conduct business and market research and support data-driven decision-making across the team's technical and operational initiatives.",
     highlights: [
@@ -189,7 +189,7 @@ export const bio = {
   website: "https://www.mysuvo.com",
   orcid: "0009-0009-0810-5513",
   role: "Data Science & Artificial Intelligence Undergraduate Student",
-  location: "Dublin, County Dublin, Ireland",
+  location: "India",
   // Kept short and about the person, not the work. The projects, publications
   // and skills sections already say what he builds, at length; repeating it here
   // in the first person is what made this read like a cover letter.
